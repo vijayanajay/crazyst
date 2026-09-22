@@ -6,7 +6,10 @@ Daily -> monthly ONCE, so repeated work over the big daily tables (bhav 7.9M row
     month_grid   (m, mdate)                                the decision calendar: each month's
                                                            last EQ trading day
     adj_me       (symbol, m, mdate, adate, adj_close)       last adjusted close of the month
-    turnover_me  (symbol, m, mdate, med_turnover, n_days)   monthly median daily turnover
+    liq_me       (symbol, m, mdate, med3, n_days)           BRD §4 liquidity: median daily
+                                                           turnover over the trailing
+                                                           liquidity_lookback_months ending AT
+                                                           mdate — the universe-rank input
     deliv_me     (symbol, m, mdate, deliv_per_mean, deliv_qty_sum, n_days)
 
 - adj_me keeps the LAST VALID adjusted print AT OR BEFORE the month's last trading day, inside
@@ -19,8 +22,13 @@ Daily -> monthly ONCE, so repeated work over the big daily tables (bhav 7.9M row
   therefore filtered on value first, and adate always dates the value it is stored with.
 - panels are FULL-HISTORY regardless of profile: the profile bounds reported windows, not
   lookback (the rule the canaries already follow), so rank sees complete trailing windows.
-- turnover_me needs only bhav; adj_me needs adj_close; deliv_me is skipped when the delivery
-  table is absent (synthetic fixtures). Rebuildable derived tables, ~1-3s over the full DB.
+- liq_me is pooled, not a median of monthly medians: it pools every daily turnover in the
+  window and takes one median, because a median of medians is not a median. It is also
+  FULL-HISTORY even when the profile window is shorter, so a decision month's lookback is
+  never truncated by the profile start (see rank.py).
+- liq_me needs only bhav; adj_me needs adj_close; deliv_me is skipped when the delivery table is
+  absent (synthetic fixtures). Rebuildable derived tables; liq_me is the expensive one (~4s full
+  history, it is the price of the BRD §4 window) and everything else is ~1-3s.
 - ensure(con, cfg) is stamped (src/stamp.py): it rebuilds when the source tables, the panel SQL
   or the config moved, and is a no-op in the steady state — callers (rank, winners, feature
   builds) pay only the fingerprint read.
@@ -42,7 +50,7 @@ import duckdb
 from src import stamp
 from src.config import load
 
-_CORE = ("month_grid", "adj_me", "turnover_me")  # ensure() gate; deliv_me is optional
+_CORE = ("month_grid", "adj_me", "liq_me")  # ensure() gate; deliv_me is optional
 _KEY = "panels"  # stamp key for ensure()
 
 _GRID_SQL = """
@@ -61,11 +69,12 @@ WHERE a.date <= coalesce(g.mdate, last_day(a.m))
 GROUP BY 1, 2, 3
 """
 
-_TURNOVER_SQL = """
-CREATE OR REPLACE TABLE turnover_me AS
-SELECT b.symbol, date_trunc('month', b.date) AS m, g.mdate,
-       median(b.turnover) AS med_turnover, count(*) AS n_days
-FROM bhav b JOIN month_grid g ON g.m = date_trunc('month', b.date)
+_LIQ_SQL = """
+CREATE OR REPLACE TABLE liq_me AS
+SELECT b.symbol, g.m, g.mdate,
+       median(b.turnover) AS med3, count(*) AS n_days
+FROM bhav b JOIN month_grid g
+  ON b.date > g.mdate - ({lookback} * INTERVAL '1 month') AND b.date <= g.mdate
 WHERE b.series = 'EQ'
 GROUP BY 1, 2, 3
 """
@@ -85,9 +94,14 @@ def _has(con, table: str) -> bool:
 
 
 def _fp(cfg: dict, con) -> str:
-    """Stamp fingerprint of everything the panels are made of (source tables + panel SQL + cfg)."""
+    """Stamp fingerprint of everything the panels are made of (sources + panel SQL + params).
+
+    The lookback is a `cfg:` spec, not just part of the code hash: changing the config value must
+    rebuild liq_me even though no source table and no source line moved.
+    """
     return stamp.fingerprint(cfg, con, ["code", "table:bhav.date", "table:delivery.date",
-                                        "table:adj_close.date"])
+                                        "table:adj_close.date",
+                                        "cfg:universe.liquidity_lookback_months"])
 
 
 def build(con, cfg: dict) -> dict:
@@ -99,7 +113,8 @@ def build(con, cfg: dict) -> dict:
     rows = {}
     for name, sql, needs in (("month_grid", _GRID_SQL, None),
                              ("adj_me", _ADJ_SQL, "adj_close"),
-                             ("turnover_me", _TURNOVER_SQL, None),
+                             ("liq_me", _LIQ_SQL.format(
+                                 lookback=cfg["universe"]["liquidity_lookback_months"]), None),
                              ("deliv_me", _DELIVERY_SQL, "delivery")):
         if needs and not _has(con, needs):
             continue  # synthetic fixtures without that source
@@ -166,11 +181,16 @@ def _synth_check() -> None:
     assert adj[("X", date(2010, 6, 1))] == (None, date(2010, 6, 15), 7.0), \
         f"pre-bhav month must survive with NULL mdate: {adj[('X', date(2010, 6, 1))]}"
 
-    to = {(s, m): (med, n) for s, m, med, n in con.execute(
-        "SELECT symbol, m::DATE, med_turnover, n_days FROM turnover_me").fetchall()}
-    assert to[("X", date(2024, 9, 1))] == (3e7, 5), f"median of 1e7..5e7 = 3e7 over 5 days: {to}"
-    assert to[("Z", date(2024, 8, 1))] == (1e6, 1), to[("Z", date(2024, 8, 1))]
-    assert ("W", date(2024, 9, 1)) not in to, "BE turnover must not enter the panel"
+    # liq_me is the POOLED trailing-window median. At the Sep 27 decision the window is
+    # (Jun 27, Sep 27], so Z pools its Aug 30 and Sep 27 rows: median(1e6, 2e6) = 1.5e6 over
+    # 2 days — a median of monthly medians would have said 2e6 over 1 day.
+    lq = {(s, m): (med, n) for s, m, med, n in con.execute(
+        "SELECT symbol, m::DATE, med3, n_days FROM liq_me").fetchall()}
+    assert lq[("X", date(2024, 9, 1))] == (3e7, 5), f"median of 1e7..5e7 = 3e7 over 5 days: {lq}"
+    assert lq[("Z", date(2024, 9, 1))] == (1.5e6, 2), \
+        f"the window must pool August with September: {lq[('Z', date(2024, 9, 1))]}"
+    assert lq[("Z", date(2024, 8, 1))] == (1e6, 1), lq[("Z", date(2024, 8, 1))]
+    assert ("W", date(2024, 9, 1)) not in lq, "BE turnover must not enter the panel"
 
     dl = con.execute("SELECT deliv_per_mean, deliv_qty_sum, n_days FROM deliv_me "
                      "WHERE symbol='X' AND m::DATE = '2024-09-01'").fetchone()

@@ -1,14 +1,18 @@
 """Task 2.1 — as-of universe rank: top-1500 by trailing 3-month median turnover (BRD §4).
 
-Pure SQL over bhav data — no external index membership (BRD §4, actionplan 2.1). For every
-decision date D (each month's last trading day), each EQ symbol's median daily turnover over
-the trailing {liquidity_lookback_months} calendar months ending AT D is ranked; rank <= top_n
-is the as-of universe. The decision month itself is inside its own trailing window.
+Reads the `liq_me` month-end panel (src/normalize/panels.py) instead of rescanning daily bhav:
+the BRD §4 window median is computed once, full history, and this module only ranks it. For
+every decision date D (each month's last trading day), each EQ symbol's pooled median daily
+turnover over the trailing {liquidity_lookback_months} calendar months ending AT D is ranked;
+rank <= top_n is the as-of universe. The decision month is inside its own trailing window.
 
-- window semantics: turnover is a RANK input only — a symbol present in 2 of 3 window months
-  gets a median over what exists. ponytail: partial windows rank on partial evidence; the
-  first lookback-1 decision months of a profile are affected and 1-month-old listings rank on
-  one month — the 6-month listing-age rule (task 2.2) keeps both out of the tradeable pool.
+- one definition, one place: the window expression lives in the panel. Rank previously carried
+  its own copy over daily bhav, which meant every future liquidity consumer would carry another.
+- lookback is never truncated by the profile: the panel is full-history, so a decision month's
+  window is complete even when it starts before the profile window. The old query filtered DAILY
+  rows by profile start first, so the first lookback-1 decision months were ranked on partial
+  evidence (a documented `ponytail:` wart) — under `full` nothing changes (no data precedes
+  2011), under `quick` the first months get their real window.
 - turnover unit: raw rupees (TOTTRDVAL / TtlTrfVal passed through unscaled by both mapping
   files); med3_cr is the rupee-crore view for humans.
 - no lookahead by construction: the window ends at the decision date D. The rank carries NO
@@ -16,11 +20,14 @@ is the as-of universe. The decision month itself is inside its own trailing wind
 - rebuildable derived table (CREATE OR REPLACE), unlike the append-only bhav table (BRD §5).
 
 build(con, cfg) takes an open DuckDB connection so the phase chain (rank -> eligibility ->
-winners) runs on one connection, the way task 3.5's matrix build will call it.
+winners) runs on one connection, the way task 3.5's matrix build will call it. It calls
+panels.ensure() first, so a standalone run on a fresh database works and the steady state pays
+only the stamp read.
 
 python -m src.universe.rank runs the self-check: synthetic hand-computed medians/ranks, then
-live (profile quick): builds the table, prints the top 5 for 5 decision dates, asserts
-month-over-month membership overlap >= 85%, and asserts build runtime stays in minutes.
+live (profile quick): builds the table, PROVES the panel reproduces a from-scratch recompute of
+med3 straight from daily bhav (sampled decision dates, exact on every symbol), prints the top 5
+for 5 decision dates, asserts month-over-month membership overlap >= 85% and runtime in minutes.
 """
 import copy
 import os
@@ -31,26 +38,15 @@ import time
 import duckdb
 
 from src.config import load
+from src.normalize import panels
 
 _RANK_SQL = """
 CREATE OR REPLACE TABLE universe_rank AS
-WITH eq AS (
-    SELECT symbol, date, turnover FROM bhav
-    WHERE series = 'EQ' AND date >= '{start}'::DATE AND date <= '{end}'::DATE
-),
-month_ends AS (
-    SELECT date_trunc('month', date) AS m, max(date) AS mdate FROM eq GROUP BY 1
-),
-med3 AS (
-    SELECT e.symbol, me.mdate, median(e.turnover) AS med3
-    FROM eq e JOIN month_ends me
-      ON e.date > me.mdate - ({lookback} * INTERVAL '1 month') AND e.date <= me.mdate
-    GROUP BY 1, 2
-),
-ranked AS (
+WITH ranked AS (
     SELECT symbol, mdate, med3,
            row_number() OVER (PARTITION BY mdate ORDER BY med3 DESC, symbol) AS rank
-    FROM med3
+    FROM liq_me
+    WHERE mdate >= '{start}'::DATE AND mdate <= '{end}'::DATE
 )
 SELECT symbol, mdate, med3, med3 / 1.0e7 AS med3_cr, rank, rank <= {top_n} AS in_universe
 FROM ranked
@@ -59,8 +55,8 @@ FROM ranked
 
 def build(con, cfg: dict) -> dict:
     t0 = time.monotonic()
+    panels.ensure(con, cfg)  # liq_me must exist; stamped, so this is a fingerprint read when current
     con.execute(_RANK_SQL.format(start=cfg["data_start_date"], end=cfg["end_date"],
-                                 lookback=cfg["universe"]["liquidity_lookback_months"],
                                  top_n=cfg["universe"]["top_n"]))
     rows, months = con.execute(
         "SELECT count(*), count(DISTINCT mdate) FROM universe_rank").fetchone()
@@ -135,6 +131,45 @@ def _synth_check() -> None:
     print("synthetic check passed (hand-computed med3, rank order, BE exclusion)", flush=True)
 
 
+def _source_equivalence(con, cfg: dict, dates: list) -> None:
+    """Prove the panel reproduces the daily source: recompute med3 STRAIGHT FROM bhav (the
+    definition rank used when it owned this query) for sampled decision dates and compare to
+    liq_me exactly, both directions, plus every universe_rank row against its panel row.
+
+    This is the check that would catch a wrong panel join, a wrong window bound (one day either
+    side), a monthly-median shortcut, or a profile filter leaking into the window.
+    """
+    lookback = cfg["universe"]["liquidity_lookback_months"]
+    total = 0
+    for d in dates:
+        n_src, n_panel, missing, extra, diff = con.execute(f"""
+            WITH src AS (
+                SELECT b.symbol, median(b.turnover) AS med3, count(*) AS n_days
+                FROM bhav b
+                WHERE b.series = 'EQ'
+                  AND b.date > ?::DATE - ({lookback} * INTERVAL '1 month')
+                  AND b.date <= ?::DATE
+                GROUP BY 1),
+            pnl AS (SELECT symbol, med3, n_days FROM liq_me WHERE mdate = ?::DATE)
+            SELECT (SELECT count(*) FROM src), (SELECT count(*) FROM pnl),
+                   count(*) FILTER (WHERE pnl.symbol IS NULL),
+                   count(*) FILTER (WHERE src.symbol IS NULL),
+                   count(*) FILTER (WHERE src.med3 != pnl.med3 OR src.n_days != pnl.n_days)
+            FROM src FULL OUTER JOIN pnl USING (symbol)""", [d, d, d]).fetchone()
+        assert n_src == n_panel and not (missing or extra or diff), (
+            f"{d}: liq_me disagrees with a from-scratch bhav recompute — "
+            f"panel {n_panel} vs source {n_src} symbols, missing {missing}, extra {extra}, "
+            f"value/count mismatches {diff}")
+        total += n_src
+    bad = con.execute("SELECT count(*) FROM universe_rank u "
+                      "LEFT JOIN liq_me l ON l.symbol = u.symbol AND l.mdate = u.mdate "
+                      "WHERE l.symbol IS NULL OR u.med3 != l.med3 "
+                      "OR u.in_universe != (u.rank <= ?)", [cfg["universe"]["top_n"]]).fetchone()[0]
+    assert bad == 0, f"{bad} universe_rank rows do not match their liq_me row (join/filter drift)"
+    print(f"source equivalence: med3 recomputed from daily bhav for {len(dates)} decision dates "
+          f"({total:,} symbol-months) — 0 mismatches, rank table matches the panel", flush=True)
+
+
 def _live_check(cfg: dict) -> None:
     con = duckdb.connect(cfg["paths"]["duckdb"])
     try:
@@ -147,6 +182,7 @@ def _live_check(cfg: dict) -> None:
             "SELECT DISTINCT mdate FROM universe_rank ORDER BY 1").fetchall()]
         picks = sorted({dates[0], dates[len(dates) // 4], dates[len(dates) // 2],
                         dates[3 * len(dates) // 4], dates[-1]})
+        _source_equivalence(con, cfg, picks[::2])  # the sampled subset, incl. first and last month
         for d in picks:
             top = ", ".join(f"{s} {cr:,.0f}Cr r{r}" for s, cr, r in as_of(con, str(d)))
             print(f"  as of {d}: {top}", flush=True)

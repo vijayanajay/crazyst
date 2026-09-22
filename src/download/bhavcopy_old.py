@@ -59,6 +59,9 @@ def fetch_day(session: requests.Session, d: date, cfg: dict) -> str:
 
 
 def download_month(session: requests.Session, year: int, month: int, cfg: dict, up_to: date | None = None) -> dict:
+    # Self-bound to end_date like the UDiFF loop, so no caller can walk into a day fetch_day
+    # refuses by iterating the current month without an explicit up_to.
+    up_to = min([d for d in (up_to, date.fromisoformat(cfg["end_date"])) if d])
     summary = {"year": year, "month": month, "downloaded": 0, "cached": 0, "holidays": []}
     _, ndays = calendar.monthrange(year, month)
     for day in range(1, ndays + 1):

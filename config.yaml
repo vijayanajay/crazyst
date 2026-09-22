@@ -13,7 +13,7 @@ full:
   walkforward_months: 36       # BRD §10.1
 
 # ---- Dates & universe (BRD §4) ----
-end_date: "2026-09-21"        # "yesterday" — updated by the daily refresh; never a future date
+end_date: "2026-09-22"        # "yesterday" — updated by the daily refresh; never a future date
 decision_month_end: true      # score on last trading day of month, after close (§7.1)
 adj_history_start: "2009-01-01"  # yfinance fetch floor (task 1.6). BRD window starts 2011 and the
                                  # longest feature lookback is 12M-1M, so two years of buffer.
@@ -94,3 +94,10 @@ paths:
 download:
   retry_attempts: 3
   sleep_seconds: 2
+  publish_cutoff_ist: "19:00"   # daily refresh (src/download/refresh.py): before this IST time the
+                                # day's bhavcopy/delivery usually are not published yet, and a 404
+                                # is remembered for NEG_TTL_DAYS (30) — so the refresh waits rather
+                                # than poisoning the day. --date overrides for catch-up runs.
+  refresh_retry_minutes: 20     # scheduler (src/download/scheduler.py): gap between attempts when
+                                # the pipeline is still behind after a run (NSE archive late).
+                                # Bounded at 3 attempts, then the exit code reports the state.

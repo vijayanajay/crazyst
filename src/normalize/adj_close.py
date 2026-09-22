@@ -23,6 +23,10 @@ that is the written dependency reason BRD §13 requires. NSE raw prices stay unt
 synthetic data, then the done-when — 20 random symbols, NSE raw close vs Yahoo raw
 close matching on >=95% of overlapping days (a symbol-mapping bug shows as ~0%).
 `python -m src.normalize.adj_close --backfill` fetches all EQ symbols (~15 min, resumable).
+`--refresh` is the daily path (src/download/refresh.py calls it): symbols whose bhav history
+runs past their last stored adjusted date, one short window each, plus a full re-fetch for any
+symbol whose adjustment basis moved (a split/bonus rewrites Yahoo's whole adjusted history).
+`--trim` applies the history floor and drops unusable rows.
 """
 import os
 import random
@@ -52,10 +56,14 @@ def match_fraction(nse: "pd.Series[float]", yf: "pd.Series[float]") -> float:
     return float((abs(j["nse"] - j["yf"]) / j["nse"].abs() <= MATCH_TOL).mean())
 
 
-def _fetch_batch(tickers: list[str], cfg: dict) -> dict[str, pd.DataFrame]:
-    """yf.download one chunk -> {symbol: df indexed by date with Close/Adj Close}."""
+def _fetch_batch(tickers: list[str], cfg: dict, start: str | None = None) -> dict[str, pd.DataFrame]:
+    """yf.download one chunk -> {symbol: df indexed by date with Close/Adj Close}.
+
+    `start` bounds the window (default: the full history floor); the daily refresh passes a
+    short recent window so a routine run pulls days, not decades.
+    """
     import yfinance as yf
-    df = yf.download([yahoo_ticker(t) for t in tickers], start=cfg["adj_history_start"],
+    df = yf.download([yahoo_ticker(t) for t in tickers], start=start or cfg["adj_history_start"],
                      auto_adjust=False, progress=False, threads=True, group_by="ticker")
     out = {}
     for t in tickers:
@@ -137,6 +145,148 @@ def backfill(cfg: dict, chunk: int = 100) -> dict:
     return {"failed": failed}
 
 
+ACTION_TOL = 1e-4  # adjustment-factor move that means the symbol's adjusted history was rewritten
+
+
+def _window_start(last_dates: dict, cfg: dict, buffer_days: int) -> "date":
+    """Window start for a daily refresh: the oldest symbol's last stored date minus a buffer, so a
+    short suspension or a late Yahoo print is covered, floored at the history floor.
+
+    Pure so the self-check can pin it; an empty map (fresh table) falls back to end_date.
+    """
+    from datetime import date, timedelta
+    floor = date.fromisoformat(cfg["adj_history_start"])
+    oldest = min([d for d in last_dates.values() if d], default=date.fromisoformat(cfg["end_date"]))
+    return max(floor, oldest - timedelta(days=buffer_days))
+
+
+def _replace_symbol(cfg: dict, symbol: str, df: pd.DataFrame) -> int:
+    """Swap a symbol's entire series (used when an adjustment rewrote its history)."""
+    con = duckdb.connect(cfg["paths"]["duckdb"])
+    try:
+        con.execute("DELETE FROM adj_close WHERE symbol = ?", [symbol])
+        con.register("aview", df[ADJ_COLS])
+        con.execute(f"INSERT INTO adj_close SELECT {', '.join(ADJ_COLS)} FROM aview")
+        con.unregister("aview")
+        con.execute("CHECKPOINT")
+        return len(df)
+    finally:
+        con.close()
+
+
+def refresh_recent(cfg: dict, chunk: int = 100, buffer_days: int = 7, fetcher=None) -> dict:
+    """Daily-refresh path: bring adj_close up to the newest NSE trading day.
+
+    `backfill()` skips symbols that already exist, so it can never pick up a NEW day. This
+    fetches one short recent window for the symbols whose bhav history runs past their last
+    stored adjusted date and inserts only rows after that date — bounded cost, idempotent.
+
+    Corporate actions: Yahoo's Adj Close is adjusted *historically*, so a split/bonus today
+    rewrites every past adjusted price for that symbol and an append alone would leave the old
+    series stale (BRD D3: correct returns). Detected by comparing the adj/raw factor on the
+    newest stored day with the new day's: when it moved, that symbol's whole series is re-fetched
+    and replaced. ponytail: a suspension spanning an ex-date is not detected this way (the symbol
+    would have to trade on both sides of the action); the Phase 1 cross-check and the canary
+    remain the safety nets.
+
+    Returns rows added/replaced, symbols touched, and Yahoo-vs-NSE raw-close agreement on the new
+    rows — the daily trust check: a mapping regression shows up as disagreement, not a price.
+    """
+    con = duckdb.connect(cfg["paths"]["duckdb"], read_only=True)
+    try:
+        last = {s: d for s, d in con.execute(
+            "SELECT symbol, max(date) FROM adj_close GROUP BY 1").fetchall()}
+        # Recently-traded symbols only. Without the 30-day clause the ~1,067 delisted tickers
+        # Yahoo cannot serve (they have no stored rows at all, so their bhav max always looks
+        # newer than "no stored date") are re-requested every single day and get the refresh
+        # rate-limited (HTTP 429) — measured live. ponytail: a symbol suspended for more than
+        # 30 days is not topped up while suspended, and is picked up by itself when it trades
+        # again (its bhav max becomes recent); deep history stays the one-off --backfill's job.
+        todo = [r[0] for r in con.execute("""
+            SELECT b.symbol FROM bhav b WHERE b.series = 'EQ' GROUP BY 1
+            HAVING max(b.date) > coalesce(
+                       (SELECT max(a.date) FROM adj_close a WHERE a.symbol = b.symbol),
+                       DATE '1900-01-01')
+               AND max(b.date) >= (SELECT max(date) FROM bhav WHERE series = 'EQ')
+                                  - INTERVAL 30 DAY
+            ORDER BY 1""").fetchall()]
+    finally:
+        con.close()
+    if not todo:
+        return {"rows": 0, "symbols": 0, "replaced": 0, "agree": None, "pairs": 0, "start": None,
+                "newest": None, "traded": 0, "missing": 0}
+    start = _window_start({s: last.get(s) for s in todo}, cfg, buffer_days)
+    start_iso = start.isoformat()
+    con = duckdb.connect(cfg["paths"]["duckdb"], read_only=True)
+    try:
+        nse = {(s, d): c for s, d, c in con.execute(
+            "SELECT symbol, date, close FROM bhav WHERE series = 'EQ' AND date >= ?", [start_iso]).fetchall()}
+    finally:
+        con.close()
+
+    # start=None means the full history: a redo symbol needs its whole series, not the window
+    fetch = fetcher or (lambda syms, start=None: _fetch_batch(syms, cfg, start=start))
+    added = replaced = touched = 0
+    pairs: list[bool] = []
+    for i in range(0, len(todo), chunk):
+        frames = fetch(todo[i:i + chunk], start_iso)
+        fresh, redo = {}, []
+        for sym, df in frames.items():
+            cut = last.get(sym)
+            if cut is None:
+                redo.append(sym)  # listed in bhav but never stored: needs the whole series
+                continue
+            prev = df[df["date"] == cut]
+            new = df[df["date"] > cut]
+            if len(new) and len(prev) and prev["close_raw"].iloc[-1]:
+                f_old = prev["adj_close"].iloc[-1] / prev["close_raw"].iloc[-1]
+                f_new = new["adj_close"].iloc[-1] / new["close_raw"].iloc[-1]
+                if f_old and abs(f_new / f_old - 1.0) > ACTION_TOL:
+                    redo.append(sym)  # adjustment basis moved: history is stale
+                    continue
+            new = new[new["adj_close"].notna() & (new["adj_close"] > 0)]  # never store junk rows
+            if len(new):
+                fresh[sym] = new
+        if fresh:
+            added += _insert(cfg, fresh)
+            touched += len(fresh)
+            for sym, nf in fresh.items():
+                for r in nf.itertuples():
+                    c = nse.get((sym, r.date))
+                    if c:
+                        pairs.append(abs(r.close_raw - c) / abs(c) <= MATCH_TOL)
+        for sym in redo:
+            full = fetch([sym]).get(sym)
+            if full is not None and len(full):
+                replaced += _replace_symbol(cfg, sym, full)
+                touched += 1
+        print(f"  adj chunk {i // chunk + 1}: +{len(fresh)} symbols, {len(redo)} re-fetched",
+              flush=True)
+    # coverage of the newest NSE day: the number a daily job must watch (a Yahoo lag shows up
+    # here as "not priced yet", not as a silently missing return)
+    con = duckdb.connect(cfg["paths"]["duckdb"], read_only=True)
+    try:
+        newest = con.execute("SELECT max(date) FROM bhav WHERE series = 'EQ'").fetchone()[0]
+        traded = con.execute("SELECT count(*) FROM bhav WHERE series = 'EQ' AND date = ?",
+                             [newest]).fetchone()[0]
+        missing = con.execute("""
+            SELECT count(*) FROM bhav b WHERE b.series = 'EQ' AND b.date = ?
+              AND NOT EXISTS (SELECT 1 FROM adj_close a
+                              WHERE a.symbol = b.symbol AND a.date = b.date)""",
+            [newest]).fetchone()[0]
+    finally:
+        con.close()
+
+    agree = (sum(pairs) / len(pairs)) if pairs else None
+    if agree is not None and len(pairs) >= 50 and agree < 0.9:
+        raise AssertionError(
+            f"Yahoo raw closes agree with NSE on only {agree:.1%} of {len(pairs):,} new symbol-days "
+            f"(floor 90%) — a symbol-mapping or Yahoo data problem, not a price to trust")
+    return {"rows": added, "symbols": touched, "replaced": replaced, "agree": agree,
+            "pairs": len(pairs), "start": start_iso, "newest": newest,
+            "traded": traded, "missing": missing}
+
+
 def cross_check(cfg: dict, n: int = 20, fetcher=None) -> bool:
     """Done-when: n random symbols, NSE vs Yahoo raw closes match on >=95% of overlap days."""
     import yfinance as yf
@@ -201,11 +351,20 @@ def _self_check() -> None:
     noisy.iloc[9] *= 3  # 1 of 10 days broken
     assert match_fraction(nse, noisy) == 0.9, "1 broken day of 10 must give 0.9"
 
-    # 3. live done-when: 20 random symbols vs NSE
+    # 3. daily-refresh window: oldest last-stored date minus the buffer, floored at the history floor
+    from datetime import date as _date
+    cfg0 = {"adj_history_start": "2009-01-01", "end_date": "2026-09-21"}
+    assert _window_start({"A": _date(2026, 9, 21), "B": _date(2026, 9, 18)}, cfg0, 7) == _date(2026, 9, 11), \
+        "window must start buffer_days before the OLDEST symbol's last stored date"
+    assert _window_start({}, cfg0, 7) == _date(2026, 9, 14), "empty table must fall back to end_date"
+    assert _window_start({"A": _date(2009, 1, 3)}, cfg0, 7) == _date(2009, 1, 1), \
+        "window must never reach before adj_history_start"
+
+    # 4. live done-when: 20 random symbols vs NSE
     cfg = load("quick")
     assert cross_check(cfg, n=20), "NSE vs Yahoo cross-check failed — symbol-mapping bug?"
 
-    # 4. delisted probe (informational): how many long-dead tickers Yahoo still serves
+    # 5. delisted probe (informational): how many long-dead tickers Yahoo still serves
     con = duckdb.connect(cfg["paths"]["duckdb"], read_only=True)
     try:
         dead = [r[0] for r in con.execute(f"""
@@ -231,5 +390,15 @@ if __name__ == "__main__":
         n = trim(cfg)
         print(f"trimmed {n:,} adj_close rows (pre-{cfg['adj_history_start']} or NULL-valued)",
               flush=True)
+        sys.exit(0)
+    if "--refresh" in sys.argv:
+        st = refresh_recent(load("quick"))
+        agree = "n/a" if st["agree"] is None else f"{st['agree']:.1%}"
+        print(f"adj refresh: +{st['rows']:,} rows for {st['symbols']:,} symbols "
+              f"(window from {st['start']}, {st['replaced']:,} rows replaced by full re-fetch, "
+              f"raw-close agreement {agree} on {st['pairs']:,} pairs)", flush=True)
+        if st["traded"]:
+            print(f"  newest NSE day {st['newest']}: {st['traded'] - st['missing']:,}/"
+                  f"{st['traded']:,} traded symbols priced ({st['missing']:,} missing)", flush=True)
         sys.exit(0)
     _self_check()

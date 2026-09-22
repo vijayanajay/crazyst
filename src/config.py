@@ -34,6 +34,14 @@ def _validate(cfg: dict) -> None:
     assert adj_start < cfg["data_start_date"], \
         (f"adj_history_start {adj_start} must precede the profile window "
          f"{cfg['data_start_date']} — features need adjusted prices for their lookback")
+    cutoff = cfg["download"].get("publish_cutoff_ist")
+    assert isinstance(cutoff, str) and len(cutoff) == 5 and cutoff[2] == ":" \
+        and cutoff[:2].isdigit() and cutoff[3:].isdigit() \
+        and 0 <= int(cutoff[:2]) <= 23 and 0 <= int(cutoff[3:]) <= 59, \
+        f"download.publish_cutoff_ist must be HH:MM IST, got {cutoff!r}"
+    retry_min = cfg["download"].get("refresh_retry_minutes")
+    assert isinstance(retry_min, int) and 1 <= retry_min <= 240, \
+        f"download.refresh_retry_minutes must be 1..240 minutes, got {retry_min!r}"
     v = cfg["validate"]
     assert 80 <= v["min_year_coverage_pct"] <= 100, f"coverage floor is a percent, got {v['min_year_coverage_pct']}"
     assert 0 <= v["max_join_mismatch_pct"] <= 10, f"join mismatch cap is a percent, got {v['max_join_mismatch_pct']}"

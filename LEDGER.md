@@ -81,8 +81,9 @@ contain**, not only how fast they load. Commit hash to be filled in once committ
 | full-history rank build | 6.35s* | 4.02s |
 | month-end panels (new) | — | 2.9s, 1.45M rows |
 
-\* the 6.35s figure was measured while the MTO/adj backfills were running; rank still reads daily
-bhav directly (the panel rewire is pending), so treat this row as contention, not speedup.
+\* the 6.35s figure was measured while the MTO/adj backfills were running, and rank has since
+moved onto the `liq_me` panel (follow-up note at the end of this block) — treat this row as
+contention, not speedup.
 
 **R1 — scoped recompute.** The winners spot-check loaded all 30.3M `adj_close` rows into pandas
 (2.4 GB) and re-sliced the frame 20 times — 128.7s of the 134.3s check. It now fetches only the
@@ -168,3 +169,142 @@ for when that is not good enough. (2) The file-size gain is modest (437 MB); the
 momentum verdict and the M2 sign-off above were computed before the NULL trim; the table state
 has changed since, so the M2 canary numbers should be read as "same sign, re-measured" rather
 than bit-identical.
+
+### Follow-up (same session): rank reads the panel
+
+The unused `turnover_me` (monthly medians) was replaced by **`liq_me`** — the BRD §4 trailing-
+window median, **pooled** (a median of monthly medians is not a median) and full-history — and
+`universe_rank` now ranks that instead of rescanning daily bhav. The window expression lives in
+one place from here on.
+
+Equivalence, measured rather than asserted:
+
+- **`full` profile: bit-identical.** 330,831 rows both ways, 0 added, 0 removed, 0 differing
+  med3/rank/in_universe values against the old daily-bhav query. (Expected: no bhav data precedes
+  2011, so the window was never truncated there.)
+- **Rank's own self-check** now recomputes med3 straight from bhav for sampled decision dates
+  (7,765 symbol-months, incl. first and last month) and asserts exact equality with the panel,
+  plus every `universe_rank` row against its `liq_me` row — 0 mismatches.
+- **`quick` changes exactly three months** (2025-09-30, 2025-10-31, 2025-11-28). Cause: the old
+  query filtered *daily* rows by profile start before building the window, so the first
+  lookback−1 decision months were ranked on truncated evidence — the wart its own docstring
+  admitted. Fixing it adds 84 symbol-months, flips 121 eligible flags/reasons, and moves winners
+  by 56 rows added / 39 removed / **1 gained winner, 0 lost**.
+- Cost: panel rebuild +0.94s (`liq_me` is 2.21s of the 3.84s), and rank's build drops from 4.02s
+  to **1.11s** for the full history (330,831 rows) because it no longer touches daily bhav.
+
+---
+
+## Milestone M2.3 — daily refresh and scheduler (2026-09-23, uncommitted; working tree on `7d5d431`)
+
+Not an experiment — the operational gate that turns Phase 1's tables from "built once" into
+"current every evening". Two new modules: `src/download/refresh.py` (the pipeline, callable by
+hand) and `src/download/scheduler.py` (the single entry point the clock calls). Data cutoff moved
+**2026-09-21 → 2026-09-22**; bhav is now **7,899,813 rows**, delivery 6,262,863, and adj_close
+prices **2,658 of 2,662 traded symbols on the newest NSE day**.
+
+### The daily path
+
+`python -m src.download.refresh` (`--date` for catch-up): as-of → fetch → normalize → `end_date`
+→ adj_close → derived rebuild → stamped self-check.
+
+- **as-of** is today once past `download.publish_cutoff_ist` (19:00 IST), else yesterday. Not a
+  nicety: `_http` remembers a 404 for 30 days, so one run before NSE publishes would hide a real
+  trading day for a month.
+- **adj_close gets a daily path** (`refresh_recent`). `backfill()` skips symbols that already
+  exist, so it could never see a new day. It fetches one short window for symbols whose bhav
+  history runs past their last stored adjusted date, and **self-heals corporate actions**: a
+  split rewrites Yahoo's whole adjusted history, which an append cannot fix, so when the adj/raw
+  factor moves between the two days the symbol's entire series is re-fetched and replaced.
+- **`end_date` is set from the data, not the clock** — the clock decides what to fetch, the newest
+  bhav date present decides what is written. The edit preserves the line's comment (a yaml
+  round-trip would have deleted every comment in config.yaml).
+
+### Live verification
+
+| Test | Result |
+|---|---|
+| New day (2026-09-22) fetched and normalized | bhav **+3,676 rows**, 2,662 EQ symbols; `end_date` bumped 2026-09-21 → 2026-09-22; derived rebuilt; self-check **ALL PASS (13)** |
+| Adjusted-close coverage of that day | **2,662/2,662 traded symbols priced** |
+| Second run the same day | 8.4s, "panels already current", self-check **cached** |
+| Delete 2 settled adj rows, re-run | restored exactly — "+2 symbols, +2 rows" |
+| `scheduler --once` (real run) | **exit 0**, "ok: caught up to 2026-09-22", 42s |
+| that run's own verify step | self-check **ALL PASS (13 checks) in 28.4s**, stamp recorded |
+| `scheduler --self-check` | verdict codes (equal/ahead/behind/empty/failed), cutoff wait math, era-aware URL set, lock exclusivity + stale takeover, 404 eviction scoping + idempotence + missing file |
+| suite afterwards | **13/13 in 32.8s**, no stale lock, both stamps current |
+
+The daily log line reads: `2,658/2,662 traded symbols priced (4 missing)` — the missing four are
+`20MICRONS, 21STCENMGM, 360ONE, 3BBLACKBIO`, whose 2026-09-22 rows my delete-and-restore test
+removed and Yahoo is currently serving as a **placeholder row (Close and Adj Close both NaN)**.
+The notna guard correctly refuses to store it and the day stays queued; the table, not the code,
+is what is 4 rows short, and the recovery mechanism is the one proven above.
+
+### The scheduler: entry points and exit codes
+
+| Invocation | Behaviour |
+|---|---|
+| `python -m src.download.scheduler` | waits for the cutoff, refreshes, retries while behind |
+| `--once` | one attempt now, no waiting or retrying (the manual equivalent) |
+| `--self-check` | the offline rules above; no network, no DB writes |
+| exit **0** | caught up — or nothing was due |
+| exit **1** | refused to run (another refresh in flight) or the refresh itself failed |
+| exit **2** | ran fine but still behind: NSE holiday, or their archive is late |
+
+Two pieces are load-bearing, not decoration:
+
+- **Every attempt evicts the target date from the negative cache first**, otherwise a retry is
+  theatre — `_http` would answer "holiday" from the 30-day cache without contacting NSE. Verified
+  against the live 451-line cache: exactly the target date's 3 URLs dropped, other dates and
+  unrelated lines untouched.
+- **A single-instance lock** (takeover only after 90 min, i.e. a dead process, not a slow one),
+  so a scheduled run and a manual run cannot both write DuckDB.
+
+The refresh runs in a subprocess — its own DuckDB writers, its own env, exactly as run by hand —
+and the wrapper judges it from `max(bhav.date)`, not from the exit code alone.
+
+### Finding: retrying a late archive is expensive, and that is what the cutoff is for
+
+The live scheduled-mode test hit the 600s tool timeout. It was **not** a bug: with
+`refresh_retry_minutes: 1` (a test value) the run did 3 attempts × (full refresh 40–90s + real NSE
+probes + 60s sleeps), which exceeds ten minutes. The honest lesson is the cost model — a retry
+against a not-yet-published day spends real NSE timeout time (60s read timeout × retries per
+source), which is exactly why the default cutoff is 19:00 and the retry gap 20 minutes. Bounded
+retrying stays: a late archive recovers, a holiday never will.
+
+### Change: per-event logging (prompted by that timeout)
+
+The wrapper originally buffered its output and wrote one block at the end of the run. A killed or
+rebooted run therefore left **no record at all** — the failure mode most worth logging was the one
+case that logged nothing. `log_line()` now appends one IST-timestamped line per event through
+`say()`, so an interrupted run still shows how far it got:
+
+```
+2026-09-23 00:33:32 IST  --- scheduler start (once, pid 24916)
+2026-09-23 00:34:14 IST  attempt 1/3: ok: caught up to 2026-09-22 (42s, refresh exit 0)
+2026-09-23 00:34:14 IST  RESULT: ok: caught up to 2026-09-22 (exit 0)
+```
+
+The module docstring now carries the concrete cron and `schtasks` lines, plus the property that
+makes one missed night harmless: the refresh walks every month from the newest stored date to
+as-of, so a run after downtime closes the whole gap.
+
+### Bugs found and fixed on the way
+
+1. **Any run in the current month could crash**: `delivery.download_month` ignored `end_date`
+   unless the caller passed `up_to`, while both bhavcopy loops bound themselves. The same latent
+   shape existed in `bhavcopy_old.download_month`. Both now bound themselves, so no call site can
+   walk into a day `fetch_day` refuses.
+2. **Yahoo rate-limited us (HTTP 429)**: ~1,067 delisted tickers sat in the fetch set on *every*
+   run, because after the NULL trim they have no stored rows, so their bhav max always looked
+   newer than "no stored date". The daily set is now scoped to symbols that traded in the last 30
+   days (114s → 47s); a symbol suspended longer is picked up by itself when it resumes.
+3. **My own assertion was wrong**, twice: it demanded `panels.ensure()` rebuild every time, which
+   breaks the harmless second run of the day (now reported, not required), and it asserted the
+   2024-07 era boundary could be straddled by a single *date* when it is a straddled *month*.
+4. `months_between` is a generator — the fetch plan was a generator, not the list the code assumed.
+
+### Number reconciliation (looked contradictory in the logs)
+
+`winners` holds **14,373 rows** = one per eligible symbol-month (~1,337/month, 11 months), of which
+**724 are winner flags** (~67/month, top 5%), 1,441 top-decile, 220 top-20. The stamp reports table
+rows, the refresh reports winner flags; both numbers are right.

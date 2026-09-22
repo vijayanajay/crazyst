@@ -74,6 +74,10 @@ def _month_days(year: int, month: int, up_to: date | None, from_d: date | None):
 
 def download_month(session: requests.Session, year: int, month: int, cfg: dict,
                    source: str, up_to: date | None = None, from_d: date | None = None) -> dict:
+    # Self-bound to end_date like both bhavcopy month loops, so a caller iterating the CURRENT
+    # month cannot walk into days fetch_day refuses (caught live by the daily refresh, which had
+    # to know to pass up_to=asof while every other fetcher bounds itself).
+    up_to = min([d for d in (up_to, date.fromisoformat(cfg["end_date"])) if d])
     summary = {"year": year, "month": month, "source": source, "downloaded": 0, "cached": 0, "holidays": []}
     for d in _month_days(year, month, up_to, from_d):
         status = fetch_day(session, d, cfg, source)

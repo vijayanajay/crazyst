@@ -86,7 +86,7 @@ def _synth_check() -> None:
     rank.synth_setup(con)                      # Sep closes: A 130 (+30%), Y 5.5 (+10%), rest flat
     con.execute("CREATE TABLE adj_close (symbol VARCHAR, date DATE, adj_close DOUBLE)")
     con.execute("INSERT INTO adj_close SELECT symbol, date, close FROM bhav WHERE series='EQ'")
-    panels.build(con, cfg)                     # month_grid + adj_me (+ turnover_me) from the fixture
+    panels.build(con, cfg)                     # month_grid + adj_me + liq_me from the fixture
     rank.build(con, cfg)
     eligibility.build(con, cfg)
     build(con, cfg)

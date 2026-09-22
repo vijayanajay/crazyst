@@ -61,7 +61,7 @@ def suite_inputs(cfg: dict) -> list:
         "table:adj_close.date",
         "table:month_grid.m",
         "table:adj_me.mdate",
-        "table:turnover_me.mdate",
+        "table:liq_me.mdate",
         "table:deliv_me.mdate",
         "table:universe_rank.mdate",
         "table:eligible.mdate",
