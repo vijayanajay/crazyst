@@ -2,6 +2,8 @@
 
 Companion to `BRD.md`. Written for one developer. Follow the order unless a task says "parallel-safe". Every task ends with a runnable check — a task without a passing check is not done.
 
+Universe note: we track ~1500 stocks via an as-of liquidity rank (top 1500 by trailing 3-month median turnover, computed from bhav data per decision date). Winners = top 5% of eligible stocks (BRD §4). No index-membership scraping on the critical path.
+
 ## Working rules (read first)
 
 1. One config file (`config.yaml`) holds every threshold, path, cost, and date. No magic numbers in code.
@@ -10,6 +12,10 @@ Companion to `BRD.md`. Written for one developer. Follow the order unless a task
 4. Raw downloads are cached and never re-fetched if present. Deleting the cache is a deliberate act, done manually.
 5. Any run must be reproducible: log config snapshot + git hash + data cutoff with results.
 6. If a task takes more than 2 days, split it. Stop and report at each checkpoint below.
+
+## Quick/full profiles
+
+Two config profiles: `quick` = last 12 months, `full` = 15 years. Self-checks, validation, and experiments default to `quick` so iteration is seconds-fast; `full` is the deliberate act and is what produces reported numbers. Every reported result states its profile. The feature matrix is precomputed once per profile; experiments then run as SQL queries against it.
 
 ## Repo layout (build it in Phase 0, don't redesign later)
 
@@ -38,7 +44,7 @@ LEDGER.md
 | # | Task | Done when |
 |---|---|---|
 | 0.1 | Repo skeleton per layout above; `requirements.txt` (python, duckdb, pandas or polars, requests, pyyaml, matplotlib); `.gitignore` with `data/` | `pip install -r requirements.txt` works; repo layout matches |
-| 0.2 | `config.yaml` with: date range, universe definition, eligibility thresholds, costs, portfolio rule parameters (BRD §8), paths | File exists, every value referenced by later code comes from it |
+| 0.2 | `config.yaml` with: date range, universe definition (top-1500 as-of liquidity rank), eligibility thresholds, costs (with `quick`/`full` profiles), portfolio rule parameters as percentiles (BRD §4/§8), paths | File exists, every value referenced by later code comes from it |
 | 0.3 | `LEDGER.md` created with table header | File exists |
 
 **Checkpoint: nothing to show. Proceed.**
@@ -65,25 +71,26 @@ Work in this order. Each task depends on the previous.
 
 | # | Task | Details | Done when |
 |---|---|---|---|
-| 2.1 | Historical index membership | Fetch Nifty 200 changes (fallback F&O underlying list). Store as `universe(symbol, in_from, in_to)` | Coverage % printed; uncovered periods flagged in report, not silently dropped |
-| 2.2 | Eligibility function | BRD §4 rules as a pure function `eligible(symbol, date) -> bool` from config | Unit check: 6 hand-built cases (T2T stock, low turnover, recent listing, GSM-flagged, normal) all behave correctly |
-| 2.3 | Monthly winners table | Top 20 per month by adjusted return, per BRD §4 | Spot-check 10 random months by hand against a finance site; 10/10 match |
+| 2.1 | As-of universe rank | Pure SQL over bhav data: trailing 3-month median turnover per symbol, ranked as of each decision date, top 1500. No external index data | Rank for 5 hand-picked dates printed; ranks stable month-over-month except at real liquidity shifts; runtime minutes, not hours |
+| 2.2 | Eligibility function | BRD §4 rules as a pure function `eligible(symbol, date) -> bool` from config | Unit check: 6 hand-built cases (T2T stock, low turnover, recent listing, GSM-flagged, rank>1500, normal) all behave correctly |
+| 2.3 | Monthly winners table | Top 5% per month by adjusted return (plus top-20 and top-decile secondary labels), per BRD §4 | Spot-check 10 random months by recomputing from raw bhav files (no public site lists market-wide gainers); 10/10 match |
 
-**Checkpoint: show 3 winner lists side by side with a public source.**
+**Checkpoint: show 3 winner lists side by side with re-computation from raw files.**
 
 ## Phase 3 — Feature library + univariate sweep (M2) (4–5 days)
 
 | # | Task | Details | Done when |
 |---|---|---|---|
-| 3.1 | Feature framework | One `compute(symbol, date, data) -> float` contract per feature; registry dict; NaN-tolerant | One call computes all features for one symbol-month; missing inputs → NaN, never 0, never exception |
+| 3.1 | Feature framework | Panel-wide computation: one DuckDB `CREATE TABLE AS` with window functions ordered by date — past-only by construction, no per-symbol-month Python calls | One call computes all features panel-wide; missing inputs → NaN, never 0, never exception |
 | 3.2 | Momentum group | BRD §6 momentum features | Each has a hand-computed test case |
 | 3.3 | Volume + delivery group | BRD §6 volume structure, delivery features | Same |
 | 3.4 | Volatility + candle group | BRD §6; candles as features, not triggers | Same |
-| 3.5 | Feature matrix build | One table: symbol, month, all features, next-month return, is_winner. Materialize once, reuse | Row count = eligible stock-months; sanity: no duplicate keys |
+| 3.5 | Feature matrix build | One table: symbol, month, all features, next-month return, is_winner (top 5%), plus liquidity rank and size bucket (top 200 / 201–600 / 601–1500) | Row count = eligible stock-months; sanity: no duplicate keys |
 | 3.6 | **Experiment 001 — anatomy of winners** | Hypothesis: winners differ from rest on momentum/delivery features. Output: feature distribution table winners vs rest, per regime | `hypothesis.md` written and committed BEFORE `run.py` executes; results + verdict in ledger |
-| 3.7 | **Experiment 002 — univariate IC sweep** | Spearman IC per feature per month + pooled; top-decile precision vs 6.7% baseline | Every feature has a ledger row with pre-registered direction |
+| 3.7 | **Experiment 002 — univariate IC sweep** | Spearman IC per feature per month + pooled; top-5% precision vs 5% baseline; Benjamini–Hochberg correction across the ~20 features | Every feature has a ledger row with pre-registered direction |
+| 3.8 | **Experiment 000 — universe overlap** | Hypothesis: the as-of top-1500 liquidity universe approximates the large/mid-cap intent. Output: per-year overlap with Nifty 200 constituents, hit-rate delta if winners were computed on the Nifty-200-only universe | Overlap table in ledger; E000 verdict decides whether index membership is ever needed |
 
-**Checkpoint: present IC table + anatomy findings. Expect some priors to die here — that is the deliverable.**
+**Checkpoint: present IC table + anatomy findings + E000 overlap. Expect some priors to die here — that is the deliverable.**
 
 ## Phase 4 — Selection model (M3) (3–4 days) — *parallel-safe from 3.5 with Phase 5*
 
@@ -92,6 +99,7 @@ Work in this order. Each task depends on the previous.
 | 4.1 | Composite score v0 | Rank-average of the 3–5 features that survived E002, weights fixed in config | Beats best single feature on pre-test-window validation slice (pre-registered in hypothesis.md) |
 | 4.2 | Learned ranker | Gradient boosting with rank objective (scikit-learn / lightgbm — justify dependency in ledger) trained walk-forward style on pre-window data | Same bar as 4.1; if it loses, ledger says so and composite ships |
 | 4.3 | Model freeze protocol | Model + weights + feature list saved with each run | Re-running an old run with its saved artifacts reproduces its picks exactly |
+| 4.4 | **Experiment 006 — cost sensitivity** | Pre-registered: re-score picks at 0.2% / 0.5% / 1.0% per side on the validation slice. Rank-1200 names will not fill at 0.2% | Ledger row with all three cost levels; sets the report's default cost assumption |
 
 **Checkpoint: compare v0 vs ranker on the validation slice. Pick one. Document why.**
 
@@ -106,6 +114,7 @@ Build against **synthetic data first** so it never waits on the pipeline.
 | 5.3 | Portfolio rules | BRD §8: monthly review, Trigger A/B/C, churn cap, cash slots | Rule unit tests: one test per trigger with a hand-built price path |
 | 5.4 | No-lookahead audit script | Recompute every pick from data available at decision date; assert match | Audit passes on a 12-month synthetic run and later on real data |
 | 5.5 | Trade log + metrics | BRD §11 metric set from the log | One function produces all metrics from a trade log; checked against hand-computed toy portfolio |
+| 5.6 | Size-bucket attribution | Split picks by as-of liquidity rank: top 200 / 201–600 / 601–1500; hit rate, return, churn per bucket | Bucket table present in the report pack; blended-only reporting fails review |
 
 **Checkpoint: run engine on synthetic data with a trivial "buy momentum" model. Show equity curve + trade log.**
 
@@ -115,7 +124,7 @@ Build against **synthetic data first** so it never waits on the pipeline.
 |---|---|---|---|
 | 6.1 | Walk-forward loop | BRD §10: monthly refit, 1-month purge, test window = last 36 months ending yesterday, recomputed per run | Window boundaries printed; refit never sees test month (assert in code) |
 | 6.2 | Run protocol | §10.3: config change after seeing results → archive old run dir, append ledger note, full re-run | Demonstrated once on purpose |
-| 6.3 | Reports | Equity curve PNG+CSV, monthly pick table, IC table, per-regime table, binomial test + CI vs random baseline | One command produces the full report pack from a run dir |
+| 6.3 | Reports | Equity curve PNG+CSV, monthly pick table, IC table, per-regime table, size-bucket attribution (5.6), binomial test + CI vs 5% baseline | One command produces the full report pack from a run dir |
 | 6.4 | **The run** | Full walk-forward of the chosen model on real data | Report pack generated; hit rate, p-value, CI, per-regime table all present; verdict written in ledger regardless of outcome |
 
 **Checkpoint: this is the project's first real answer. Present the full report, including confidence interval, honestly.**
@@ -125,7 +134,7 @@ Build against **synthetic data first** so it never waits on the pipeline.
 | # | Task | Details | Done when |
 |---|---|---|---|
 | 7.1 | Event overlays | E003 bulk/block deals, E004 SAST disclosures, E005 F&O OI (optional) as separate experiments per BRD §12 | Each has its own ledger row and walk-forward delta vs the base model |
-| 7.2 | Rule tuning (bounded) | Mid-month trigger thresholds (§8) swept on pre-window data only | Chosen values logged with the sweep results; churn metric reported |
+| 7.2 | Rule tuning (bounded) | Rank thresholds (§8 percentiles) and mid-month trigger thresholds swept on pre-window data only; churn reported | Chosen percentile values logged with the sweep results; churn metric reported |
 | 7.3 | Paper phase | Run rules live: score at month-end, log intended picks + triggers before results known, compare after | 1 month of decisions logged in advance; divergence between paper log and what backtest would have said = 0 |
 | 7.4 | Final writeup | What works, what doesn't, ceiling estimate, next-phase proposal | Written in LEDGER.md verdict section |
 
@@ -139,6 +148,10 @@ Phase 0 ──> Phase 1 ──> Phase 2 ──> Phase 3 ──> Phase 4 ──�
 
 Phase 5 starts after 3.5 exists (needs feature matrix for refits) but is built on synthetic data and can run alongside Phase 4.
 
+## Self-check runner
+
+One small command (stdlib only) imports each module's `python -m` self-check, prints `PASS/FAIL` + elapsed per check, exits non-zero on first failure. Default profile `quick`. Every assert carries a message (`got X, expected Y`) so failures are self-explaining; `--verbose` prints per-month rows.
+
 ## Total estimate
 
 ~21–27 working days for one developer, excluding calendar time for the paper phase.
@@ -146,3 +159,4 @@ Phase 5 starts after 3.5 exists (needs feature matrix for refits) but is built o
 ## Explicit non-goals during this plan
 
 - No live broker integration. No dashboard. No sentiment/NLP. No strategy claims without a p-value. Do not "improve" the portfolio rules mid-walk-forward — file it as an experiment instead.
+- No index-membership scraping during this plan; E000 decides if it is ever worth adding.

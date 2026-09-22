@@ -1,0 +1,93 @@
+# Single source of truth for every threshold, path, cost, and date (plan working rule 1).
+# References: BRD §2 targets, §4 definitions, §8 portfolio rules, §9 backtest, §10 walk-forward, §11 metrics.
+# Two profiles: `quick` = last 12 months (default for self-checks/experiments), `full` = 15 years (reported numbers).
+
+profile: quick            # quick | full
+
+quick:
+  start_date: "2025-09-01"     # ~12 months of data
+  walkforward_months: 12       # shorter window so self-checks run in seconds
+
+full:
+  start_date: "2011-01-01"     # bhavcopy availability from 2011
+  walkforward_months: 36       # BRD §10.1
+
+# ---- Dates & universe (BRD §4) ----
+end_date: "2026-09-21"        # "yesterday" — updated by the daily refresh; never a future date
+decision_month_end: true      # score on last trading day of month, after close (§7.1)
+
+universe:
+  top_n: 1500                 # top 1500 by as-of liquidity rank (BRD §4)
+  liquidity_lookback_months: 3  # trailing 3-month median turnover rank, as of decision date
+  min_price: 20.0             # ₹ price floor (penny guard)
+  min_listed_months: 6        # listed >= 6 months
+  min_median_turnover_cr: 5.0 # ₹ crore; config guard only — subsumed by top-1500 rank
+  allowed_series: [EQ]        # EQ series only
+  exclude_series: [BE, T2T]   # tradability exclusions
+  rank_percentiles:           # all rank cutoffs are percentiles of the eligible universe, never counts (§8)
+    sell_below_top_pct: 0.25  # monthly sell trigger: rank falls below top 25% (§8.1)
+    replace_above_top_pct: 0.15  # replacement must rank in top 15% (§8.1)
+    # 300-stock-era defaults; re-tune on pre-test-window data before any walk-forward (§8, 7.2)
+
+# ---- Portfolio rules (BRD §8) ----
+portfolio:
+  n_slots: 4                  # 4 positions, equal weight 25% each (§7.2/§7.3)
+  cash_earns: 0.0             # interest on cash slots, 0 = conservative default (§13: reported)
+  monthly_review:
+    ma_window_days: 50
+    ma_below_consecutive_closes: 5  # below 50-DMA for 5 consecutive closes -> sell
+  midmonth:
+    check_freq: weekly        # every Friday close
+    trigger_a_score_excess: 0.20  # candidate score > held score by 20% relative (§8.2 A)
+    trigger_a_cap: 2          # max mid-month replacements per month (§8.2 A)
+    trigger_b_stop_pct: 0.08      # 8% below entry (§8.2 B)
+    trigger_b_trail_pct: 0.12     # 12% below month's high, trailing (§8.2 B)
+    trigger_b_ma_close_below: 2   # two consecutive closes below 50-DMA (§8.2 B)
+    trigger_b_deliv_z: -2.0       # delivery% z-score < -2 (§8.2 B)
+    trigger_b_deliv_days: 3       # ...for 3 consecutive days while price falls
+    gsm_asm_stage_exit: 2         # GSM/ASM stage >= 2 = forced exit, no exceptions
+  churn_report_threshold: 1.5   # avg replacements/month above this = "too twitchy" flag (§8.3)
+
+# ---- Backtest engine (BRD §9) ----
+backtest:
+  cost_per_side_pct: 0.20      # brokerage + STT + slippage + impact
+  cost_sensitivity_pct: [0.20, 0.50, 1.00]  # E006 pre-registered sensitivity
+  suspension_exit_days: 5      # mark at last close if no trade within 5 days
+  purge_months: 1              # 1-month purge gap between train end and test month (§10.2)
+  random_seed: 42
+
+# ---- Statistical checks (BRD §11) ----
+stats:
+  winner_top_pct: 0.05         # winners = top 5% of eligible stocks (§4)
+  secondary_winner_labels:     # reported alongside, never instead
+    top_decile_pct: 0.10
+    top_n_abs: 20              # the original, harder label
+  baseline_hit_rate: 0.05      # binomial test baseline p
+  bh_fdr_alpha: 0.05           # Benjamini–Hochberg across the ~20-feature IC sweep (E002)
+
+# ---- Validation (plan 1.7; BRD §11 canaries) ----
+validate:
+  min_year_coverage_pct: 93.0   # bhav distinct dates per year vs weekdays; NSE holidays ≈ 4-6%/yr,
+                                # COVID closures (Mar 2020) sit just under that band
+  max_join_mismatch_pct: 1.0    # delivery join mismatch on delivery-dates (task 1.5 done-when)
+  canary_min_adj_coverage: 0.90 # adj_close symbols / bhav EQ symbols before the momentum canary runs
+  canary_min_ic_months: 6       # month-end ICs required for the momentum verdict
+  canary_min_ic_names: 100      # symbols in a month for its IC to count
+  canary_min_deliv_pairs: 1000  # (dp_t, dp_lag) pairs required for the autocorr verdict
+  canary_min_deliv_autocorr: 0.10
+
+# ---- Paths (plan repo layout) ----
+paths:
+  raw_404_cache: data/raw/404_cache.txt   # negative cache: URLs NSE 404'd (holidays), url<TAB>unix_ts
+  raw_bhavcopy_old: data/raw/bhavcopy_old/
+  raw_bhavcopy_udiff: data/raw/bhavcopy_udiff/
+  raw_delivery: data/raw/delivery/
+  raw_yf_adj: data/raw/yf_adj/
+  duckdb: data/duckdb/quant.duckdb
+  runs: runs/
+  reports: reports/
+
+# ---- Downloader behavior (plan working rule 4: cache, never re-fetch) ----
+download:
+  retry_attempts: 3
+  sleep_seconds: 2

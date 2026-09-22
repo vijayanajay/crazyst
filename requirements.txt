@@ -1,0 +1,6 @@
+duckdb>=1.0
+pandas>=2.0
+requests>=2.31
+PyYAML>=6.0
+matplotlib>=3.8
+yfinance>=0.2.40   # BRD D3 names it explicitly: adjusted closes + corporate actions from Yahoo

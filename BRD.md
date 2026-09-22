@@ -1,8 +1,8 @@
-# BRD — NSE Monthly Top-Gainer Picker (Large / Mid Cap)
+# BRD — NSE Monthly Top-Gainer Picker (Top-1500 Liquidity Universe)
 
 | | |
 |---|---|
-| Version | 1.0 |
+| Version | 1.1 (universe: top 1500 by as-of liquidity) |
 | Date | 2026-09-22 |
 | Status | Draft |
 
@@ -19,24 +19,24 @@ Every month a handful of NSE large/mid cap stocks give the highest returns. We w
 
 ### Success measures
 
-With ~300 eligible stocks and a top-20 target, 4 random picks per month produce a hit rate of about 6.7% (20/300). That is the floor, not the goal.
+With ~1500 eligible stocks and winners defined as the **top 5%** (≈75 stocks/month), 4 random picks per month produce a baseline hit rate of about 5%. That is the floor, not the goal. (Original design: top 20 of ~300 ≈ 6.7%. The ladder below is unchanged — winners scale as a percentage of the universe, never a fixed count.)
 
 | Level | Pick-level hit rate* | Meaning |
 |---|---|---|
 | Reject | < 10% | Nothing learned, strategy useless |
 | Minimum | 12–15% | Signal exists, roughly 1 hit in 2 months per slot |
-| Target | 20–25% | ~1 of 4 picks is a top-20 stock each month |
+| Target | 20–25% | ~1 of 4 picks lands in the winner set (top 5%) each month |
 | Stretch | > 25% | Strong signal, likely regime-dependent |
 
-\* hits ÷ total picks over the whole test window. Also report month-level hit rate: % of months with at least 1 hit.
+\* hits ÷ total picks over the whole test window. Also report month-level hit rate: % of months with at least 1 hit. Top-20 hits (the original, harder label) and top-decile hits are reported alongside as secondary metrics.
 
-Secondary measure: portfolio return vs Nifty 200 total return. A high hit rate with negative returns is still a failure.
+Secondary measure: portfolio return vs a broad-market total-return benchmark (Nifty 500; Nifty 200 as large-cap reference). A high hit rate with negative returns is still a failure.
 
 ## 3. Scope
 
 **In scope**
 
-- NSE cash-market large/mid cap stocks (EQ series).
+- NSE cash-market stocks (EQ series); universe = **top 1500 by as-of liquidity** (trailing 3-month median turnover, ranked as of each decision date). Small/mid caps enter by construction; the ₹20 price floor keeps penny stocks out.
 - Free data only: NSE bhavcopy, delivery data, surveillance lists, bulk/block deals, SAST disclosures, corporate actions, index membership history, F&O OI (optional).
 - Backtest + walk-forward engine, experiment ledger, reports.
 
@@ -45,13 +45,13 @@ Secondary measure: portfolio return vs Nifty 200 total return. A high hit rate w
 - Sentiment analysis, news NLP, social media signals.
 - F&O trading strategies (F&O data only as an input feature).
 - Live trading. Output of this phase is a tested rule set, not a trading bot.
-- Small caps and penny stocks.
+- Penny stocks (price < ₹20) and stocks below the as-of liquidity cutoff (rank > 1500). Small caps inside the universe are in scope and must be reported separately (size-bucket attribution, §11).
 
 ## 4. Definitions
 
-- **Universe (as of date D):** stocks that were in Nifty 200 (fallback: F&O underlying list) on D, plus the filters below, evaluated as of D. Historical membership is used — never today's list (survivorship bias).
-- **Eligible stock:** EQ series; not in T2T/BE; not under GSM/ASM (as of D, where historical data exists); median daily turnover ≥ ₹5 crore over last 3 months; listed ≥ 6 months; price ≥ ₹20. All thresholds configurable.
-- **Winner:** stock in the **top 20 by monthly return** among eligible stocks for a calendar month. Also track top-decile as a secondary label.
+- **Universe (as of date D):** the **top 1500 stocks by median daily turnover over the trailing 3 months, ranked as of D** from NSE bhav data, plus the filters below, all evaluated as of D. Never today's list applied to the past (survivorship bias). No external index membership is required; the Nifty 200 list is used only as an overlap reference in experiment E000.
+- **Eligible stock:** in the as-of universe; EQ series; not in T2T/BE; not under GSM/ASM (as of D, where historical data exists); listed ≥ 6 months; price ≥ ₹20. All thresholds configurable. (The ₹5-crore-turnover floor is subsumed by the top-1500 rank and kept only as a config guard.)
+- **Winner:** stock in the **top 5% by monthly return** among eligible stocks for a calendar month (≈75 of ~1500; the count scales with the eligible count, never a fixed number). Secondary labels: top decile, and top 20 (the original, harder target).
 - **Monthly return:** adjusted close of last trading day of month M vs last trading day of month M-1.
 - **Hit:** a pick that becomes a winner.
 - **Test window:** last 36 months ending **yesterday**, recomputed every time the backtest runs.
@@ -63,7 +63,7 @@ Secondary measure: portfolio return vs Nifty 200 total return. A high hit rate w
 | D1 | Daily bhavcopy | NSE archives (old format → Jul 2024, UDiFF format after) | OHLC, volume, series, trades | 2011 | candles, momentum, volume | Two formats; one normalizer |
 | D2 | Delivery data | NSE `sec_bhavdata_full` / MTO | DELIV_QTY, DELIV_PER, turnover | 2011 | accumulation signals | Missing days; format drift |
 | D3 | Corporate actions | yfinance adjusted `.NS` + NSE actions list | splits, bonus, dividends | 2011 | correct returns, clean candles | Cross-check both sources on a sample |
-| D4 | Index membership | Nifty 200/500 historical changes; F&O underlying list history | constituent lists | 2011 | as-of universe | Press-release scraping; gaps must be flagged |
+| D4 | Index membership (optional) | Nifty 200/500 historical changes; F&O underlying list history | constituent lists | 2011 | overlap reference for E000 only — not on the critical path | Press-release scraping; never block the pipeline on it |
 | D5 | Surveillance | NSE GSM/ASM lists | stage, date | current only | tradability filter | No historical archive — see Risks |
 | D6 | Bulk / block deals | NSE archives | buyer, seller, qty, price | 2011 | smart-money feature | Late 2023 format change |
 | D7 | SAST / insider | NSE SAST archives, exchange disclosures | acquirer, % change | 2011 | event feature | Messy names; needs matching |
@@ -73,6 +73,7 @@ Secondary measure: portfolio return vs Nifty 200 total return. A high hit rate w
 **Rules**
 
 - All raw files cached locally as downloaded. Never re-download to re-process.
+- Two config profiles: `quick` (last 12 months) and `full` (15 years). Self-checks, validation, and experiments default to `quick`; `full` is the deliberate act. Every reported number states which profile produced it.
 - One normalizer per source → one DuckDB database. Every experiment queries it; no experiment reads raw files.
 - A validation report must run on every data refresh: date coverage, per-stock gap count, cross-source price mismatch count, canary checks (see §13).
 - Daily refresh job appends yesterday's files. The database is append-only.
@@ -105,6 +106,8 @@ Every feature gets a definition, a formula, and a unit test with one known-input
 ## 8. Portfolio rules: hold, sell, replace
 
 All thresholds live in one config file with the defaults below. Experiments may tune them; defaults are what the walk-forward reports on.
+
+All rank cutoffs are **percentiles of the eligible universe**, never absolute counts (with ~1500 stocks, absolute ranks are meaningless). The defaults below were calibrated for the original ~300-stock universe; before any walk-forward they must be re-tuned on pre-test-window data only.
 
 ### 8.1 Monthly review (last trading day, close)
 
@@ -139,6 +142,7 @@ One engine. Every experiment uses it. The engine must:
 4. Handle: suspensions (exit at first trade day price; if none within 5 days, mark at last close and flag), delistings (same rule), circuit limits (skip the fill), missing delivery data (feature degrades to NaN, never to 0).
 5. Be deterministic: same inputs + same config → same outputs, to the rupee.
 6. Record per-month: picks, entry prices, every sell with its trigger, exits, portfolio return, benchmark return, hit/miss per pick.
+7. Report results at three cost levels — 0.2% (default), 0.5%, and 1.0% per side — as pre-registered sensitivity (E006). Rank-600+ names will not fill at 0.2%; the cheap-cost result alone is not evidence.
 
 ## 10. Walk-forward test requirements
 
@@ -161,20 +165,21 @@ This is the only result that counts. Single in-sample backtests are not evidence
 | Pick-level hit rate | hits ÷ picks |
 | Month-level hit rate | months with ≥1 hit ÷ months |
 | Portfolio CAGR | geometric, net of costs |
-| Benchmark CAGR | Nifty 200 total return, same window |
+| Benchmark CAGR | Nifty 500 total return, same window (broad benchmark matching the 1500-stock universe; Nifty 200 reported alongside as the large-cap reference) |
 | Sharpe (monthly) | mean monthly excess return ÷ std |
 | Max drawdown | peak-to-trough on equity curve |
 | Churn | replacements ÷ month |
 | Average holding period | days per position |
 | Per-regime table | months split by benchmark up/down/sideways |
 
-**Statistical check.** Hit rate is tested against the random baseline p = 20 ÷ eligible-stock-count (per month, averaged), with a binomial test. A result without p-value is not reported. With 36 months × 4 picks = 144 picks, report the confidence interval — a 20% hit rate on 144 picks has a wide one.
+**Statistical check.** Hit rate is tested against the random baseline p = 0.05 (winners = top 5% of eligible stocks, per month), with a binomial test. A result without p-value is not reported. With 36 months × 4 picks = 144 picks, report the confidence interval — a 20% hit rate on 144 picks has a wide one.
 
 **Reports produced automatically**
 
 - Equity curve vs benchmark (PNG + CSV).
 - Monthly table: picks, returns, hits, triggers fired.
 - Per-feature IC table (Spearman rank correlation of feature vs next-month return, per month and pooled).
+- Size-bucket attribution (mandatory): picks bucketed by as-of liquidity rank — top 200, 201–600, 601–1500. Hit rate, return, and churn per bucket. A strategy whose edge lives only in the small bucket is reported as such, not blended away.
 - Ledger entry (see §12).
 
 **Canary checks (data validation, run with every refresh).** Known anomalies must reproduce or the pipeline is wrong: 6–12M momentum should have positive IC in this market; delivery% must correlate with its own lag for liquid stocks; total monthly eligible count must be stable within ±20% except at known universe-change dates. A failed canary blocks experiments from running.
@@ -198,7 +203,7 @@ This is the only result that counts. Single in-sample backtests are not evidence
 | # | Milestone | Acceptance |
 |---|---|---|
 | M0 | Data pipeline | 15 years loaded; validation report passes all canaries; both bhavcopy formats normalized |
-| M1 | Universe + labels | As-of membership built; monthly winner list for 15 years; spot-check 10 random months against actual data |
+| M1 | Universe + labels | As-of top-1500 liquidity universe built from bhav data; monthly winner list (top 5%) for 15 years; spot-check 10 random months by recomputing from raw bhav files |
 | M2 | Signal sweep | Every feature group tested univariate with IC tables; ledger entries for all |
 | M3 | Selection model | Composite or learned ranker beats best single feature out-of-sample (pre-walk-forward validation slice) |
 | M4 | Portfolio rules | Backtest engine passes the deterministic-replay test and the no-lookahead audit (trade log vs raw data) |
@@ -211,8 +216,9 @@ This is the only result that counts. Single in-sample backtests are not evidence
 |---|---|
 | NSE blocks scraping | Cache everything; rate-limit; UDiFF/edge CDNs; fallback mirrors documented in repo |
 | No historical GSM/ASM archive | Filter applies going forward; in backtest, flag suspicious movers (blow-off top + extreme volume) instead of hard-excluding; report sensitivity with/without |
-| Membership history incomplete | Two sources (Nifty 200 + F&O list); report coverage % and treat uncovered months as lower-confidence |
+| As-of liquidity universe approximates large/mid-cap membership | E000 overlap check vs Nifty 200; size-bucket attribution makes any small-cap dependence visible |
+| Edge is mostly the small-cap liquidity/cost premium | Mandatory size-bucket attribution (§11); E006 cost sensitivity at 0.5%/1.0% per side; no strategy ships on blended numbers |
 | Small sample: 144 picks | Always report confidence intervals; prefer month-level and pick-level metrics together; never claim significance without the binomial test |
-| Winners are catalyst-driven | Accept: system detects pre-conditioning, not the catalyst. Target is beating the 6.7% baseline, not perfection |
+| Winners are catalyst-driven | Accept: system detects pre-conditioning, not the catalyst. Target is beating the 5% baseline, not perfection |
 | Regime dependence | Per-regime reporting is mandatory; no strategy ships on blended numbers alone |
 | Overfitting via config tuning | All tuning on pre-test-window data only; §10.3 protocol; ledger discipline |

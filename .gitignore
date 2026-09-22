@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Project: raw data cache + duckdb (never commit; deleting the cache is a deliberate act)
+data/
