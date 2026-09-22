@@ -4,8 +4,9 @@ Per decision month M (mdate = last trading day of M):
   pool  = symbols ELIGIBLE at the PRIOR decision date (the §7 decision happens after M-1's
           close; M's own close is not yet known — no lookahead). A symbol that falls out of
           the universe during M still counts (it was tradeable at the decision).
-  ret   = adj_close(M_end) / adj_close(M_end_prev) - 1, each ASOF-matched on the symbol's own
-          adjusted series; a >40-day gap = suspension break — no return, no winner.
+  ret   = adj_me(M month) / adj_me((M-1) month) - 1 from the month-end panels (panels.py):
+          the last adjusted print INSIDE each month, so a stale cross-month price can never
+          become a return. A >40-day decision gap = suspension break — no return, no winner.
   labels: winner = top 5% (percent_rank < 0.05, ties share the label, counts scale with the
           pool); secondary top-decile and top-20 (row_number, ties broken by symbol).
 
@@ -13,10 +14,9 @@ Output `winners(mdate, symbol, ret, is_winner, is_top_decile, is_top20)`. This i
 table only — the monthly pick ranking (§7/§8 model score) is a later phase.
 
 python -m src.universe.winners self-check: synthetic hand-computed returns/labels (incl. the
-all-tie month), then live: label-count invariants + 10 random months recomputed from raw
-bhav prices via NSE's own prev_close (independent of adj_close and every Phase 2 join;
-dividend drift means set overlap >= 0.9, not exact equality). DB-bhav == raw zips was
-already proven by the normalize self-check, so prev_close here is raw-grounded.
+all-tie month), then live: label-count invariants + n random months recomputed EXACTLY by an
+independent from-scratch pandas pass over the sampled months only (returns < 1e-9, winner
+sets identical).
 """
 import random
 import sys
@@ -24,26 +24,30 @@ import sys
 import duckdb
 
 from src.config import load
+from src.normalize import panels
 from src.universe import eligibility, rank
 
 _WINNERS_SQL = """
 CREATE OR REPLACE TABLE winners AS
 WITH cal AS (SELECT DISTINCT mdate FROM universe_rank),
 pool AS (
-    SELECT e.symbol, e.mdate AS d_start,
+    SELECT e.symbol, e.mdate AS d_start, date_trunc('month', e.mdate) AS m_start,
            (SELECT min(c.mdate) FROM cal c WHERE c.mdate > e.mdate) AS d_end
     FROM eligible e
     WHERE e.eligible
 ),
 ar AS (
     SELECT p.d_end AS mdate, p.symbol,
-           a.adj_close / a_prev.adj_close - 1.0 AS ret
+           a1.adj_close / a0.adj_close - 1.0 AS ret
     FROM pool p
-    ASOF JOIN adj_close a      ON a.symbol = p.symbol AND a.date <= p.d_end
-    ASOF JOIN adj_close a_prev ON a_prev.symbol = p.symbol AND a_prev.date <= p.d_start
+    JOIN adj_me a1 ON a1.symbol = p.symbol AND a1.m = date_trunc('month', p.d_end)
+    JOIN adj_me a0 ON a0.symbol = p.symbol AND a0.m = p.m_start
     WHERE p.d_end IS NOT NULL
       AND date_diff('day', p.d_start, p.d_end) <= 40
-      AND a.adj_close > 0 AND a_prev.adj_close > 0
+      AND a1.adj_close > 0 AND a0.adj_close > 0
+      -- label only COMPLETE calendar months: an unfinished month's return would be a
+      -- provisional short-month number that silently changes as the month goes on
+      AND last_day(p.d_end) <= '{end}'::DATE
 ),
 lbl AS (
     SELECT mdate, symbol, ret,
@@ -62,7 +66,8 @@ FROM lbl
 def build(con, cfg: dict) -> dict:
     s, w = cfg["stats"], cfg["stats"]["secondary_winner_labels"]
     con.execute(_WINNERS_SQL.format(winner_pct=s["winner_top_pct"],
-                                    decile_pct=w["top_decile_pct"], top20=w["top_n_abs"]))
+                                    decile_pct=w["top_decile_pct"], top20=w["top_n_abs"],
+                                    end=cfg["end_date"]))
     months, nw = con.execute(
         "SELECT count(DISTINCT mdate), count(*) FILTER (WHERE is_winner) FROM winners").fetchone()
     return {"months": months, "winners": nw}
@@ -81,6 +86,7 @@ def _synth_check() -> None:
     rank.synth_setup(con)                      # Sep closes: A 130 (+30%), Y 5.5 (+10%), rest flat
     con.execute("CREATE TABLE adj_close (symbol VARCHAR, date DATE, adj_close DOUBLE)")
     con.execute("INSERT INTO adj_close SELECT symbol, date, close FROM bhav WHERE series='EQ'")
+    panels.build(con, cfg)                     # month_grid + adj_me (+ turnover_me) from the fixture
     rank.build(con, cfg)
     eligibility.build(con, cfg)
     build(con, cfg)
@@ -105,46 +111,66 @@ def _synth_check() -> None:
     print("synthetic check passed (hand-computed returns, labels, tie semantics)", flush=True)
 
 
+def _month_last(adj, end):
+    """{symbol: (date, adj_close)} of the last VALID adjusted print inside `end`'s month.
+
+    Mirrors the adj_me panel rule exactly: only rows with a real value count (Yahoo marks gap
+    days NaN — a keep='last' that kept one would disagree with the panel's arg_max), and a
+    month with no valid print yields no entry, so nothing is priced from a stale month.
+    """
+    win = adj[(adj.date >= end.replace(day=1)) & (adj.date <= end)]
+    win = win[win.adj_close.notna() & (win.adj_close > 0)]
+    return win.drop_duplicates("symbol", keep="last").set_index("symbol")[["date", "adj_close"]]
+
+
 def _raw_spot_check(con, cfg: dict, n: int = 10) -> None:
     """Done-when: n random months, an INDEPENDENT from-scratch recompute (pandas, not the
     winners SQL) reproduces per-symbol returns to 1e-9 and winner sets EXACTLY — 10/10.
-    Catches every wiring bug: wrong month-end dates, wrong pool, wrong ASOF direction,
+    Catches every wiring bug: wrong month-end dates, wrong pool, wrong month pairing,
     off-by-one months, label/threshold drift.
 
+    Cost shape: only the sampled months' adjusted rows are loaded (hundreds of thousands
+    instead of the whole table) and each month-end lookup is one sorted drop_duplicates pass
+    rather than a full-frame mask per end — the same numbers for a fraction of the work.
+
     ponytail: the recompute shares adj_close — price-source validity is owned by Phase 1's
-    20-symbol NSE<->Yahoo cross-check. Raw bhav month-end-to-month-end ratios are NOT a
-    usable return oracle (measured live, Feb 2026: 149/1,279 names diverge >5pts vs a
-    chained prev_close recompute; direction varies by name — NSE adjusted Feb 2 for
-    ADANIENSOL's dividend while Yahoo did not, and the reverse for ACCELYA). The two
-    sources define returns differently; BRD §4 rules: returns come from ADJUSTED closes.
-   """
+    20-symbol NSE<->Yahoo cross-check. Raw bhav ratios are NOT a usable return oracle
+    (measured live, Feb 2026: 149/1,279 names diverge >5pts because NSE and Yahoo place
+    dividend adjustments differently, in both directions). BRD §4 rules: adjusted closes.
+    """
     import pandas as pd
     months = [r[0] for r in con.execute(
         "SELECT DISTINCT mdate FROM winners ORDER BY 1").fetchall()]
     rng = random.Random(cfg["backtest"]["random_seed"])
     sample = rng.sample(months, min(n, len(months)))
-    adj = con.execute("SELECT symbol, date, adj_close FROM adj_close").fetch_df()
+    prevs = {d: con.execute("SELECT max(mdate) FROM (SELECT DISTINCT mdate FROM universe_rank "
+                            "WHERE mdate < ?::DATE)", [d]).fetchone()[0] for d in sample}
+    lo = min(pd.Timestamp(str(p)) for p in prevs.values()).replace(day=1)  # earliest month needed
+    adj = con.execute("SELECT symbol, date, adj_close FROM adj_close WHERE date >= ?",
+                      [lo]).fetch_df()
     adj["date"] = pd.to_datetime(adj["date"])
+    adj = adj.sort_values("date")          # once: keep='last' below then means latest date
+    print(f"  recompute input: {len(adj):,} adjusted rows from {lo.date()} "
+          f"(scoped to the sampled months)", flush=True)
     for d in sample:
-        prev = con.execute("SELECT max(mdate) FROM (SELECT DISTINCT mdate FROM universe_rank "
-                           "WHERE mdate < ?::DATE)", [d]).fetchone()[0]
+        prev = prevs[d]
+        ends = [pd.Timestamp(str(prev)), pd.Timestamp(str(d))]
+        table = dict(con.execute(
+            "SELECT symbol, ret FROM winners WHERE mdate = ?::DATE", [d]).fetchall())
         pool = {s for (s,) in con.execute(
             "SELECT symbol FROM eligible WHERE mdate = ?::DATE AND eligible", [prev]).fetchall()}
-        ends = con.execute("SELECT DISTINCT mdate FROM universe_rank WHERE mdate IN (?, ?::DATE)",
-                           [prev, d]).fetchall()
-        ends = sorted(pd.to_datetime([r[0] for r in ends]))
-        a_start, a_end = (adj[adj.date <= e].groupby("symbol").tail(1).set_index("symbol")
-                          for e in ends)  # ends ascending: ASOF at prev, then at mdate
-        j = a_start.join(a_end, lsuffix="_s", rsuffix="_e", how="inner").loc[
-            sorted(set(pool) & set(a_start.index) & set(a_end.index))]
-        j = j[(j.adj_close_e > 0) & (j.adj_close_s > 0) &
-              ((ends[1] - ends[0]).days <= 40)]
+        if (ends[1] - ends[0]).days > 40:      # the SQL's suspension break
+            assert not table, f"{d}: >40-day decision gap must produce no winners"
+            continue
+        a0, a1 = (_month_last(adj, e) for e in ends)
+        common = sorted(set(pool) & set(a0.index) & set(a1.index))
+        j = a0.loc[common].join(a1.loc[common], lsuffix="_s", rsuffix="_e")
+        j = j[(j.adj_close_s > 0) & (j.adj_close_e > 0)]
         j["ret"] = j.adj_close_e / j.adj_close_s - 1.0
         # winners SQL labels: percent_rank() = (rank-1)/(n-1) over ret DESC, ties share
-        n = len(j)
-        pct = (j.ret.rank(ascending=False, method="min") - 1) / (n - 1)
+        n_rows = len(j)
+        pct = (j.ret.rank(ascending=False, method="min") - 1) / (n_rows - 1)
         recomp_win = set(j.index[pct < cfg["stats"]["winner_top_pct"]])
-        table = dict(con.execute("SELECT symbol, ret FROM winners WHERE mdate = ?::DATE", [d]).fetchall())
         table_win = {s for (s,) in con.execute(
             "SELECT symbol FROM winners WHERE mdate = ?::DATE AND is_winner", [d]).fetchall()}
         assert set(j.index) == set(table), \
@@ -160,6 +186,7 @@ def _raw_spot_check(con, cfg: dict, n: int = 10) -> None:
 def _live_check(cfg: dict) -> None:
     con = duckdb.connect(cfg["paths"]["duckdb"])
     try:
+        panels.ensure(con, cfg)
         if con.execute("SELECT count(*) FROM duckdb_tables() "
                        "WHERE table_name = 'universe_rank'").fetchone()[0] == 0:
             rank.build(con, cfg)

@@ -15,6 +15,9 @@ full:
 # ---- Dates & universe (BRD §4) ----
 end_date: "2026-09-21"        # "yesterday" — updated by the daily refresh; never a future date
 decision_month_end: true      # score on last trading day of month, after close (§7.1)
+adj_history_start: "2009-01-01"  # yfinance fetch floor (task 1.6). BRD window starts 2011 and the
+                                 # longest feature lookback is 12M-1M, so two years of buffer.
+                                 # Yahoo's 1991-2008 tail was 42% of adj_close and unused (trimmed).
 
 universe:
   top_n: 1500                 # top 1500 by as-of liquidity rank (BRD §4)

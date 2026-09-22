@@ -4,6 +4,14 @@ Why yfinance: BRD D3 names it explicitly (adjusted closes + splits/bonus/dividen
 that is the written dependency reason BRD §13 requires. NSE raw prices stay untouched
 (task 1.1-1.4); this table exists only for correct returns.
 
+- history floor: fetched from config `adj_history_start` (2009-01-01), NOT period="max" —
+  the BRD window starts 2011 and the longest feature lookback is 12M-1M, so Yahoo's 1991-2008
+  tail was 42% of the table and unused. `--trim` applies the same floor to an existing table
+  (the fetch change alone only prevents re-adding it).
+- only usable prices are stored: a frame whose Adj Close is entirely NaN means Yahoo has no
+  data for that ticker (delisted/renamed), so it is reported as unavailable instead of being
+  cached as a symbol that is forever empty. Multi-ticker batches still pad gap and pre-listing
+  days with NaN — `--trim` drops those rows from an existing table.
 - cache: the adj_close table itself (no raw files — API data); symbols already present
   are skipped, so the backfill is resumable (plan working rule 4).
 - mapping: NSE SYMBOL + ".NS" (M&M.NS, BAJAJ-AUTO.NS work as-is).
@@ -47,8 +55,8 @@ def match_fraction(nse: "pd.Series[float]", yf: "pd.Series[float]") -> float:
 def _fetch_batch(tickers: list[str], cfg: dict) -> dict[str, pd.DataFrame]:
     """yf.download one chunk -> {symbol: df indexed by date with Close/Adj Close}."""
     import yfinance as yf
-    df = yf.download([yahoo_ticker(t) for t in tickers], period="max", auto_adjust=False,
-                     progress=False, threads=True, group_by="ticker")
+    df = yf.download([yahoo_ticker(t) for t in tickers], start=cfg["adj_history_start"],
+                     auto_adjust=False, progress=False, threads=True, group_by="ticker")
     out = {}
     for t in tickers:
         yt = yahoo_ticker(t)
@@ -57,6 +65,11 @@ def _fetch_batch(tickers: list[str], cfg: dict) -> dict[str, pd.DataFrame]:
         except KeyError:
             continue  # symbol failed entirely
         if sub.empty or "Adj Close" not in sub:
+            continue
+        if sub["Adj Close"].dropna().empty:
+            # Yahoo serves the ticker name but has no usable prices (delisted/renamed tickers
+            # come back as an all-NaN frame). Storing that frame would mark the symbol as
+            # fetched forever — 1,066 EQ symbols were silently NULL that way before this guard.
             continue
         idx = sub.index
         if getattr(idx, "tz", None) is not None:
@@ -152,6 +165,29 @@ def cross_check(cfg: dict, n: int = 20, fetcher=None) -> bool:
     return len(ok_syms) >= n - 2  # tolerate 2 renamed/dead symbols out of 20
 
 
+def trim(cfg: dict) -> int:
+    """Diet adj_close to rows anything can use; returns rows removed.
+
+    Two one-time repairs for a table built while the fetcher used period="max" and stored
+    every NaN row of multi-ticker batches:
+      - date < cfg['adj_history_start']: ~12.6M of 30.3M rows (42%) predate 2009 and no
+        profile can reach them;
+      - adj_close IS NULL: Yahoo's gap/pre-listing padding plus all-NaN frames for 1,066
+        delisted tickers — the panel, the canary and the labels all ignore them anyway.
+    The fetch is now bounded and skips unusable frames, so a fresh backfill never re-adds them.
+    """
+    con = duckdb.connect(cfg["paths"]["duckdb"])
+    try:
+        before = con.execute("SELECT count(*) FROM adj_close").fetchone()[0]
+        con.execute("DELETE FROM adj_close WHERE date < ?::DATE OR adj_close IS NULL",
+                    [cfg["adj_history_start"]])
+        con.execute("CHECKPOINT")
+        after = con.execute("SELECT count(*) FROM adj_close").fetchone()[0]
+        return before - after
+    finally:
+        con.close()
+
+
 def _self_check() -> None:
     # 1. mapping edge cases
     assert yahoo_ticker("M&M") == "M&M.NS" and yahoo_ticker("BAJAJ-AUTO") == "BAJAJ-AUTO.NS"
@@ -189,5 +225,11 @@ if __name__ == "__main__":
     if "--backfill" in sys.argv:
         cfg = load("quick")
         backfill(cfg)
+        sys.exit(0)
+    if "--trim" in sys.argv:
+        cfg = load("quick")
+        n = trim(cfg)
+        print(f"trimmed {n:,} adj_close rows (pre-{cfg['adj_history_start']} or NULL-valued)",
+              flush=True)
         sys.exit(0)
     _self_check()

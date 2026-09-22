@@ -12,7 +12,8 @@ Sections:
                                 (reuses task 1.5's check); FAIL at/above max_join_mismatch_pct
   5. missing-delivery %       — EQ stock-days inside the delivery span with no delivery row
                                 (informational: delivery has known missing stretches, BRD D2)
-  6. adj_close coverage       — symbols with Yahoo adjusted closes vs bhav EQ symbols
+  6. adj_close coverage       — still-trading EQ symbols with Yahoo adjusted closes (all-time
+                                count reported alongside: delisted tickers are absent on Yahoo)
                                 (prerequisite gate for the momentum canary)
 
 The NSE-vs-Yahoo raw-price cross-check is live-network and lives in
@@ -126,14 +127,27 @@ def main() -> int:
         # ---- 6. adj_close coverage ----
         print("\n[6] adj_close coverage (momentum canary prerequisite)")
         if con.execute("SELECT count(*) FROM duckdb_tables() WHERE table_name = 'adj_close'").fetchone()[0]:
-            n_adj = con.execute("SELECT count(DISTINCT symbol) FROM adj_close").fetchone()[0]
+            # Measured on symbols that STILL TRADE (see canary.py [0] for the rationale): Yahoo
+            # serves no delisted/renamed ticker, so an all-symbol ratio measures survivorship,
+            # not pipeline health. The all-time figure is printed as context only.
             n_eq = con.execute("SELECT count(DISTINCT symbol) FROM bhav WHERE series = 'EQ'").fetchone()[0]
-            cov = n_adj / n_eq if n_eq else 0.0
+            n_priced = con.execute("SELECT count(DISTINCT symbol) FROM adj_close").fetchone()[0]
+            n_live, n_recent = con.execute("""
+                WITH recent AS (SELECT DISTINCT symbol FROM bhav WHERE series = 'EQ'
+                                AND date > (SELECT max(date) FROM bhav) - INTERVAL 30 DAY)
+                SELECT (SELECT count(*) FROM recent r WHERE EXISTS (
+                            SELECT 1 FROM adj_close a
+                            WHERE a.symbol = r.symbol AND a.adj_close IS NOT NULL)),
+                       (SELECT count(*) FROM recent)""").fetchone()
+            cov = n_live / n_recent if n_recent else 0.0
             flag = ""
             if cov < v["canary_min_adj_coverage"]:
                 flag, _ = "  <-- backfill incomplete", failures.append(
                     f"adj_close coverage {cov:.1%} < {v['canary_min_adj_coverage']:.0%}")
-            print(f"  adj_close symbols: {n_adj:,} / bhav EQ symbols: {n_eq:,} ({cov:.1%}){flag}")
+            print(f"  still-trading symbols priced: {n_live:,} / {n_recent:,} ({cov:.1%}){flag}")
+            print(f"  all-time: {n_priced:,} / {n_eq:,} EQ symbols ({n_priced / n_eq:.1%}) — "
+                  f"the remainder are delisted/renamed tickers Yahoo no longer serves "
+                  f"(BRD §4: survivorship — as-of lists, never today's)")
         else:
             print("  adj_close table absent — run python -m src.normalize.adj_close --backfill (task 1.6)")
     finally:

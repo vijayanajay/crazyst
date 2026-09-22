@@ -130,12 +130,27 @@ def _self_check() -> None:
         has_adj = con.execute(
             "SELECT count(*) FROM duckdb_tables() WHERE table_name = 'adj_close'").fetchone()[0]
         assert has_adj, "adj_close table missing — run python -m src.normalize.adj_close --backfill first (task 1.6)"
-        n_adj = con.execute("SELECT count(DISTINCT symbol) FROM adj_close").fetchone()[0]
-        n_eq = con.execute("SELECT count(DISTINCT symbol) FROM bhav WHERE series = 'EQ'").fetchone()[0]
-        cov = n_adj / n_eq
+        # Coverage is measured on symbols that STILL TRADE. Yahoo does not serve delisted or
+        # renamed tickers, and counting DISTINCT symbol would count the all-NaN frames they
+        # return as coverage (it reported a false 100% until this was fixed). The delisted
+        # share is reported alongside — it is the survivorship problem BRD §4 warns about, not a bug.
+        n_adj, n_eq = con.execute("""
+            SELECT (SELECT count(DISTINCT symbol) FROM adj_close WHERE adj_close IS NOT NULL),
+                   (SELECT count(DISTINCT symbol) FROM bhav WHERE series = 'EQ')""").fetchone()
+        n_live, n_recent = con.execute("""
+            WITH recent AS (SELECT DISTINCT symbol FROM bhav WHERE series = 'EQ'
+                            AND date > (SELECT max(date) FROM bhav) - INTERVAL 30 DAY)
+            SELECT (SELECT count(*) FROM recent r WHERE EXISTS (
+                        SELECT 1 FROM adj_close a
+                        WHERE a.symbol = r.symbol AND a.adj_close IS NOT NULL)),
+                   (SELECT count(*) FROM recent)""").fetchone()
+        cov = n_live / n_recent
         assert cov >= cfg["validate"]["canary_min_adj_coverage"], \
-            f"adj_close coverage {cov:.1%} < {cfg['validate']['canary_min_adj_coverage']:.0%} — backfill incomplete"
-        print(f"[0] adj_close coverage: {n_adj:,}/{n_eq:,} EQ symbols ({cov:.1%})", flush=True)
+            (f"adj_close covers {cov:.1%} of the {n_recent:,} still-trading EQ symbols "
+             f"(floor {cfg['validate']['canary_min_adj_coverage']:.0%}) — backfill incomplete?")
+        print(f"[0] adj_close coverage: {n_live:,}/{n_recent:,} still-trading symbols ({cov:.1%}); "
+              f"all-time {n_adj:,}/{n_eq:,} ({n_adj / n_eq:.1%} — the rest are delisted tickers "
+              f"Yahoo no longer serves)", flush=True)
 
         ic, nm = momentum_ic(con, cfg)
         print(f"[1] momentum IC: pooled median {ic:+.4f} > 0 over {nm} month-ends "

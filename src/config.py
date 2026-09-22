@@ -27,6 +27,13 @@ def load(profile: str | None = None) -> dict:
 
 
 def _validate(cfg: dict) -> None:
+    adj_start = cfg.get("adj_history_start")
+    assert isinstance(adj_start, str) and len(adj_start) == 10 \
+        and adj_start[4] == "-" and adj_start[7] == "-", \
+        f"adj_history_start must be an ISO date, got {adj_start!r}"
+    assert adj_start < cfg["data_start_date"], \
+        (f"adj_history_start {adj_start} must precede the profile window "
+         f"{cfg['data_start_date']} — features need adjusted prices for their lookback")
     v = cfg["validate"]
     assert 80 <= v["min_year_coverage_pct"] <= 100, f"coverage floor is a percent, got {v['min_year_coverage_pct']}"
     assert 0 <= v["max_join_mismatch_pct"] <= 10, f"join mismatch cap is a percent, got {v['max_join_mismatch_pct']}"
@@ -57,6 +64,7 @@ if __name__ == "__main__":
     for prof in ("quick", "full"):
         c = load(prof)
         assert c["data_start_date"] and c["walkforward_months"], f"{prof}: date block merge failed"
+        assert c["adj_history_start"] < c["data_start_date"], f"{prof}: adj history floor drifted"
         assert c["universe"]["top_n"] == 1500, f"{prof}: top_n drifted from BRD §4"
         assert c["stats"]["winner_top_pct"] == 0.05, f"{prof}: winner definition drifted from BRD §4"
         assert c["backtest"]["cost_sensitivity_pct"] == [0.20, 0.50, 1.00], f"{prof}: E006 levels drifted from BRD §9"
