@@ -26,6 +26,10 @@ Daily -> monthly ONCE, so repeated work over the big daily tables (bhav 7.9M row
   window and takes one median, because a median of medians is not a median. It is also
   FULL-HISTORY even when the profile window is shorter, so a decision month's lookback is
   never truncated by the profile start (see rank.py).
+- the series filter is a RULE from config (universe.allowed_series), not a hardcoded string:
+  month_grid (the decision calendar), liq_me (the rank input) and rank's from-scratch oracle must
+  all see the same universe, so series_sql() renders it once. It is also a `cfg:` spec in the
+  panel fingerprint — changing the allowed series must rebuild the panels.
 - liq_me needs only bhav; adj_me needs adj_close; deliv_me is skipped when the delivery table is
   absent (synthetic fixtures). Rebuildable derived tables; liq_me is the expensive one (~4s full
   history, it is the price of the BRD §4 window) and everything else is ~1-3s.
@@ -50,13 +54,15 @@ import duckdb
 from src import stamp
 from src.config import load
 
+RUPEE_PER_CRORE = 1.0e7  # med3 is rupees; every config floor/report is in ₹ crore
+
 _CORE = ("month_grid", "adj_me", "liq_me")  # ensure() gate; deliv_me is optional
 _KEY = "panels"  # stamp key for ensure()
 
 _GRID_SQL = """
 CREATE OR REPLACE TABLE month_grid AS
 SELECT date_trunc('month', date) AS m, max(date) AS mdate
-FROM bhav WHERE series = 'EQ' GROUP BY 1
+FROM bhav b WHERE {series} GROUP BY 1
 """
 
 _ADJ_SQL = """
@@ -75,7 +81,7 @@ SELECT b.symbol, g.m, g.mdate,
        median(b.turnover) AS med3, count(*) AS n_days
 FROM bhav b JOIN month_grid g
   ON b.date > g.mdate - ({lookback} * INTERVAL '1 month') AND b.date <= g.mdate
-WHERE b.series = 'EQ'
+WHERE {series}
 GROUP BY 1, 2, 3
 """
 
@@ -88,9 +94,21 @@ GROUP BY 1, 2, 3
 """
 
 
-def _has(con, table: str) -> bool:
+def has_table(con, table: str) -> bool:
+    """Whether a table exists — the gate for optional sources (delivery, surveillance)."""
     return con.execute("SELECT count(*) FROM duckdb_tables() WHERE table_name = ?",
                        [table]).fetchone()[0] > 0
+
+
+def series_sql(cfg: dict, alias: str = "b") -> str:
+    """The universe's series filter, rendered from config (BRD §4 "EQ series; not in T2T/BE").
+
+    One definition for every consumer: the decision calendar, the liquidity panel and the rank's
+    own from-scratch oracle. A hardcoded 'EQ' in three places is how the rule and the config drift
+    apart, which is exactly what the plan's working rule 1 forbids.
+    """
+    vals = ", ".join("'" + str(s).replace("'", "''") + "'" for s in cfg["universe"]["allowed_series"])
+    return f"{alias}.series IN ({vals})"
 
 
 def _fp(cfg: dict, con) -> str:
@@ -101,7 +119,8 @@ def _fp(cfg: dict, con) -> str:
     """
     return stamp.fingerprint(cfg, con, ["code", "table:bhav.date", "table:delivery.date",
                                         "table:adj_close.date",
-                                        "cfg:universe.liquidity_lookback_months"])
+                                        "cfg:universe.liquidity_lookback_months",
+                                        "cfg:universe.allowed_series"])
 
 
 def build(con, cfg: dict) -> dict:
@@ -111,12 +130,14 @@ def build(con, cfg: dict) -> dict:
     """
     t0 = time.monotonic()
     rows = {}
-    for name, sql, needs in (("month_grid", _GRID_SQL, None),
+    series = series_sql(cfg)
+    for name, sql, needs in (("month_grid", _GRID_SQL.format(series=series), None),
                              ("adj_me", _ADJ_SQL, "adj_close"),
                              ("liq_me", _LIQ_SQL.format(
+                                 series=series,
                                  lookback=cfg["universe"]["liquidity_lookback_months"]), None),
                              ("deliv_me", _DELIVERY_SQL, "delivery")):
-        if needs and not _has(con, needs):
+        if needs and not has_table(con, needs):
             continue  # synthetic fixtures without that source
         con.execute(sql)
         rows[name] = con.execute(f"SELECT count(*) FROM {name}").fetchone()[0]
@@ -133,7 +154,7 @@ def ensure(con, cfg: dict) -> bool:
     data or code changed and skipped when neither did — and the stamp re-verifies the panels are
     still present with the row counts they were built with.
     """
-    if all(_has(con, t) for t in _CORE) and stamp.is_current(con, _KEY, _fp(cfg, con)):
+    if all(has_table(con, t) for t in _CORE) and stamp.is_current(con, _KEY, _fp(cfg, con)):
         return False
     build(con, cfg)
     return True
@@ -219,7 +240,7 @@ def _live_check(cfg: dict) -> None:
         leak = con.execute("SELECT count(*) FROM adj_me "
                            "WHERE mdate IS NOT NULL AND adate > mdate").fetchone()[0]
         assert leak == 0, f"{leak} adj_me rows priced AFTER their month's decision date (lookahead)"
-        if _has(con, "eligible"):
+        if has_table(con, "eligible"):
             # A missing adj_me row is only a BUG when a valid print existed in that month.
             # For delisted/renamed tickers Yahoo has no print at all (BRD §4 survivorship bias) —
             # those 1,3xx symbols legitimately have no monthly price, and the fixture-proven

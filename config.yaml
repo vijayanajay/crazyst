@@ -24,9 +24,21 @@ universe:
   liquidity_lookback_months: 3  # trailing 3-month median turnover rank, as of decision date
   min_price: 20.0             # ₹ price floor (penny guard)
   min_listed_months: 6        # listed >= 6 months
-  min_median_turnover_cr: 5.0 # ₹ crore; config guard only — subsumed by top-1500 rank
-  allowed_series: [EQ]        # EQ series only
-  exclude_series: [BE, T2T]   # tradability exclusions
+  min_median_turnover_cr: 0.0 # ₹ crore median daily turnover floor; 0.0 = guard OFF. BRD §4 keeps
+                              # ₹5cr "as a config guard, subsumed by the top-1500 rank" — measured,
+                              # that premise FAILS: rank 1500 turns over ₹1.94cr/day, so 6,010
+                              # in-universe symbol-months sit below ₹5cr and enforcing it would cut
+                              # ~18% of the universe. Left off pending a BRD decision; set 5.0 to
+                              # enforce (eligibility then excludes with reason turnover<5.0cr).
+  allowed_series: [EQ]        # BRD §4 "EQ series; not in T2T/BE" IS this filter: every other code
+                              # is excluded by construction. BE is the trade-to-trade series that
+                              # actually appears in bhav; the literal "T2T" appears in no row, so the
+                              # old exclude_series key was dead config and has been removed.
+  gsm_asm_max_allowed_stage: 0  # BRD §4 "not under GSM/ASM (as of D)": stage > 0 excludes. A
+                              # different decision from §8.2's hold rule (portfolio.midmonth.
+                              # gsm_asm_stage_exit: 2). Historical stages do not exist (BRD §5 D5),
+                              # so this excludes nothing until a snapshot is supplied via
+                              # paths.surveillance_csv.
   rank_percentiles:           # all rank cutoffs are percentiles of the eligible universe, never counts (§8)
     sell_below_top_pct: 0.25  # monthly sell trigger: rank falls below top 25% (§8.1)
     replace_above_top_pct: 0.15  # replacement must rank in top 15% (§8.1)
@@ -86,6 +98,8 @@ paths:
   raw_bhavcopy_udiff: data/raw/bhavcopy_udiff/
   raw_delivery: data/raw/delivery/
   raw_yf_adj: data/raw/yf_adj/
+  surveillance_csv: data/surveillance/surveillance.csv   # optional GSM/ASM snapshot, one row per
+                              # symbol+start: symbol,effective_from,list,stage (list = GSM|ASM)
   duckdb: data/duckdb/quant.duckdb
   runs: runs/
   reports: reports/

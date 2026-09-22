@@ -53,6 +53,14 @@ def _validate(cfg: dict) -> None:
     u, p, b, s = cfg["universe"], cfg["portfolio"], cfg["backtest"], cfg["stats"]
     assert u["top_n"] > 0 and u["liquidity_lookback_months"] > 0, f"universe rank params must be positive, got {u}"
     assert u["min_price"] > 0 and u["min_listed_months"] > 0, f"eligibility floors must be positive, got {u}"
+    assert isinstance(u["allowed_series"], list) and u["allowed_series"], \
+        f"universe.allowed_series must be a non-empty list of series codes, got {u['allowed_series']}"
+    assert u["min_median_turnover_cr"] >= 0, \
+        (f"universe.min_median_turnover_cr is a floor (0.0 = guard off), got "
+         f"{u['min_median_turnover_cr']}")
+    assert isinstance(u["gsm_asm_max_allowed_stage"], int) and u["gsm_asm_max_allowed_stage"] >= 0, \
+        (f"universe.gsm_asm_max_allowed_stage must be an int stage >= 0 (0 = any listing excludes), "
+         f"got {u['gsm_asm_max_allowed_stage']!r}")
     assert 0 < u["rank_percentiles"]["sell_below_top_pct"] <= 1 and 0 < u["rank_percentiles"]["replace_above_top_pct"] <= 1, \
         f"rank cutoffs are percentiles in (0, 1], got {u['rank_percentiles']}"
     assert u["rank_percentiles"]["replace_above_top_pct"] < u["rank_percentiles"]["sell_below_top_pct"], \

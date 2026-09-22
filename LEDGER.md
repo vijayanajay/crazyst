@@ -308,3 +308,154 @@ as-of, so a run after downtime closes the whole gap.
 `winners` holds **14,373 rows** = one per eligible symbol-month (~1,337/month, 11 months), of which
 **724 are winner flags** (~67/month, top 5%), 1,441 top-decile, 220 top-20. The stamp reports table
 rows, the refresh reports winner flags; both numbers are right.
+
+---
+
+## Phase 2 (M1) complete — universe + labels (2026-09-23, uncommitted; working tree on `8df273b`)
+
+Not an experiment — the plan's Phase 2 checkpoint ("show 3 winner lists side by side with
+re-computation"). Recorded because the audit found three BRD §4 rules that existed only in config
+or docstrings, and because one of them falsifies a stated assumption in the BRD.
+
+### The audit: plan Phase 2 against the working tree
+
+| Task | Plan's done-when | Before this pass | Now |
+|---|---|---|---|
+| 2.1 as-of rank | 5 dates printed; stable MoM except real liquidity shifts; minutes not hours | **satisfied** (`rank.py` + the `liq_me` panel; 5 dates printed; Jaccard ≥ 0.85 asserted on all 12 transitions; 1.5–3.7s vs a 300s bar) | unchanged — not rebuilt |
+| 2.2 eligibility | BRD §4 as a pure function from config; 6 hand-built cases (T2T, low turnover, recent listing, GSM-flagged, rank>1500, normal) | **partial**: 4 of §4's rules present; series rule hardcoded rather than from config; turnover floor dead config; GSM/ASM implemented nowhere. Of the 6 cases: normal, rank>1500 and recent listing covered; **low turnover and GSM-flagged had none**; T2T covered only at the rank layer (BE never ranks) and unanswerable in the point form | completed (below) |
+| 2.3 winners | top 5% + top-20 + top-decile; 10 random months recomputed, 10/10 | **satisfied** with one documented deviation; checkpoint lists not printed | checkpoint artifact added (below) |
+
+What 2.2 was missing, and what it cost: the series rule lived as a hardcoded `'EQ'` string in
+`rank.py`, `panels.py` and `eligibility.py` while `universe.allowed_series` — the config key that
+owns it — was never read (plan working rule 1). All ~180 series codes in `bhav` were checked to
+settle it: **`"T2T"` appears in no row** (BE is the trade-to-trade series that actually exists), so
+the `exclude_series: [BE, T2T]` key was dead config and is gone. `panels.series_sql()` is now the
+single renderer for the decision calendar, the liquidity panel, eligibility and rank's oracle, and
+`allowed_series` is a `cfg:` spec in the panel stamp — changing it rebuilds the panels.
+
+### Decision: BRD §4's "subsumed" ₹5-crore floor is measurably false
+
+BRD §4 states: *"The ₹5-crore-turnover floor is subsumed by the top-1500 rank and kept only as a
+config guard."* Nothing read the key, so the claim had never been tested. Measured on the quick
+profile (13 decision months):
+
+| Quantity | Value |
+|---|---|
+| Rank-1500 median daily turnover (pooled 3-month), by month | **₹1.01cr – ₹1.94cr/day** |
+| In-universe symbol-months below ₹5cr | **6,010 of 19,500 (30.8%)** |
+| Effect of enforcing the floor | excludes ~31% of the as-of universe |
+
+**Decision: implemented, shipped OFF.** The floor is now a real config-driven rule (`> 0` excludes
+with reason `turnover<Ncr`), but `min_median_turnover_cr: 0.0` leaves live behaviour BRD-normative —
+the premise is false, the *policy* that follows from it (rank governs liquidity) is still the BRD's,
+and silently relabelling 30.8% of the universe on a contradicted sentence is not an audit's call.
+`_live_check` re-reports the measurement on every run so the claim can never go unverified again.
+Switching it on is one config line, and it needs the BRD owner.
+
+Implementation bug caught here: `med3` is in **rupees** while the floor is in **₹ crore**, so the
+first version compared 1e8 against 15.0 and never fired. There is now one shared conversion
+(`panels.RUPEE_PER_CRORE`, also used by rank's `med3_cr`).
+
+### GSM/ASM: a real rule with no historical source
+
+BRD §4 requires "not under GSM/ASM (as of D, where historical data exists)"; the code had nothing.
+Now: `surveillance(symbol, effective_from, list, stage)`, excluded when `max(stage)` over rows with
+`effective_from <= D` exceeds `universe.gsm_asm_max_allowed_stage` (default **0** — any listing
+excludes). §8.2's *hold* rule (`gsm_asm_stage_exit: 2`, forced exit) is a different decision and
+stays in the engine. `load_surveillance()` imports `paths.surveillance_csv` when a snapshot exists;
+the CSV is the trust boundary, so rows are validated and a malformed one raises rather than being
+skipped. Live, the rule reports itself honestly:
+
+```
+surveillance: none — no historical GSM/ASM archive exists (BRD §4 'where historical data exists'),
+so the rule excludes nothing in the backtest
+```
+
+Exercised end to end on real data with a temporary snapshot: a symbol in the universe for all 13
+months took eligible **17,204 → 17,191** (−13 = exactly its 13 months), the point form returned
+`(False, ['gsm_asm'])`, and dropping the snapshot + rebuilding restored the baseline hash. Known
+limits, recorded rather than hidden: no `effective_to`, so "left the list" is unrepresentable; the
+table survives removal of the CSV (deliberate — a snapshot is an import, not a lease), which the
+live check makes visible every run; and one bad row aborts the whole `build()` (robustness gap,
+named in the audit, not yet fixed).
+
+### The six cases the plan names
+
+| Case | Fixture | Expected reasons at the Sep decision |
+|---|---|---|
+| normal | A, B | `''` (eligible) |
+| rank>1500 (+ penny) | Y (rank 6, ₹5) | `rank>5,price<20.0,turnover<15.0cr` |
+| recent listing | D (first month Aug) | `listed<6m,gsm_asm` |
+| low turnover | C (rank 5 — **inside** the universe) | `turnover<15.0cr` |
+| GSM-flagged | G (GSM stage 2 from Jan 2024) | `gsm_asm` |
+| T2T stock | X (`BE`), Q (`'T'`) | never enter the rank; point form → `series_not_allowed` |
+
+The low-turnover case deliberately mirrors the live finding: a symbol **inside** the top-1500 and
+still excluded by the floor. `D`'s ASM begins Sep 1, so its Aug row must *not* carry `gsm_asm` — the
+as-of test — while `A`'s flag (Oct 1) is after the window and must not exclude at all. Flipping the
+stage threshold 0 → 2 makes G eligible again, then back to 0 re-excludes it, so the threshold is
+provably config. One feature of the rewrite: table and point form are now compared **literally,
+reason for reason**, and that caught a latent divergence — a NULL close suppressed the `listed`
+reason in the point form only. Three live rows exercise it (SCANSTL 2026-08-31, BTTL 2026-09-22,
+KAVDEFENCE 2025-09-30); all three now agree.
+
+### 2.3 winners — satisfied, with one documented deviation
+
+The done-when is met: top 5% (724 flags / 11 months), top decile 1,441, top 20 220, and an
+**independent from-scratch pandas recompute matches 10/10 sampled months exactly** (worst per-symbol
+return difference < 1e-9, winner sets identical). The deviation the plan should know about: the
+recompute reads `adj_close`, not raw bhav ratios. Raw month-end ratios are not a return oracle —
+a mid-month 10:1 split reads as −89% (GOLDADD, Aug 2026) and NSE vs Yahoo place dividend adjustments
+differently (Feb 2026: 149 of 1,279 names diverging >5pts, in both directions) — while BRD §4 rules
+that returns come from adjusted closes. The raw→bhav half of the chain is Phase 1's (task 1.4's
+done-when plus the canaries), so the chain is verified in two halves rather than by a zips-level
+oracle.
+
+### Checkpoint: three winner lists, table vs recomputation
+
+Now printed by the check itself, because a claim without a visible artifact is not a checkpoint:
+
+```
+2026-08-31: pool 1,337 | winners 67 (recomputed 67)
+  table     : MOREPENLAB +87.87%, RATNAVEER +68.72%, INDSWFTLAB +62.69%, KENNAMET +55.81%, SHILPAMED +55.30%
+  recomputed: MOREPENLAB +87.87%, RATNAVEER +68.72%, INDSWFTLAB +62.69%, KENNAMET +55.81%, SHILPAMED +55.30%
+2025-11-28: pool 1,282 | winners 65 (recomputed 65)
+  table     : SILVER1 +66.07%, THANGAMAYL +49.98%, RICOAUTO +44.96%, CUPID +40.95%, LGBBROSLTD +38.34%
+  recomputed: SILVER1 +66.07%, THANGAMAYL +49.98%, RICOAUTO +44.96%, CUPID +40.95%, LGBBROSLTD +38.34%
+2025-10-31: pool 1,304 | winners 66 (recomputed 66)
+  table     : GMBREW +74.60%, MCLEODRUSS +67.17%, SHAREINDIA +46.20%, INDOTHAI +43.18%, TATVA +40.56%
+  recomputed: GMBREW +74.60%, MCLEODRUSS +67.17%, SHAREINDIA +46.20%, INDOTHAI +43.18%, TATVA +40.56%
+independent recompute: 10/10 months match exactly (returns < 1e-9, winner sets identical)
+```
+
+### Zero drift: the audit changed no label
+
+Snapshotted before the first edit, compared by hash after the last:
+
+| Table | Baseline (before) | After | |
+|---|---|---|---|
+| `eligible` | 33,567 rows / 17,204 eligible / reasons_hash `309004543472110316846433` | identical | **IDENTICAL** |
+| `winners` | 14,373 / 724 win / 1,441 decile / 220 top20 / labels_hash `132390852150023982609164` | identical | **IDENTICAL** |
+| `universe_rank` | 33,567 rows / rank_hash `310020180659703283487795` | identical | **IDENTICAL** |
+
+That is the property that mattered: the series rule was re-expressed (not changed in effect), the
+floor stayed off, and the surveillance table is empty — so every number Phase 3 will join to is
+bit-for-bit what it was. Suite after the change: `python -m src.selfcheck` → **ALL PASS (13 checks)
+in 28.5s**.
+
+### Open items for the next pass
+
+1. **The ₹5cr floor decision** — the premise is falsified; enforcing it cuts ~31% of the universe.
+   Needs the BRD owner, not an agent.
+2. **`eligible()` is not the "pure function" the plan asks for**: it needs an open connection *and*
+   the `month_history` table that only `build()` creates (on a fresh DB:
+   `CatalogException: Table with name month_history does not exist!`).
+3. **The rule set has two owners**: `_CHECKS` (SQL) and the point form's if-chain must be
+   hand-synchronised — the divergence found above is the class, and fixing that class is the
+   highest-value next pass.
+4. **A malformed surveillance row aborts the whole build** (and with it the daily refresh chain)
+   instead of being quarantined.
+5. Minor, recorded for honesty: `eligible` keeps the partial September month while `winners`
+   excludes it (benign — no return is provisional — but previously undocumented); 2.1's "5
+   hand-picked dates" are deterministic picks (first, quartiles, last); and printing `₹` raises
+   `UnicodeEncodeError` on this cp1252 console, so new output says `Rs`.

@@ -16,7 +16,8 @@ table only — the monthly pick ranking (§7/§8 model score) is a later phase.
 python -m src.universe.winners self-check: synthetic hand-computed returns/labels (incl. the
 all-tie month), then live: label-count invariants + n random months recomputed EXACTLY by an
 independent from-scratch pandas pass over the sampled months only (returns < 1e-9, winner
-sets identical).
+sets identical) — and, since a claim without a visible artifact is not a checkpoint, the first
+three sampled months are PRINTED side by side (table list vs recomputed list).
 """
 import random
 import sys
@@ -80,7 +81,7 @@ def _synth_check() -> None:
     tmp = tempfile.mkdtemp()
     cfg = copy.deepcopy(load("quick"))
     cfg["data_start_date"], cfg["end_date"] = "2024-01-01", "2024-09-30"
-    cfg["universe"]["top_n"] = 4
+    cfg["universe"]["top_n"] = 5   # ranks D,A,G,B,C — so C (rank 5) stays inside the universe
     cfg["paths"]["duckdb"] = os.path.join(tmp, "test.duckdb")
     con = duckdb.connect(cfg["paths"]["duckdb"])
     rank.synth_setup(con)                      # Sep closes: A 130 (+30%), Y 5.5 (+10%), rest flat
@@ -94,7 +95,8 @@ def _synth_check() -> None:
     sep = {s: (r, wi, d, t) for s, r, wi, d, t in con.execute(
         "SELECT symbol, ret, is_winner, is_top_decile, is_top20 FROM winners "
         "WHERE mdate = '2024-09-30'").fetchall()}
-    # pool = eligible at the Aug 31 DECISION = {A, B, C} (D listed<6m, Y price+rank).
+    # pool = eligible at the Aug 31 DECISION = {A, B, C} (D listed<6m + ASM, G under GSM,
+    # Y price+rank).
     # Sep returns: A +30% (100 -> 130), B 0% (100 -> 100), C 0% (50 -> 50).
     assert set(sep) == {"A", "B", "C"}, f"Sep pool wrong: {sorted(sep)}"
     assert abs(sep["A"][0] - 0.30) < 1e-12 and sep["A"][1:] == (True, True, True), \
@@ -104,7 +106,7 @@ def _synth_check() -> None:
 
     aug = {s: wi for s, wi in con.execute(
         "SELECT symbol, is_winner FROM winners WHERE mdate = '2024-08-31'").fetchall()}
-    # Aug: pool from Jul = {A, B, C}, all returns 0.0 -> percent_rank ties -> EVERYONE wins
+    # Aug: pool from Jul = {A, B, C} (same exclusions), all returns 0.0 -> percent_rank ties -> EVERYONE wins
     # (documented tie semantics: labels scale by percentile, ties share them)
     assert aug == {"A": True, "B": True, "C": True}, f"all-tie month must crown everyone: {aug}"
     con.close()
@@ -150,8 +152,11 @@ def _raw_spot_check(con, cfg: dict, n: int = 10) -> None:
                       [lo]).fetch_df()
     adj["date"] = pd.to_datetime(adj["date"])
     adj = adj.sort_values("date")          # once: keep='last' below then means latest date
-    print(f"  recompute input: {len(adj):,} adjusted rows from {lo.date()} "
-          f"(scoped to the sampled months)", flush=True)
+    print(f"  recompute input: {len(adj):,} adj_close rows from {lo.date()} "
+          f"(scoped to the sampled months; raw bhav ratios are not a return oracle — NSE and "
+          f"Yahoo place dividend adjustments differently, see the docstring)", flush=True)
+    print("  Phase 2 checkpoint - winner lists, table vs independent recompute:", flush=True)
+    shown = 0
     for d in sample:
         prev = prevs[d]
         ends = [pd.Timestamp(str(prev)), pd.Timestamp(str(d))]
@@ -179,6 +184,15 @@ def _raw_spot_check(con, cfg: dict, n: int = 10) -> None:
         assert worst < 1e-9, f"{d}: per-symbol returns differ, worst {worst:.2e}"
         assert recomp_win == table_win, \
             f"{d}: winner sets differ: {sorted(recomp_win ^ table_win)[:8]}"
+        if shown < 3:                      # the plan's checkpoint, three months side by side
+            shown += 1
+            t_names = sorted(table_win, key=lambda s: (-table[s], s))[:5]
+            r_names = sorted(recomp_win, key=lambda s: (-j.loc[s, "ret"], s))[:5]
+            print(f"  {d}: pool {len(j):,} | winners {len(table_win)} "
+                  f"(recomputed {len(recomp_win)})", flush=True)
+            print("    table     : " + ", ".join(f"{s} {table[s]:+.2%}" for s in t_names), flush=True)
+            print("    recomputed: " + ", ".join(f"{s} {j.loc[s, 'ret']:+.2%}" for s in r_names),
+                  flush=True)
     print(f"independent recompute: {len(sample)}/{len(sample)} months match exactly "
           f"(returns < 1e-9, winner sets identical)", flush=True)
 

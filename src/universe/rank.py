@@ -17,6 +17,8 @@ rank <= top_n is the as-of universe. The decision month is inside its own traili
   files); med3_cr is the rupee-crore view for humans.
 - no lookahead by construction: the window ends at the decision date D. The rank carries NO
   price floor — a ₹5 stock can rank (the price floor is eligibility's job, task 2.2).
+- the series filter comes from config (universe.allowed_series) via panels.series_sql — the same
+  renderer the panel and this module's oracle use, so the universe definition cannot drift.
 - rebuildable derived table (CREATE OR REPLACE), unlike the append-only bhav table (BRD §5).
 
 build(con, cfg) takes an open DuckDB connection so the phase chain (rank -> eligibility ->
@@ -34,6 +36,7 @@ import os
 import sys
 import tempfile
 import time
+from datetime import date
 
 import duckdb
 
@@ -74,24 +77,28 @@ def as_of(con, decision_date: str, k: int = 5) -> list[tuple]:
 # ---- synthetic fixture shared by the universe-layer self-checks (tasks 2.1-2.3) ----
 
 def synth_bhav_rows() -> list[tuple]:
-    """6 symbols x 9 months of 2024: (symbol, series, date, close, turnover).
+    """8 symbols x 9 months of 2024: (symbol, series, date, close, turnover).
 
-    A,B,C,Y trade the whole span; D only Aug+Sep (recent listing); X is BE (excluded series).
+    A,B,C,G,Y trade the whole span; D only Aug+Sep (recent listing); X is BE and Q is 'T'
+    (both non-allowed series, and both the largest turnover in the fixture, so a series leak
+    cannot hide behind a rank miss).
     Closes: A 100 (130 in Sep — gives the winners test a +30% month), B 100, C 50, D 100,
-    Y 5 (penny), X 100. Turnover varies for A in Jun/Jul/Aug so the trailing median is
-    hand-checkable; B 2e8, C 1e8, D 5e8, Y 1e6, X 1e9.
+    G 100, Y 5 (penny), X/Q 100. Turnover varies for A in Jun/Jul/Aug so the trailing median is
+    hand-checkable; B 2e8, C 1e8 (the low-turnover case), D 5e8, G 2.5e8 (the GSM case),
+    Y 1e6, X/Q 1e9.
     """
     import calendar
     rows = []
     for sym, series, close, to in (("A", "EQ", 100.0, 3.0e8), ("B", "EQ", 100.0, 2.0e8),
                                    ("C", "EQ", 50.0, 1.0e8), ("D", "EQ", 100.0, 5.0e8),
-                                   ("Y", "EQ", 5.0, 1.0e6), ("X", "BE", 100.0, 1.0e9)):
+                                   ("G", "EQ", 100.0, 2.5e8), ("Y", "EQ", 5.0, 1.0e6),
+                                   ("X", "BE", 100.0, 1.0e9), ("Q", "T", 100.0, 1.0e9)):
         months = (8, 9) if sym == "D" else range(1, 10)
         for m in months:
             a_to = {6: 2.7e8, 7: 3.3e8, 8: 3.0e8}.get(m, 3.0e8) if sym == "A" else to
             close_eff = 130.0 if (sym == "A" and m == 9) else close
             for day in (15, calendar.monthrange(2024, m)[1]):
-                rows.append((sym, series, __import__("datetime").date(2024, m, day), close_eff, a_to))
+                rows.append((sym, series, date(2024, m, day), close_eff, a_to))
     return rows
 
 
@@ -102,6 +109,16 @@ def synth_setup(con) -> None:
     rows = synth_bhav_rows()
     con.executemany("INSERT INTO bhav (symbol, series, date, close, turnover) "
                     "VALUES (?, ?, ?, ?, ?)", rows)
+    # Surveillance (BRD §4 GSM/ASM), as of the DECISION date. G is under GSM from Jan 2024
+    # (excluded in every fixture month); D enters ASM only from Sep 2024 (so its Aug row shows
+    # the rule is as-of, not "ever flagged"); A's flag starts AFTER the fixture window — a flag
+    # not yet in force must not exclude anything.
+    con.execute("CREATE TABLE surveillance (symbol VARCHAR, effective_from DATE, "
+                "list VARCHAR, stage INTEGER)")
+    con.executemany("INSERT INTO surveillance VALUES (?, ?, ?, ?)",
+                    [("G", date(2024, 1, 1), "GSM", 2),
+                     ("D", date(2024, 9, 1), "ASM", 3),
+                     ("A", date(2024, 10, 1), "GSM", 4)])
 
 
 def _synth_check() -> None:
@@ -114,19 +131,21 @@ def _synth_check() -> None:
     build(con, cfg)
 
     # hand-computed: at the Aug decision, A's trailing-3 monthly medians are
-    # (2.7e8, 3.3e8, 3.0e8) -> med3 = 3.0e8; order D(5e8) > A(3e8) > B(2e8) > C(1e8) > Y(1e6)
+    # (2.7e8, 3.3e8, 3.0e8) -> med3 = 3.0e8; order D(5e8) > A(3e8) > G(2.5e8) > B(2e8) > C(1e8) > Y(1e6)
     got = {r[0]: (r[1], r[2]) for r in con.execute(
         "SELECT symbol, med3, rank FROM universe_rank WHERE mdate = '2024-08-31'").fetchall()}
     assert got["A"] == (3.0e8, 2), f"A med3/rank: got {got['A']}, expected (3.0e8, 2)"
     assert [s for s, _ in sorted(got.items(), key=lambda kv: kv[1][1])] == \
-        ["D", "A", "B", "C", "Y"], f"rank order wrong: {got}"
-    assert "X" not in got, "BE series must never enter the EQ rank"
-    assert got["Y"][1] <= cfg["universe"]["top_n"], \
-        "rank has no price floor: the penny stock must rank and be excluded later (task 2.2)"
+        ["D", "A", "G", "B", "C", "Y"], f"rank order wrong: {got}"
+    assert "X" not in got and "Q" not in got, \
+        f"a non-allowed series must never enter the rank (BE/'T'), got {sorted(got)}"
+    assert got["Y"][1] == 6, \
+        (f"rank has no price floor: the ₹5 penny must be ranked ({got['Y']}) — excluding it is "
+         f"eligibility's job (task 2.2), not the rank's")
     # partial window: at the Jan decision only Jan exists -> median over Jan alone;
-    # 4 symbols (A,B,C,Y — D first lists in Aug, so it cannot be ranked yet)
+    # 5 symbols (A,B,C,G,Y — D first lists in Aug, X/Q are non-allowed series)
     jan = con.execute("SELECT count(*) FROM universe_rank WHERE mdate = '2024-01-31'").fetchone()[0]
-    assert jan == 4, f"first decision month must rank the 4 existing EQ symbols, got {jan}"
+    assert jan == 5, f"first decision month must rank the 5 existing EQ symbols, got {jan}"
     con.close()
     print("synthetic check passed (hand-computed med3, rank order, BE exclusion)", flush=True)
 
@@ -140,13 +159,14 @@ def _source_equivalence(con, cfg: dict, dates: list) -> None:
     side), a monthly-median shortcut, or a profile filter leaking into the window.
     """
     lookback = cfg["universe"]["liquidity_lookback_months"]
+    series = panels.series_sql(cfg)   # the same rule the panel is built with, or this proves nothing
     total = 0
     for d in dates:
         n_src, n_panel, missing, extra, diff = con.execute(f"""
             WITH src AS (
                 SELECT b.symbol, median(b.turnover) AS med3, count(*) AS n_days
                 FROM bhav b
-                WHERE b.series = 'EQ'
+                WHERE {series}
                   AND b.date > ?::DATE - ({lookback} * INTERVAL '1 month')
                   AND b.date <= ?::DATE
                 GROUP BY 1),
