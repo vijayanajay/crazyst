@@ -26,6 +26,9 @@ CHECKS = [
     ("normalize.delivery", "src.normalize.delivery"),
     ("validate.report", "src.validate.report"),
     ("validate.canary", "src.validate.canary"),
+    ("universe.rank", "src.universe.rank"),
+    ("universe.eligibility", "src.universe.eligibility"),
+    ("universe.winners", "src.universe.winners"),
 ]
 
 
