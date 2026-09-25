@@ -49,6 +49,7 @@ from src.normalize import delivery as norm_deliv
 from src.universe import eligibility, rank, winners
 
 IST = timezone(timedelta(hours=5, minutes=30))
+LOG_PATH = "data/refresh.log"
 ERA_LAST = (OLD_FORMAT_LAST_DAY.year, OLD_FORMAT_LAST_DAY.month)  # 2024-07 straddles the two eras
 
 

@@ -586,3 +586,27 @@ tried to bring the key back refuses to load rather than silently half-working.
 Consequence for the plan: actionplan's M2.3 status clause "the scheduler's `end_date` write is
 now atomic" describes a mechanism that no longer exists — the write is gone, and the 2026-09-23
 audit finding it answered is closed at the root rather than defended in place.
+
+### Live verification (2026-09-25) — and one bug the live run caught
+
+First real execution of the committed code: `python -m src.download.scheduler --once`, pre-cutoff
+(10:52 IST), as-of 2026-09-24, a genuine 2-day gap to close (stored cutoff was 2026-09-22).
+
+| Step | Result |
+|---|---|
+| 404 eviction for the target date | 1 entry dropped, re-probed NSE (the M2.3 mechanism, unchanged) |
+| fetch + normalize (2 missed days, cache-skip after an interrupted first attempt) | bhav **7,899,813 → 7,907,146 rows**, cutoff **2026-09-22 → 2026-09-24**; delivery 6,262,863 → 6,268,195; adj_close +1 straggler row (the 4-missing self-heal queue from M2.3) |
+| cutoff provenance | the log states it outright: *the cutoff downstream stages read is that bhav max date (panels.data_cutoff)* — no config write anywhere |
+| derived rebuild | `universe_rank` 33,563 rows / 13 months, `eligible` 33,563, **winners 724 over 11 months (unchanged)** |
+| verification gate | selfcheck **ALL PASS (17 checks) in 294.2s** inside the refresh; scheduler verdict **ok: caught up to 2026-09-24, exit 0** (336s) |
+| repo hygiene | `git status` after the run: clean apart from the one-line fix below — the property this refactor exists for |
+| Yahoo lag (documented, by design) | newest NSE day 2026-09-24: 804/2,664 traded symbols priced — placeholder NaN rows refused, queued for the next run |
+
+**The bug:** the refactor's constants cleanup deleted `LOG_PATH` along with `CONFIG`, and the
+refresh crashed with a `NameError` **after all data work had succeeded** — exit 1 on a run that
+had caught up. The scheduler judged it exactly right (`FAILED: the refresh did not complete
+(stored 2026-09-24, as-of 2026-09-24)`, traceback tail logged per-event, retry scheduled), which
+is the verdict logic working as designed against the new cutoff path — and the per-event log
+captured the whole failure, the exact killed-run record M2.3's logging change exists for. Fixed
+by restoring the constant; the lesson is the same one M2.3 learned: self-checks green ≠ the job
+entry point exercised. The live run is the check.
