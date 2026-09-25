@@ -8,13 +8,50 @@ Usage:
 Merges the profile's date block to top level (`data_start_date`, `walkforward_months`)
 and validates the invariants later phases rely on. `python -m src.config` runs the self-check.
 """
+import os
 import sys
 
 import yaml
 
 
+def python_child_args(module: str, *rest: str) -> list:
+    """argv that runs `python -m <module> <rest>` against this same runtime, frozen-aware.
+
+    The frozen exe can't spawn `-m` children (no interpreter sources) — it re-invokes itself
+    with --run-module, which quantdata.py dispatches via runpy. Used by the selfcheck runner,
+    the refresh's verify gate and the scheduler's refresh child.
+    """
+    if getattr(sys, "frozen", False):
+        return [sys.executable, "--run-module", module, *rest]
+    return [sys.executable, "-m", module, *rest]
+
+
+def home_dir() -> str:
+    """Where config.yaml and data/ live: the frozen executable's folder, else the cwd.
+
+    The frozen build (build_exe.py -> dist/quantdata.exe) carries a packaged default config and
+    keeps everything under its own directory, so the same exe is portable across machines and
+    projects; from source, the repo root (cwd) is home, exactly as before.
+    """
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    return os.getcwd()
+
+
+def _bootstrap_config(path: str) -> None:
+    """First run of the frozen exe: unpack the packaged default config.yaml next to it."""
+    import shutil
+    src = os.path.join(getattr(sys, "_MEIPASS", "."), "config.yaml")
+    assert os.path.isfile(src), f"no packaged default config found at {src}"
+    shutil.copyfile(src, path)
+    print(f"wrote default config: {path}", flush=True)
+
+
 def load(profile: str | None = None) -> dict:
-    with open("config.yaml") as f:
+    path = os.path.join(home_dir(), "config.yaml")
+    if not os.path.exists(path) and getattr(sys, "frozen", False):
+        _bootstrap_config(path)
+    with open(path) as f:
         cfg = yaml.safe_load(f)
     profile = profile or cfg["profile"]
     if profile not in ("quick", "full"):
@@ -22,6 +59,12 @@ def load(profile: str | None = None) -> dict:
     cfg["profile"] = profile
     cfg["data_start_date"] = cfg[profile]["start_date"]
     cfg["walkforward_months"] = cfg[profile]["walkforward_months"]
+    if getattr(sys, "frozen", False):
+        # Relative paths resolve against the exe's folder, not wherever it was launched from —
+        # otherwise a shortcut from another cwd would scatter a second data/ tree.
+        for k, v in cfg["paths"].items():
+            if not os.path.isabs(str(v)):
+                cfg["paths"][k] = os.path.join(home_dir(), str(v))
     _validate(cfg)
     return cfg
 

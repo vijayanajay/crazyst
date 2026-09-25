@@ -37,7 +37,7 @@ from datetime import date, datetime, timedelta, timezone
 import duckdb
 import requests
 
-from src.config import load
+from src.config import load, python_child_args
 from src.download._http import asof_date  # shared by every fetch-plan caller (re-exported)
 from src.download.backfill_bhavcopy import months_between
 from src.download.bhavcopy_old import OLD_FORMAT_LAST_DAY, download_month as old_month
@@ -176,7 +176,7 @@ def main(argv: list[str]) -> int:
     verdict = "skipped (--no-verify)"
     code = 0
     if verify:
-        v = subprocess.run([sys.executable, "-m", "src.selfcheck"], capture_output=True, text=True)
+        v = subprocess.run(python_child_args("src.selfcheck"), capture_output=True, text=True)
         tail = (v.stdout + v.stderr).strip().splitlines()
         verdict = tail[-1] if tail else "(no output)"
         code = v.returncode

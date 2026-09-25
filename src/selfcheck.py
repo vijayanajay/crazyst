@@ -25,7 +25,7 @@ import time
 import duckdb
 
 from src import stamp
-from src.config import load
+from src.config import load, python_child_args
 
 # registry: (name, module with a __main__ self-check). Network checks are cache-backed:
 # once months are cached they run in seconds and hit NSE only for missing files.
@@ -106,10 +106,10 @@ def main(argv: list[str]) -> int:
         t0 = time.monotonic()
         if verbose:
             print(f"== {name} ({module}) ==", flush=True)
-            r = subprocess.run([sys.executable, "-m", module])
+            r = subprocess.run(python_child_args(module))
             tail = []
         else:
-            r = subprocess.run([sys.executable, "-m", module], capture_output=True, text=True)
+            r = subprocess.run(python_child_args(module), capture_output=True, text=True)
             tail = (r.stdout + r.stderr).strip().splitlines()[-3:]
         dt = time.monotonic() - t0
         if r.returncode == 0:

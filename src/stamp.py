@@ -53,7 +53,19 @@ def _connect(cfg: dict):
 
 def code_fp() -> str:
     """sha256 over the sources and params that define behavior (comments included, deliberately:
-    any edit is a change worth re-verifying under)."""
+    any edit is a change worth re-verifying under).
+
+    Frozen exe (build_exe.py): there are no source files on disk, so hash the packaged build ID
+    written at freeze time instead — a rebuilt exe is a code change, a copied exe is not.
+    """
+    if getattr(sys, "frozen", False):
+        marker = os.path.join(os.path.dirname(sys.executable), "quantdata_build_id.txt")
+        if os.path.isfile(marker):
+            with open(marker, "rb") as fh:
+                return hashlib.sha256(fh.read()).hexdigest()[:16]
+        import __main__  # marker missing: degrade to the exe's own identity, never crash
+        return hashlib.sha256(sys.executable.encode()).hexdigest()[:16] + ":" \
+            + hashlib.sha256(getattr(__main__, "__file__", sys.executable).encode()).hexdigest()[:16]
     h = hashlib.sha256()
     for root in _CODE_ROOTS:
         if os.path.isfile(root):

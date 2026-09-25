@@ -46,7 +46,7 @@ from datetime import date, datetime
 
 import duckdb
 
-from src.config import load
+from src.config import load, python_child_args
 from src.download import bhavcopy_old, bhavcopy_udiff, delivery, refresh
 
 LOCK_PATH = "data/.refresh.lock"
@@ -190,8 +190,8 @@ def main(argv: list[str]) -> int:
             if dropped:
                 say(f"evicted {dropped} cached 404(s) for {target} so this attempt re-probes NSE")
             t0 = time.monotonic()
-            r = subprocess.run([sys.executable, "-m", "src.download.refresh",
-                                "--date", target.isoformat()], capture_output=True, text=True)
+            r = subprocess.run(python_child_args("src.download.refresh", "--date", target.isoformat()),
+                               capture_output=True, text=True)
             stored = stored_max(cfg)
             code, msg = verdict(stored, target, failed=r.returncode != 0)
             say(f"attempt {attempt}/{MAX_ATTEMPTS}: {msg} "
