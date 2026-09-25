@@ -7,8 +7,9 @@ experiment's `results.json`.
 
 | # | Experiment | Pre-registered prediction | Verdict | Date |
 |---|---|---|---|---|
-| E000 | Universe overlap: as-of top-1500 liquidity vs Nifty 200 | Overlap ≥ 80% of Nifty 200 constituents per year; hit rates computed on the two universes differ by < 2pp | pending | — |
-| E001 | Anatomy of winners: winners differ from rest on momentum/delivery features | Winners' 6–12M momentum and 20-day delivery% z-score distributions sit above the eligible rest (median shift > 0) | pending | — |
+| E000 | Universe overlap: as-of top-1500 liquidity vs Nifty 200 | Overlap ≥ 80% of Nifty 200 constituents per year; hit rates computed on the two universes differ by < 2pp | **rejected on the letter of the rule** — overlap clause decisively confirmed (min 97.7% / mean 98.7% per year, 15 years); hit-rate trigger fired (mean yearly |Δ| 2.48pp ≥ 2pp) but the fired statistic is noise-bound (yearly binomial noise floor ±1.91pp; pooled |Δ| = 0.86pp, below the bar). No index-membership data needed; universe choice (0.86pp, ~2σ) handed to the BRD owner. See 2026-09-25 E000 block | 2026-09-25 |
+| E002b | Full-profile confirmation IC sweep (mean monthly IC, month fixed effects removed) | Momentum features (mom_6m / mom_12m_1m) confirmed at 15 years; volatility-state finding reproduces with a stable sign | **confirmed, with one major reversal** — mom_12m_1m +0.052 (p = 1.1e-6) and mom_6m confirmed; **delivery family CONFIRMED at full history** (delivery_pct +0.049, p = 1.2e-11) — E002's quick rejection was a bull-window artifact; atr_ratio is regime-flipping (+0.045 up / −0.183 down, 94% down-month consistency), so its pre-registered sign holds only in the regime quick never sampled. See 2026-09-25 E002b block | 2026-09-25 |
+| E001 | Anatomy of winners: winners differ from rest on momentum/delivery features | Winners' 6–12M momentum and 20-day delivery% z-score distributions sit above the eligible rest (median shift > 0) | **partial** — momentum anatomy confirmed (mom_12m_1m AUC 0.544, +0.050 median shift, 64% per-month consistency); delivery z-score anatomy REJECTED (AUC 0.478, wrong sign — matches E002); strongest separator is volatility state with the LORE-DIRECTION wrong (atr_ratio AUC 0.639 at every month, uniform across size buckets — not a small-cap artifact; momentum vanishes in the 601–1500 bucket, AUC 0.507). See 2026-09-25 block | 2026-09-25 |
 | E002 | Univariate IC sweep (all features) | 6–12M momentum and delivery% z-score have positive pooled Spearman IC, surviving BH at α = 0.05 | **partial** — mom_12m_1m confirmed (+0.065, right sign, BH-surviving); delivery z-score REJECTED (−0.010, n.s.); mom_6m wrong sign; volatility-state features dominate (see 2026-09-24 block) | 2026-09-24 |
 | E006 | Cost sensitivity: 0.2 / 0.5 / 1.0 % per side | Net edge at 0.2% does not survive 1.0% for picks ranked below ~600 (BRD §9.7) | pending | — |
 | E003 | Bulk/block deal net buying overlay (Phase 7) | Net institutional buying in the prior month adds IC on top of E002 survivors | pending | — |
@@ -587,6 +588,30 @@ Consequence for the plan: actionplan's M2.3 status clause "the scheduler's `end_
 now atomic" describes a mechanism that no longer exists — the write is gone, and the 2026-09-23
 audit finding it answered is closed at the root rather than defended in place.
 
+---
+
+## Experiment E001 — anatomy of winners (2026-09-25, profile `quick`)
+
+- **Prediction (pre-registered in the ledger row above and in
+  `experiments/001_anatomy/hypothesis.md`, written before the run):** winners' 12M−1M momentum
+  and 20-day delivery% z-score distributions sit above the eligible rest (median shift > 0),
+  judged by tie-safe AUC, BH across 22 features, and per-month sign consistency, with a
+  pre-registered size-bucket split as the small-cap-artifact check on E002's volatility
+  finding.
+- **Run:** `experiments/001_anatomy/run.py --profile quick` — 22 features, 14,373 labeled rows
+  (724 winners), 11 decision months, cutoff 2026-09-24, 1.8s. All shifts, AUCs, p-values,
+  BH flags, regime and bucket splits are in `experiments/001_anatomy/results.json`.
+- **Verdict: PARTIAL** (details in the ledger row and `verdict.md`). Momentum anatomy
+  confirmed; delivery anatomy rejected (second independent falsification of the delivery
+  prior); the volatility-state direction is the strongest and most consistent winner anatomy
+  on this window — against the pre-registered lore direction — and it is uniform across size
+  buckets, while momentum's separation concentrates in the top/mid buckets.
+- **Honest caveats:** quick profile = 11 months, all of them up-regime, so the pre-registered
+  regime split was vacuous (needs the full-profile re-run to mean anything); the pooled
+  tail-vs-bulk disagreement on mom_1m/mom_3m (pooled positive, monthly bulk reversal) is
+  flagged for E002b, not resolved here; E001 shares E002's window, so "confirmed" here means
+  "confirmed on the same 11 up-months", not out-of-sample.
+
 ### Live verification (2026-09-25) — and one bug the live run caught
 
 First real execution of the committed code: `python -m src.download.scheduler --once`, pre-cutoff
@@ -610,3 +635,78 @@ is the verdict logic working as designed against the new cutoff path — and the
 captured the whole failure, the exact killed-run record M2.3's logging change exists for. Fixed
 by restoring the constant; the lesson is the same one M2.3 learned: self-checks green ≠ the job
 entry point exercised. The live run is the check.
+
+---
+
+## Experiment E002b — full-profile confirmation IC sweep (2026-09-25, profile `full`)
+
+- **Why a new experiment:** E002 ran on `quick` (11 decision months, one regime) and its own
+  row pre-registered that the full sweep "is NOT pre-registered here". Running more data
+  through the same code after seeing quick results would be post-hoc; `E002b`'s hypothesis
+  (written before the run) fixes the method instead: **mean monthly Spearman IC with a
+  one-sample t-test across months** — month fixed effects removed by construction, closing
+  the pooled-ranks fragility E002's verdict itself flagged. E002 is frozen and unedited.
+- **Run:** full-profile derived chain rebuilt through its real entry points (panels 5.7s,
+  rank 6.2s, eligible 8.0s, winners 8.3s, feature_panel 59.0s, feature_matrix 0.9s → 218,648
+  rows × 183 decision months), then `experiments/002b_ic_sweep_full/run.py --profile full` —
+  22 features, **178,171 labeled rows / 181 measured months**, cutoff 2026-09-24. All mean
+  monthly ICs, t/p values, BH flags, pooled-raw-IC continuity columns and the regime/bucket
+  splits are in `experiments/002b_ic_sweep_full/results.json`.
+- **Verdict: CONFIRMED, with one major reversal** (details in the ledger row and
+  `verdict.md`):
+  - `mom_12m_1m` +0.052 (p = 1.1e-6, BH ✓, 64% of months) and `mom_6m` +0.024 (BH ✓) — the
+    momentum prior survives 15 years, and it is counter-cyclical: down-months +0.099
+    (75% of 69) vs up-months +0.023 (n.s.).
+  - **The delivery family is confirmed at full history** — `delivery_pct` +0.049
+    (t = 7.2, p = 1.2e-11, 72% of months), trend +0.023, z-score +0.017 (all BH ✓). E002's
+    quick-profile rejection was a bull-window artifact: delivery IC is +0.087 in down-months
+    (87%) vs +0.026 in up-months. The two experiments deliberately disagree; E002b is the
+    citation.
+  - `atr_ratio` is a **regime-flipping** feature: +0.045 in up-months (matches E001's
+    quick-window anatomy) and **−0.183 in down-months** (94% of 67, p = 7e-19). Low-vol is a
+    crash factor, not an all-weather one. Five candle/accumulation features (up-down ratio,
+    breakout, close_in_range, higher-lows, big-body) are BH-rejected on direction at full
+    history.
+- **Bucket attribution:** the confirmed features price the whole universe (mom_12m_1m
+  0.038/0.049/0.052, delivery_pct 0.047/0.059/0.054 across top200/201–600/601–1500) — 15
+  years overrules E001's quick-window impression that momentum dies in the small-cap tail.
+- **Method note:** the first run of the splits counted month×bucket cells as months
+  (336+207 = 543 "months", p-values anti-conservative); caught by the months-not-summing
+  sanity check and fixed before any verdict was written — regime stats now use one IC per
+  month over the full cross-section (112 + 69 = 181).
+- **Consequence for the plan:** Phase 4's composite candidates are `mom_12m_1m` (+),
+  `mom_6m` (+), `delivery_pct` (+), with `atr_ratio` as a regime-conditional overlay; the
+  delivery features are correlated (one family = one vote). E002's verdict stands as
+  written; its "delivery falsified" claim is superseded by this row, and the status line at
+  the top of this plan is updated accordingly.
+
+---
+
+## Experiment E000 — universe overlap (2026-09-25, profile `full`)
+
+- **Source decision (settled pre-run, recorded in `hypothesis.md`):** historical Nifty 200
+  membership has no clean source (yfiua.github.io does not carry NIFTY200; index-report
+  scraping is a plan non-goal), so E000 ran on the **current** constituents CSV
+  (`data/index/ind_nifty200list.csv`, 200 validated symbols, hand-downloaded from
+  `nsearchives.nseindia.com` — the same trust-boundary pattern as the surveillance snapshot)
+  applied as-of to every year, with the survivorship bias disclosed and its direction argued
+  (it understates overlap → conservative for the verdict that matters).
+- **Run:** `experiments/000_universe_overlap/run.py --profile full` — 15 December decision
+  years, per-year overlap from `universe_rank` and hit-rate delta from `eligible`/`winners`
+  with the forward label. All counts in `results.json`.
+- **Verdict: REJECTED on the letter of the pre-registered rule, noise-bound in substance**
+  (details in the ledger row and `verdict.md`):
+  - overlap: **min 97.7% / mean 98.7%** — the top-1500 as-of universe contains the Nifty 200
+    in every year; index membership is never needed on the critical path.
+  - hit-rate delta: mean yearly |Δ| 2.48pp fired the ≥ 2pp trigger; at ~130 labeled N200
+    names/year the binomial noise floor is ±1.91pp, and the **pooled** |Δ| (not the
+    pre-registered trigger, reported as the tiebreaker) is **0.86pp** (5.04% vs 4.17%, 741 vs
+    94 winners) with noise sd 0.46pp — small, likely real, immaterial.
+  - recommendation to the BRD owner: keep top-1500; N200-only would discard ~85% of labeled
+    rows for ~0.9pp of hit rate within yearly noise.
+- **Honest caveats:** early-year N200 rows are the least trustworthy (today's list applied
+  as-of; 71/200 names did not exist by end-2011); 2011's 0/123 N200 hit rate is the noise
+  floor, not a finding; the pooled 2σ significance was not family-corrected.
+- **Method note:** the survivorship-drift column was initially computed from the trading
+  subset (structurally zero — a mislabeled denominator). Caught on the live run and fixed
+  before the verdict: `not_ever_traded_by_year_end` now reads the snapshot directly.

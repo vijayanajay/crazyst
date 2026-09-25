@@ -18,6 +18,8 @@ atomic then and has since been **removed at the root** — config no longer carr
 the cutoff is the newest bhav date (LEDGER, 2026-09-25 refactor block); the daily-refresh gate
 (agreement 1.0 on 105 pairs) and a full
 backfill slice (638 rows, 99.8% vs NSE) were re-run through their real entry points.
+Malformed surveillance rows are now quarantined (`surveillance_rejects`) instead of aborting the
+build, with validate.report failing while rejects are non-empty (2026-09-25).
 
 Open items carried forward (none blocks a Phase 1/2 done-when):
 
@@ -26,10 +28,17 @@ Open items carried forward (none blocks a Phase 1/2 done-when):
 - Quality debt recorded in the ledger's "Open items for the next pass": `eligible()`'s
   connection/table dependency vs this plan's pure-function wording, the hand-synchronised
   `_CHECKS`/point-form rule pair, quarantine for malformed surveillance rows.
-- **Phase 3 in progress**: tasks 3.1–3.5 implemented and verified; **E002 (3.7) has run** —
-  verdict `partial` in the ledger (momentum 12M−1M confirmed, delivery z-score rejected,
-  low-volatility state dominates). Open: 3.6 (E001 anatomy), 3.8 (E000 overlap),
-  `experiments/001_anatomy/` still empty.
+- **Phase 3 complete except the checkpoint presentation (2026-09-25)**: **E001 (3.6) ran** —
+  `partial` (momentum anatomy confirmed; delivery anatomy rejected; volatility state the
+  strongest separator, against lore direction, uniform across size buckets). **E000 (3.8) ran** —
+  `rejected` on the letter of its hit-rate trigger, noise-bound in substance (overlap min 97.7%:
+  the top-1500 contains the Nifty 200; no index-membership data ever needed). **E002b ran** —
+  full-profile confirmation sweep, `confirmed` with one major reversal: the delivery family is
+  real at 15 years (E002's quick rejection was a bull-window artifact) and `atr_ratio` is
+  regime-flipping (+0.045 up / −0.183 down). Phase 4 composite candidates: mom_12m_1m (+),
+  mom_6m (+), delivery_pct (+), atr_ratio as a regime-conditional overlay. Remaining: present
+  the IC table + anatomy + E000 overlap (the Phase 3 checkpoint), and the BRD owner decides the
+  universe question E000 hands over (pooled hit-rate delta 0.86pp, ~2σ).
 
 ## Working rules (read first)
 
