@@ -49,6 +49,7 @@ CHECKS = [
     ("universe.winners", "src.universe.winners"),
     ("backtest.engine", "src.backtest.engine"),
     ("backtest.portfolio", "src.backtest.portfolio"),
+    ("backtest.metrics", "src.backtest.metrics"),
 ]
 
 SUITE_KEY = "selfcheck"
