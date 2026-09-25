@@ -51,6 +51,7 @@ CHECKS = [
     ("backtest.portfolio", "src.backtest.portfolio"),
     ("backtest.metrics", "src.backtest.metrics"),
     ("backtest.audit", "src.backtest.audit"),
+    ("backtest.attribution", "src.backtest.attribution"),
 ]
 
 SUITE_KEY = "selfcheck"
