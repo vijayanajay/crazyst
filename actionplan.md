@@ -139,20 +139,20 @@ Work in this order. Each task depends on the previous.
 
 **Checkpoint: compare v0 vs ranker on the validation slice. Pick one. Document why.**
 
-## Phase 5 — Backtest engine + portfolio rules (M4) (4–5 days)
+## Phase 5 — Backtest engine + portfolio rules (M4) (4–5 days) — ✅ COMPLETE (2026-09-26): engine `src/backtest/engine.py` (T+1 open fills, E006's fill model — ADV non-fill gate + capped impact — and the 5.2 edge cases), rules `src/backtest/portfolio.py` (BRD §8), metrics `src/backtest/metrics.py`, no-lookahead audit `src/backtest/audit.py` (real data: 145 months / 6,622 picks, tamper drift 0), bucket attribution `src/backtest/attribution.py`, and the checkpoint `src/backtest/checkpoint.py` — 19-row equity curve + 5-fill trade log exact against hand-computed paper, deterministic replay proven. LEDGER "Phase 5 checkpoint — engine + portfolio rules + toy momentum"; selfcheck suite 23/23. Next: Phase 6 walks composite_2f forward on real data.
 
 Build against **synthetic data first** so it never waits on the pipeline.
 
 | # | Task | Details | Done when |
 |---|---|---|---|
-| 5.1 | Engine core | BRD §9 rules: T+1 open fills, costs, no same-bar fills, deterministic | Deterministic-replay check: two runs on same inputs → identical trade logs to the rupee |
-| 5.2 | Edge cases | Suspension, delisting, circuit lock, missing delivery data | Each case has a synthetic-data test that asserts the documented behavior |
-| 5.3 | Portfolio rules | BRD §8: monthly review, Trigger A/B/C, churn cap, cash slots | Rule unit tests: one test per trigger with a hand-built price path |
-| 5.4 | No-lookahead audit script | Recompute every pick from data available at decision date; assert match | Audit passes on a 12-month synthetic run and later on real data |
-| 5.5 | Trade log + metrics | BRD §11 metric set from the log | One function produces all metrics from a trade log; checked against hand-computed toy portfolio |
-| 5.6 | Size-bucket attribution | Split picks by as-of liquidity rank: top 200 / 201–600 / 601–1500; hit rate, return, churn per bucket | Bucket table present in the report pack; blended-only reporting fails review |
+| 5.1 | Engine core | BRD §9 rules: T+1 open fills, costs, no same-bar fills, deterministic | Deterministic-replay check: two runs on same inputs → identical trade logs to the rupee — ✅ `src/backtest/engine.py`; replay bit-identical, costs + capped linear impact vs ADV, non-fills logged never dropped |
+| 5.2 | Edge cases | Suspension, delisting, circuit lock, missing delivery data | Each case has a synthetic-data test that asserts the documented behavior — ✅ engine self-check: suspension marks at last close, delisting = the no-bar path (no T+1 fill / `no_bar` past the last session), circuit lock refuses fills, all asserted on synthetic fixtures |
+| 5.3 | Portfolio rules | BRD §8: monthly review, Trigger A/B/C, churn cap, cash slots | Rule unit tests: one test per trigger with a hand-built price path — ✅ `src/backtest/portfolio.py`: review sell + cash fallback + replace percentile, Trigger B stop/trail/DMA/delivery/GSM priority, Trigger A cap, Trigger C cancellation, no averaging down |
+| 5.4 | No-lookahead audit script | Recompute every pick from data available at decision date; assert match | Audit passes on a 12-month synthetic run and later on real data — ✅ `src/backtest/audit.py`: 24-month synthetic tamper suite + real audit (145 months / 6,622 picks, future-tamper drift 0, T+1 calendar check), writes `audit_results.json` |
+| 5.5 | Trade log + metrics | BRD §11 metric set from the log | One function produces all metrics from a trade log; checked against hand-computed toy portfolio — ✅ `src/backtest/metrics.py`: FIFO completed picks → pick/month hit rates, CAGR, monthly Sharpe, churn flag, benchmark compare, all vs the hand-computed toy |
+| 5.6 | Size-bucket attribution | Split picks by as-of liquidity rank: top 200 / 201–600 / 601–1500; hit rate, return, churn per bucket | Bucket table present in the report pack; blended-only reporting fails review — ✅ `src/backtest/attribution.py`: as-of **decision-month** buckets (`TradeEvent.signal_month`), per-bucket picks/hit/return/churn; `assert_consistent` fails a blended-only report |
 
-**Checkpoint: run engine on synthetic data with a trivial "buy momentum" model. Show equity curve + trade log.**
+**Checkpoint: run engine on synthetic data with a trivial "buy momentum" model. Show equity curve + trade log.** — ✅ DONE 2026-09-26: `src/backtest/checkpoint.py` (results in `src/backtest/checkpoint_results.json`; LEDGER "Phase 5 checkpoint" block).
 
 ## Phase 6 — Walk-forward harness + reports (M5) (3–4 days)
 
