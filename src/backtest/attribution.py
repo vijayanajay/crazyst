@@ -53,9 +53,10 @@ def bucket_attribution(events: list[TradeEvent], bucket_of,
     picks: list[tuple[str, float, bool]] = []              # (bucket, net return, closed by a mid-month churn sell)
     for e in events:
         if e.buy:
-            bucket = bm.get((e.date[:7], e.symbol))
+            key_month = e.signal_month or e.date[:7]    # AS-OF: the decision month, not the fill
+            bucket = bm.get((key_month, e.symbol))
             if bucket is None:
-                raise ValueError(f"no bucket for ({e.date[:7]}, {e.symbol}) — "
+                raise ValueError(f"no bucket for ({key_month}, {e.symbol}) — "
                                  f"bucket_of must cover every bought symbol")
             open_lots[e.symbol].append([e.date[:7], e.price, e.qty, bucket])
             continue

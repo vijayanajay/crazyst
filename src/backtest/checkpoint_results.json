@@ -1,0 +1,324 @@
+{
+  "checkpoint": "phase5_engine_rules_momentum",
+  "git_hash": "f471582bdd232a55e28ad123e9538008c36763bd",
+  "config": {
+    "backtest": {
+      "cost_per_side_pct": 0.0,
+      "purge_months": 1,
+      "random_seed": 42,
+      "fill": {
+        "max_position_adv_frac": 0.05,
+        "impact_coef": 0.1,
+        "impact_cap_pct": 1.0
+      }
+    },
+    "portfolio": {
+      "n_slots": 2,
+      "cash_earns": 0.0,
+      "monthly_review_sell_below_top_pct": 0.25,
+      "monthly_review_replace_above_top_pct": 0.15,
+      "monthly_review": {
+        "ma_below_consecutive_closes": 5
+      },
+      "midmonth": {
+        "trigger_a_score_excess": 0.2,
+        "trigger_a_cap": 2,
+        "trigger_b_stop_pct": 0.08,
+        "trigger_b_trail_pct": 0.12,
+        "trigger_b_ma_close_below": 2,
+        "trigger_b_deliv_z": -2.0,
+        "trigger_b_deliv_days": 3,
+        "gsm_asm_stage_exit": 2
+      },
+      "churn_report_threshold": 1.5
+    }
+  },
+  "start_capital": 100000.0,
+  "curve": [
+    {
+      "date": "2026-01-05",
+      "cash": 100000.0,
+      "market_value": 0,
+      "equity": 100000.0
+    },
+    {
+      "date": "2026-01-06",
+      "cash": 100000.0,
+      "market_value": 0,
+      "equity": 100000.0
+    },
+    {
+      "date": "2026-01-07",
+      "cash": 100000.0,
+      "market_value": 0,
+      "equity": 100000.0
+    },
+    {
+      "date": "2026-01-08",
+      "cash": 100000.0,
+      "market_value": 0,
+      "equity": 100000.0
+    },
+    {
+      "date": "2026-01-09",
+      "cash": 100000.0,
+      "market_value": 0,
+      "equity": 100000.0
+    },
+    {
+      "date": "2026-01-12",
+      "cash": 100000.0,
+      "market_value": 0,
+      "equity": 100000.0
+    },
+    {
+      "date": "2026-02-02",
+      "cash": 25.0,
+      "market_value": 99975.0,
+      "equity": 100000.0
+    },
+    {
+      "date": "2026-02-03",
+      "cash": 25.0,
+      "market_value": 100451.0,
+      "equity": 100476.0
+    },
+    {
+      "date": "2026-02-04",
+      "cash": 25.0,
+      "market_value": 100018.0,
+      "equity": 100043.0
+    },
+    {
+      "date": "2026-02-05",
+      "cash": 25.0,
+      "market_value": 100494.0,
+      "equity": 100519.0
+    },
+    {
+      "date": "2026-02-06",
+      "cash": 25.0,
+      "market_value": 100061.0,
+      "equity": 100086.0
+    },
+    {
+      "date": "2026-02-09",
+      "cash": 25.0,
+      "market_value": 100537.0,
+      "equity": 100562.0
+    },
+    {
+      "date": "2026-03-02",
+      "cash": 24.0,
+      "market_value": 100538.0,
+      "equity": 100562.0
+    },
+    {
+      "date": "2026-03-03",
+      "cash": 24.0,
+      "market_value": 95999.0,
+      "equity": 96023.0
+    },
+    {
+      "date": "2026-03-04",
+      "cash": 24.0,
+      "market_value": 94316.0,
+      "equity": 94340.0
+    },
+    {
+      "date": "2026-03-05",
+      "cash": 45244.0,
+      "market_value": 48841.0,
+      "equity": 94085.0
+    },
+    {
+      "date": "2026-03-06",
+      "cash": 45244.0,
+      "market_value": 49062.0,
+      "equity": 94306.0
+    },
+    {
+      "date": "2026-03-09",
+      "cash": 45244.0,
+      "market_value": 49283.0,
+      "equity": 94527.0
+    },
+    {
+      "date": "2026-04-01",
+      "cash": 45244.0,
+      "market_value": 49283.0,
+      "equity": 94527.0
+    }
+  ],
+  "trades": [
+    {
+      "signal_date": "2026-01-12",
+      "fill_date": "2026-02-02",
+      "symbol": "ME",
+      "qty": 909,
+      "price": 55.0,
+      "base_price": 55.0,
+      "cost_pct": 0.0,
+      "impact_pct": 0.0,
+      "reason": "select_momentum"
+    },
+    {
+      "signal_date": "2026-01-12",
+      "fill_date": "2026-02-02",
+      "symbol": "MO",
+      "qty": 476,
+      "price": 105.0,
+      "base_price": 105.0,
+      "cost_pct": 0.0,
+      "impact_pct": 0.0,
+      "reason": "select_momentum"
+    },
+    {
+      "signal_date": "2026-02-09",
+      "fill_date": "2026-03-02",
+      "symbol": "MB",
+      "qty": 221,
+      "price": 218.0,
+      "base_price": 218.0,
+      "cost_pct": 0.0,
+      "impact_pct": 0.0,
+      "reason": "replace"
+    },
+    {
+      "signal_date": "2026-02-09",
+      "fill_date": "2026-03-02",
+      "symbol": "ME",
+      "qty": -909,
+      "price": 53.0,
+      "base_price": 53.0,
+      "cost_pct": 0.0,
+      "impact_pct": 0.0,
+      "reason": "monthly_review"
+    },
+    {
+      "signal_date": "2026-03-04",
+      "fill_date": "2026-03-05",
+      "symbol": "MO",
+      "qty": -476,
+      "price": 95.0,
+      "base_price": 95.0,
+      "cost_pct": 0.0,
+      "impact_pct": 0.0,
+      "reason": "trigger_b_stop"
+    }
+  ],
+  "decisions": [
+    {
+      "date": "2026-01-12",
+      "action": "buy",
+      "symbol": "ME",
+      "trigger": "select_momentum",
+      "score_bought": 0.10000000000000009,
+      "score_sold": null,
+      "qty": 909,
+      "note": ""
+    },
+    {
+      "date": "2026-01-12",
+      "action": "buy",
+      "symbol": "MO",
+      "trigger": "select_momentum",
+      "score_bought": 0.050000000000000044,
+      "score_sold": null,
+      "qty": 476,
+      "note": ""
+    },
+    {
+      "date": "2026-02-09",
+      "action": "sell",
+      "symbol": "ME",
+      "trigger": "monthly_review",
+      "score_sold": -0.036363636363636376,
+      "score_bought": null,
+      "qty": 909,
+      "note": "monthly_review: rank below sell threshold"
+    },
+    {
+      "date": "2026-02-09",
+      "action": "buy",
+      "symbol": "MB",
+      "trigger": "replace",
+      "score_sold": null,
+      "score_bought": 0.07920792079207928,
+      "qty": 221,
+      "note": ""
+    },
+    {
+      "date": "2026-03-04",
+      "action": "sell",
+      "symbol": "MO",
+      "trigger": "trigger_b_stop",
+      "score_sold": -0.13636363636363635,
+      "score_bought": null,
+      "qty": 476,
+      "note": ""
+    }
+  ],
+  "picks": [
+    {
+      "symbol": "ME",
+      "buy_date": "2026-02-02",
+      "sell_date": "2026-03-02",
+      "qty": 909,
+      "return": -0.036363636363636376
+    },
+    {
+      "symbol": "MO",
+      "buy_date": "2026-02-02",
+      "sell_date": "2026-03-05",
+      "qty": 476,
+      "return": -0.09523809523809523
+    }
+  ],
+  "metrics": {
+    "pick_hit_rate": [
+      0.0,
+      2
+    ],
+    "month_hit_rate": [
+      0.0,
+      0
+    ],
+    "monthly_returns": [
+      0.005619999999999958,
+      -0.060012728466021015,
+      0.0
+    ],
+    "cagr": -0.2126215451938005,
+    "sharpe_monthly": -1.7264524079207224,
+    "churn_per_month": [
+      0.25,
+      false
+    ],
+    "final_equity": 94527.0,
+    "total_return": -0.054729999999999945
+  },
+  "buckets": {
+    "201-600": {
+      "picks": 1,
+      "hit_rate": 0.0,
+      "mean_return": -0.036363636363636376,
+      "churn_per_month": 0.0,
+      "churny": false
+    },
+    "top200": {
+      "picks": 1,
+      "hit_rate": 0.0,
+      "mean_return": -0.09523809523809523,
+      "churn_per_month": 0.25,
+      "churny": false
+    },
+    "blended": {
+      "picks": 2,
+      "hit_rate": 0.0,
+      "mean_return": -0.0658008658008658,
+      "churn_per_month": 0.25,
+      "churny": false
+    }
+  }
+}

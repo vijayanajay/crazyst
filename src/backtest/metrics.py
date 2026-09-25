@@ -49,6 +49,7 @@ class TradeEvent:
     price: float          # execution price (impact included)
     cost: float           # rupee cost of this fill (flat + impact), >= 0
     mid_month: bool = False   # True for Trigger A/B replacements (churn), False for monthly
+    signal_month: str | None = None   # decision month of the signal (bucket attribution)
 
 
 def completed_picks(events: list[TradeEvent]) -> list[dict]:
