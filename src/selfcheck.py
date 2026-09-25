@@ -50,6 +50,7 @@ CHECKS = [
     ("backtest.engine", "src.backtest.engine"),
     ("backtest.portfolio", "src.backtest.portfolio"),
     ("backtest.metrics", "src.backtest.metrics"),
+    ("backtest.audit", "src.backtest.audit"),
 ]
 
 SUITE_KEY = "selfcheck"
