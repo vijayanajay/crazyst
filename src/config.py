@@ -51,6 +51,9 @@ def _validate(cfg: dict) -> None:
     assert -1 < v["canary_min_deliv_autocorr"] < 1, f"autocorr floor is a correlation, got {v['canary_min_deliv_autocorr']}"
 
     u, p, b, s = cfg["universe"], cfg["portfolio"], cfg["backtest"], cfg["stats"]
+    assert "end_date" not in cfg, (
+        "end_date moved out of config: the data cutoff is read from the bhav table "
+        "(panels.data_cutoff) — remove the key")
     assert u["top_n"] > 0 and u["liquidity_lookback_months"] > 0, f"universe rank params must be positive, got {u}"
     assert u["min_price"] > 0 and u["min_listed_months"] > 0, f"eligibility floors must be positive, got {u}"
     sb = u["size_buckets"]

@@ -19,6 +19,7 @@ from datetime import date
 import requests
 
 from src.config import load
+from src.download._http import asof_date
 from src.download.backfill_bhavcopy import months_between
 from src.download.bhavcopy_old import OLD_FORMAT_LAST_DAY, download_month as old_month
 from src.download.bhavcopy_udiff import FIRST_DAY as UDIFF_FIRST, download_month as udiff_month
@@ -48,12 +49,12 @@ def _delivery_counts(cfg: dict):
 
 def main() -> int:
     cfg = load("quick")
-    end = date.fromisoformat(cfg["end_date"])
+    end = asof_date(None, cfg)   # the fetch-plan bound: the cutoff-gated as-of date
     totals = {"downloaded": 0, "cached": 0, "holidays": 0}
     with requests.Session() as s:
         # 1. bhavcopy, both eras (resumes where the previous run stopped)
         print(f"[1/3] bhavcopy resume: old 2011-01..{OLD_FORMAT_LAST_DAY:%Y-%m}, "
-              f"UDiFF {UDIFF_FIRST:%Y-%m}..{cfg['end_date'][:7]}", flush=True)
+              f"UDiFF {UDIFF_FIRST:%Y-%m}..{end:%Y-%m}", flush=True)
         for y, m in months_between(date(2011, 1, 1), OLD_FORMAT_LAST_DAY):
             up_to = OLD_FORMAT_LAST_DAY if (y, m) == (OLD_FORMAT_LAST_DAY.year, OLD_FORMAT_LAST_DAY.month) else None
             r = old_month(s, y, m, cfg, up_to=up_to)

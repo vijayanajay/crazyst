@@ -37,6 +37,7 @@ import duckdb
 import pandas as pd
 
 from src.config import load
+from src.normalize import panels
 
 ADJ_COLS = ["symbol", "date", "adj_close"]
 SCHEMA = """CREATE TABLE IF NOT EXISTS adj_close (
@@ -158,11 +159,13 @@ def _window_start(last_dates: dict, cfg: dict, buffer_days: int) -> "date":
     """Window start for a daily refresh: the oldest symbol's last stored date minus a buffer, so a
     short suspension or a late Yahoo print is covered, floored at the history floor.
 
-    Pure so the self-check can pin it; an empty map (fresh table) falls back to end_date.
+    Pure so the self-check can pin it; an empty map (fresh table) falls back to the bhav cutoff.
     """
     from datetime import date, timedelta
     floor = date.fromisoformat(cfg["adj_history_start"])
-    oldest = min([d for d in last_dates.values() if d], default=date.fromisoformat(cfg["end_date"]))
+    fallback = cfg.get("end_date") or panels.data_cutoff(
+        duckdb.connect(cfg["paths"]["duckdb"], read_only=True))
+    oldest = min([d for d in last_dates.values() if d], default=date.fromisoformat(fallback))
     return max(floor, oldest - timedelta(days=buffer_days))
 
 
@@ -387,14 +390,20 @@ def _self_check() -> None:
     noisy.iloc[9] *= 3  # 1 of 10 days broken
     assert match_fraction(nse, noisy) == 0.9, "1 broken day of 10 must give 0.9"
 
-    # 3. daily-refresh window: oldest last-stored date minus the buffer, floored at the history floor
-    from datetime import date as _date
+    # 3. daily-refresh window: oldest last-stored date minus the buffer, floored at the history floor.
+    # An end_date key is still honored (backward compat) but nothing in config carries it anymore:
+    # without one, the empty-map fallback is the bhav cutoff (panels.data_cutoff) — the live path.
+    from datetime import date as _date, timedelta as _td
     cfg0 = {"adj_history_start": "2009-01-01", "end_date": "2026-09-21"}
     assert _window_start({"A": _date(2026, 9, 21), "B": _date(2026, 9, 18)}, cfg0, 7) == _date(2026, 9, 11), \
         "window must start buffer_days before the OLDEST symbol's last stored date"
     assert _window_start({}, cfg0, 7) == _date(2026, 9, 14), "empty table must fall back to end_date"
     assert _window_start({"A": _date(2009, 1, 3)}, cfg0, 7) == _date(2009, 1, 1), \
         "window must never reach before adj_history_start"
+    cfg1 = {"adj_history_start": "2009-01-01", "paths": {"duckdb": load("quick")["paths"]["duckdb"]}}
+    live_cutoff = panels.data_cutoff(duckdb.connect(cfg1["paths"]["duckdb"], read_only=True))
+    assert _window_start({}, cfg1, 7) == _date.fromisoformat(live_cutoff) - _td(days=7), \
+        "without end_date, the empty-map fallback must be the bhav cutoff minus the buffer"
 
     # 4. live done-when: 20 random symbols vs NSE
     cfg = load("quick")
@@ -405,7 +414,7 @@ def _self_check() -> None:
     try:
         dead = [r[0] for r in con.execute(f"""
             SELECT symbol FROM bhav WHERE series='EQ'
-            GROUP BY symbol HAVING max(date) < '{cfg['end_date']}'::DATE - INTERVAL '2 years'
+            GROUP BY symbol HAVING max(date) < (SELECT max(date) FROM bhav) - INTERVAL '2 years'
             ORDER BY random() LIMIT 5""").fetchall()]
     finally:
         con.close()

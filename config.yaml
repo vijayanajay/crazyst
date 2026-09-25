@@ -13,7 +13,8 @@ full:
   walkforward_months: 36       # BRD §10.1
 
 # ---- Dates & universe (BRD §4) ----
-end_date: "2026-09-22"        # "yesterday" — updated by the daily refresh; never a future date
+# No end_date here: the data cutoff is the newest bhav date in the database
+# (panels.data_cutoff) — the daily refresh no longer mutates this file.
 decision_month_end: true      # score on last trading day of month, after close (§7.1)
 adj_history_start: "2009-01-01"  # yfinance fetch floor (task 1.6). BRD window starts 2011 and the
                                  # longest feature lookback is 12M-1M, so two years of buffer.

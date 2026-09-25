@@ -16,11 +16,30 @@ re-probed monthly, and the 1.7 gap report remains the safety net for silent hole
 """
 import os
 import time
+from datetime import date, datetime, time as dtime, timedelta, timezone
 
 import requests
 
+IST = timezone(timedelta(hours=5, minutes=30))
 NEG_TTL_DAYS = 30
 _NEG_MEMO: dict[str, dict] = {}  # path -> parsed cache; avoids re-reading the file per fetch call
+
+
+def asof_date(override: str | None, cfg: dict, now: datetime | None = None) -> date:
+    """The newest date worth fetching: `--date`, else today once past the publication cutoff.
+
+    Lives here because every fetch-plan caller needs it (refresh, both backfill tools) and the
+    downloaders already import this module — putting it in refresh would make those imports
+    circular. Before the cutoff the day's files usually do not exist, and a 404 is remembered
+    for NEG_TTL_DAYS, so an early fetch plan must aim at yesterday, not today.
+    """
+    now = now or datetime.now(IST)
+    if override:
+        d = date.fromisoformat(override)
+        assert d <= now.date(), f"--date {d} is in the future"
+        return d
+    hh, mm = (int(x) for x in cfg["download"]["publish_cutoff_ist"].split(":"))
+    return now.date() if now.time() >= dtime(hh, mm) else now.date() - timedelta(days=1)
 
 
 def _load_404(path: str) -> dict:

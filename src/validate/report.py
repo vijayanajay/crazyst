@@ -29,6 +29,7 @@ from datetime import date, timedelta
 import duckdb
 
 from src.config import load
+from src.normalize import panels
 from src.normalize.delivery import _join_check
 
 
@@ -75,11 +76,11 @@ def main() -> int:
 
         # ---- 2. calendar holes ----
         print("\n[2] calendar holes (cross-check: a bhav hole covered by delivery = outage, not holiday)")
-        end = date.fromisoformat(cfg["end_date"])
+        end = date.fromisoformat(panels.data_cutoff(con))
         deliv_only_days = [r[0] for r in con.execute(
             "SELECT DISTINCT date FROM delivery EXCEPT SELECT DISTINCT date FROM bhav ORDER BY 1").fetchall()]
         # the delivery feed can legitimately be fresher than the bhav cache (same-evening MTO vs
-        # end_date-bounded bhavcopy); only holes INSIDE the bhav window are outage candidates
+        # the bhav-bounded window); only holes INSIDE the bhav window are outage candidates
         holes = [d for d in deliv_only_days if d <= end]
         ahead = [d for d in deliv_only_days if d > end]
         wd_total = _weekdays_between(db_min, db_max)
@@ -89,7 +90,7 @@ def main() -> int:
               f"| in neither (holidays): {neither}")
         if ahead:
             print(f"  delivery ahead of bhav window: {[str(d) for d in ahead[:5]]} "
-                  f"(fresh MTO; absorbed when end_date moves)")
+                  f"(fresh MTO; absorbed when the bhav cutoff moves)")
         if holes:
             print(f"  suspicious dates: {[str(d) for d in holes[:10]]}")
             failures.append(f"{len(holes)} delivery-dates lack a bhav row (outage holes?)")

@@ -12,10 +12,10 @@ Steps:
     day for a month.
  2. fetch every month between the oldest known date and as-of: both bhavcopy eras + MTO delivery.
     Cache-skip means a routine run is a few HTTP hits, and a week off is caught up in one run.
- 3. normalize bhav + delivery (idempotent), then set config `end_date` to the newest bhav date
-    actually present: the clock decides what to fetch, the data decides what gets reported. The
-    bhav date (not delivery's) is the cutoff because bhav is the price backbone; the delivery feed
-    legitimately runs a day ahead and validate.report classifies that as informational.
+ 3. normalize bhav + delivery (idempotent). The data cutoff needs no write: it IS the newest bhav
+    date (panels.data_cutoff), read by every downstream stage straight from the database. The
+    bhav date (not delivery's) is the cutoff because bhav is the price backbone; the delivery
+    feed legitimately runs a day ahead and validate.report classifies that as informational.
  4. adj_close.refresh_recent() for adjusted closes: new days, plus a full re-fetch for any symbol
     whose adjustment basis moved.
  5. rebuild the derived tables: panels -> rank -> eligibility -> winners.
@@ -29,16 +29,16 @@ offline and side-effect-free apart from rebuildable tables).
 """
 import copy
 import os
-import re
 import subprocess
 import sys
 import time
-from datetime import date, datetime, time as dtime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import duckdb
 import requests
 
 from src.config import load
+from src.download._http import asof_date  # shared by every fetch-plan caller (re-exported)
 from src.download.backfill_bhavcopy import months_between
 from src.download.bhavcopy_old import OLD_FORMAT_LAST_DAY, download_month as old_month
 from src.download.bhavcopy_udiff import FIRST_DAY as UDIFF_FIRST, download_month as udiff_month
@@ -49,20 +49,7 @@ from src.normalize import delivery as norm_deliv
 from src.universe import eligibility, rank, winners
 
 IST = timezone(timedelta(hours=5, minutes=30))
-CONFIG = "config.yaml"
-LOG_PATH = "data/refresh.log"
 ERA_LAST = (OLD_FORMAT_LAST_DAY.year, OLD_FORMAT_LAST_DAY.month)  # 2024-07 straddles the two eras
-
-
-def asof_date(override: str | None, cfg: dict, now: datetime | None = None) -> date:
-    """The newest date worth fetching: `--date`, else today once past the publication cutoff."""
-    now = now or datetime.now(IST)
-    if override:
-        d = date.fromisoformat(override)
-        assert d <= now.date(), f"--date {d} is in the future"
-        return d
-    hh, mm = (int(x) for x in cfg["download"]["publish_cutoff_ist"].split(":"))
-    return now.date() if now.time() >= dtime(hh, mm) else now.date() - timedelta(days=1)
 
 
 def months_to_check(oldest_known: date, asof: date) -> list:
@@ -79,25 +66,6 @@ def era_calls(y: int, m: int) -> list:
     if (y, m) == ERA_LAST:
         return ["old", "udiff"]
     return ["udiff"]
-
-
-def bump_end_date(new_date: str, path: str = CONFIG) -> bool:
-    """Set config.yaml's end_date in place; returns True when the file changed.
-
-    A text edit on purpose: a yaml round-trip would silently delete every comment in the file.
-    """
-    with open(path) as f:
-        txt = f.read()
-    new_txt, n = re.subn(r'(?m)^end_date:\s*"[0-9]{4}-[0-9]{2}-[0-9]{2}"',
-                         f'end_date: "{new_date}"', txt)
-    assert n == 1, f"expected exactly one end_date line in {path}, found {n}"
-    if new_txt == txt:
-        return False
-    part = path + ".part"  # atomic replace (same discipline as _http.fetch): a concurrent
-    with open(part, "w") as f:  # load() sees the old or the new config, never a half-written one
-        f.write(new_txt)
-    os.replace(part, path)
-    return True
 
 
 def _counts(cfg: dict) -> dict:
@@ -150,7 +118,8 @@ def main(argv: list[str]) -> int:
         f"delivery {before['delivery'][1]}, adj_close {before['adj_close'][1]}")
 
     work = copy.deepcopy(cfg)
-    work["end_date"] = asof.isoformat()  # the fetchers bound themselves by end_date
+    work["fetch_asof"] = asof.isoformat()  # the fetch-plan bound the downloaders honor
+                                           # (_http.asof_date); the stored cutoff stays the bhav max date
     known = [d for d in (before["bhav"][1], before["delivery"][1]) if d]
     oldest = min(known) if known else asof
     months = months_to_check(oldest, asof)
@@ -167,13 +136,12 @@ def main(argv: list[str]) -> int:
         f"delivery +{st_d['rows']:,} rows / {st_d['files']} files")
 
     after = _counts(cfg)
-    if after["bhav"][1] and after["bhav"][1] > date.fromisoformat(cfg["end_date"]):
-        assert after["bhav"][1] <= asof, f"bhav holds {after['bhav'][1]}, past as-of {asof}"
-        bumped = bump_end_date(after["bhav"][1].isoformat())
-        cfg = load()
-        say(f"end_date -> {cfg['end_date']} ({'updated' if bumped else 'already set'})")
+    if not after["bhav"][1] or after["bhav"][1] < before["bhav"][1]:
+        raise AssertionError(f"normalize shrank bhav: {before['bhav'][1]} -> {after['bhav'][1]}")
+    assert after["bhav"][1] <= asof, f"bhav holds {after['bhav'][1]}, past as-of {asof}"
     say(f"bhav now {after['bhav'][1]} ({after['bhav'][0]:,} rows), "
-        f"delivery now {after['delivery'][1]} ({after['delivery'][0]:,} rows)")
+        f"delivery now {after['delivery'][1]} ({after['delivery'][0]:,} rows) — "
+        f"the cutoff downstream stages read is that bhav max date (panels.data_cutoff)")
 
     adj = adj_close.refresh_recent(cfg)
     agree = ("n/a (too few pairs)" if adj["agree"] is None or adj["pairs"] < 50
@@ -228,7 +196,7 @@ def main(argv: list[str]) -> int:
 def _self_check() -> None:
     """Offline checks of the scheduling logic — the parts a wrong clock or a stale file could ruin."""
     from datetime import datetime as dt
-    cfg = {"download": {"publish_cutoff_ist": "19:00"}, "end_date": "2026-09-21"}
+    cfg = {"download": {"publish_cutoff_ist": "19:00"}}
     before = dt(2026, 9, 22, 18, 30, tzinfo=IST)
     after = dt(2026, 9, 22, 19, 30, tzinfo=IST)
     assert asof_date(None, cfg, before) == date(2026, 9, 21), \
@@ -252,27 +220,7 @@ def _self_check() -> None:
     assert era_calls(2024, 7) == ["old", "udiff"], \
         "the 2024-07 boundary month spans both formats and must fetch both"
 
-    import tempfile
-    tmp = tempfile.mkdtemp()
-    path = os.path.join(tmp, "config.yaml")
-    with open(path, "w") as f:
-        f.write('# kept comment\nprofile: quick\nend_date: "2026-09-21"  # yesterday, by design\n'
-                "other: 1\n")
-    assert bump_end_date("2026-09-22", path) is True, "a new date must rewrite the file"
-    with open(path) as f:
-        txt = f.read()
-    assert 'end_date: "2026-09-22"  # yesterday, by design' in txt and "# kept comment" in txt, \
-        f"end_date edit must preserve the rest of the file verbatim: {txt!r}"
-    assert bump_end_date("2026-09-22", path) is False, "an unchanged date must not rewrite"
-    with open(path, "w") as f:
-        f.write("profile: quick\n")
-    try:
-        bump_end_date("2026-09-22", path)
-        raise AssertionError("a config without an end_date line must raise, not silently pass")
-    except AssertionError as e:
-        assert "exactly one" in str(e), f"wrong failure for a missing end_date: {e}"
-    print("PASS: refresh scheduling (cutoff gating, --date, month plan, era boundary, "
-          "comment-preserving end_date edit)")
+    print("PASS: refresh scheduling (cutoff gating, --date, month plan, era boundary)")
 
 
 if __name__ == "__main__":

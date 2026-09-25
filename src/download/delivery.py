@@ -23,10 +23,12 @@ import os
 import sys
 from datetime import date
 
+import duckdb
 import requests
 
 from src.config import load
 from src.download import _http
+from src.normalize import panels
 
 MTO_BASE = "https://archives.nseindia.com/archives/equities/mto"
 SEC_BASE = "https://archives.nseindia.com/products/content"
@@ -50,8 +52,10 @@ def _out_path(d: date, cfg: dict, source: str, ext: str) -> str:
 
 def fetch_day(session: requests.Session, d: date, cfg: dict, source: str) -> str:
     """Fetch one day from 'mto' or 'sec_full'. Returns 'cached'|'downloaded'|'holiday'. Raises on persistent errors."""
-    if d > date.fromisoformat(cfg["end_date"]):  # same guard as bhavcopy UDiFF: config-bounded, never guess
-        raise ValueError(f"{d} after configured end_date {cfg['end_date']} — update config, never guess")
+    # Same as-of guard as bhavcopy UDiFF: the fetch-plan bound, not stored state (see there).
+    if d > _http.asof_date(cfg.get("fetch_asof"), cfg):
+        raise ValueError(f"{d} after the as-of bound {cfg.get('fetch_asof') or 'today/yesterday by cutoff'} — "
+                         f"pass --date / fetch_asof to reach further, never guess")
     if source == "mto":
         url, ext = mto_url(d), "DAT"
     elif source == "sec_full":
@@ -74,10 +78,10 @@ def _month_days(year: int, month: int, up_to: date | None, from_d: date | None):
 
 def download_month(session: requests.Session, year: int, month: int, cfg: dict,
                    source: str, up_to: date | None = None, from_d: date | None = None) -> dict:
-    # Self-bound to end_date like both bhavcopy month loops, so a caller iterating the CURRENT
-    # month cannot walk into days fetch_day refuses (caught live by the daily refresh, which had
-    # to know to pass up_to=asof while every other fetcher bounds itself).
-    up_to = min([d for d in (up_to, date.fromisoformat(cfg["end_date"])) if d])
+    # Self-bound to the as-of date like both bhavcopy month loops, so a caller iterating the
+    # CURRENT month cannot walk into days fetch_day refuses (caught live by the daily refresh,
+    # which had to know to pass up_to=asof while every other fetcher bounds itself).
+    up_to = min([d for d in (up_to, _http.asof_date(cfg.get("fetch_asof"), cfg)) if d])
     summary = {"year": year, "month": month, "source": source, "downloaded": 0, "cached": 0, "holidays": []}
     for d in _month_days(year, month, up_to, from_d):
         status = fetch_day(session, d, cfg, source)
@@ -138,6 +142,11 @@ def _self_check() -> None:
     from src.download.bhavcopy_old import FIRST_DAY as BHAV_FIRST
     assert BHAV_FIRST == date(2011, 1, 3), "delivery and bhavcopy eras should align at 2011-01-03"
 
+    con = duckdb.connect(cfg["paths"]["duckdb"], read_only=True)
+    try:
+        cfg["fetch_asof"] = panels.data_cutoff(con)   # the live bound: the stored bhav cutoff
+    finally:
+        con.close()
     with requests.Session() as s:
         # 4. live MTO month (2011-01): 21 weekdays (Jan 1 was a Saturday), 1 holiday (Jan 26 Republic Day).
         #    Live probe showed MTO_03012011.DAT exists; final count asserted against actual trading days.

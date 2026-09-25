@@ -59,7 +59,7 @@ FROM ranked
 def build(con, cfg: dict) -> dict:
     t0 = time.monotonic()
     panels.ensure(con, cfg)  # liq_me must exist; stamped, so this is a fingerprint read when current
-    con.execute(_RANK_SQL.format(start=cfg["data_start_date"], end=cfg["end_date"],
+    con.execute(_RANK_SQL.format(start=cfg["data_start_date"], end=panels.data_cutoff(con),
                                  top_n=cfg["universe"]["top_n"]))
     rows, months = con.execute(
         "SELECT count(*), count(DISTINCT mdate) FROM universe_rank").fetchone()
@@ -124,7 +124,7 @@ def synth_setup(con) -> None:
 def _synth_check() -> None:
     tmp = tempfile.mkdtemp()
     cfg = copy.deepcopy(load("quick"))
-    cfg["data_start_date"], cfg["end_date"] = "2024-01-01", "2024-09-30"
+    cfg["data_start_date"] = "2024-01-01"   # end bound comes from the bhav fixture itself
     cfg["paths"]["duckdb"] = os.path.join(tmp, "test.duckdb")
     con = duckdb.connect(cfg["paths"]["duckdb"])
     synth_setup(con)

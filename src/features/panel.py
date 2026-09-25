@@ -365,6 +365,7 @@ def _synth_check() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         con = duckdb.connect(os.path.join(tmp, "features.duckdb"))
         cfg = load("quick")
+        cfg["end_date"] = "ignored"         # the cutoff comes from bhav now (panels.data_cutoff)
         try:
             con.execute("CREATE TABLE adj_me (symbol VARCHAR, m TIMESTAMP, mdate DATE, "
                         "adate DATE, adj_close DOUBLE)")

@@ -13,8 +13,10 @@ checkpoint artifacts (validation-report sign-off; the three winner lists vs re-c
 
 Post-audit repairs (2026-09-23), all proven on live data: task 1.6's cross-check was dead code —
 fixed (row unpacking, 0/0→NaN handling, date-index alignment, still-trading sampling,
-recent-window comparison) and registered in the suite; the scheduler's `end_date` write is now
-atomic (temp file + replace); the daily-refresh gate (agreement 1.0 on 105 pairs) and a full
+recent-window comparison) and registered in the suite; the scheduler's `end_date` write was made
+atomic then and has since been **removed at the root** — config no longer carries `end_date` and
+the cutoff is the newest bhav date (LEDGER, 2026-09-25 refactor block); the daily-refresh gate
+(agreement 1.0 on 105 pairs) and a full
 backfill slice (638 rows, 99.8% vs NSE) were re-run through their real entry points.
 
 Open items carried forward (none blocks a Phase 1/2 done-when):

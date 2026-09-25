@@ -74,7 +74,8 @@ def _synth_check() -> None:
 
     tmp = tempfile.mkdtemp()
     cfg = copy.deepcopy(load("quick"))
-    cfg["data_start_date"], cfg["end_date"] = "2024-01-01", "2024-09-30"
+    cfg["data_start_date"] = "2024-01-01"   # end bound comes from the bhav fixture itself
+    # end_date moved out of config (panels.data_cutoff); a cfg end_date is now ignored
     cfg["universe"]["top_n"] = 5                 # ranks D,A,G,B,C — C (rank 5) stays eligible
     cfg["universe"]["size_buckets"] = [2, 3]     # forces every bucket onto the tiny fixture
     cfg["paths"]["duckdb"] = os.path.join(tmp, "test.duckdb")

@@ -499,3 +499,90 @@ in 28.5s**.
 - **Consequence for the plan:** Phase 4's composite (4.1) must rank-average features that
   survived E002 **with the measured signs** — low volatility is now a candidate factor, the
   delivery z-score is not.
+
+---
+
+## Refactor — `end_date` removed from config; the cutoff is the data (2026-09-25, uncommitted; working tree on `440e923`)
+
+Not an experiment — an infrastructure pass in the M2.2/M2.3 line: it changed **where the pipeline's
+data cutoff lives** and removed the one write the daily refresh made to a versioned file. No
+experiment, label, or universe number moved; the zero-drift evidence is below.
+
+### What moved where
+
+| Was (M2.3 state) | Now |
+|---|---|
+| `config.yaml` carried `end_date: "2026-09-22"`, and the refresh **rewrote that line** every evening (`bump_end_date`, regex edit + atomic replace, adopted precisely because a yaml round-trip would have eaten the file's comments) | the key is **gone from config**, and `config.load()` now **refuses** a config that carries it — the class of state-in-config problems is deleted, not guarded |
+| every stage trusted the config value as the cutoff | **`panels.data_cutoff(con)` is the single source of truth**: `max(bhav.date)`, read-only, with an empty/missing-bhav sentinel. bhav (the price backbone) decides — the delivery feed's one-day lead still must not move the cutoff (validate.report keeps classifying that as informational) |
+| rank/winners formatted `end=cfg["end_date"]` into their SQL | `end=panels.data_cutoff(con)` — the database cannot disagree with the build inputs |
+| validate.report's holes-vs-ahead split and adj_close's `_window_start` empty-table fallback read `cfg["end_date"]` | same reads against the database cutoff (`_window_start` still honors an `end_date` cfg key, explicitly marked backward-compat, so its self-check stays pure/offline) |
+| refresh owned `asof_date()` (cutoff-gated today-or-yesterday, `--date` wins); the three downloader month loops self-bounded to `date.fromisoformat(cfg["end_date"])` | `asof_date()` moved to **`src/download/_http.py`** — the module every downloader already imports (a refresh-side home would make the backfill tools import refresh: a cycle); the downloaders bound their loops to the **as-of fetch-plan bound** (`cfg["fetch_asof"]`, set per-process by the refresh from its `--date`), and the backfill tools use it as their end bound |
+| `git status` dirty after every refresh (`config.yaml` always modified) | the refresh writes **no repo file**; a run's outputs are the raw cache, the DuckDB tables and `data/refresh.log` |
+
+The downloaders' upper bound changed meaning, deliberately: "config end_date" was *stored state*;
+the as-of bound is *the fetch plan*. Same effective coverage on every real run (the refresh passes
+`--date asof`; the live months sit under both bounds), but a downloader now refuses days the plan
+did not ask for rather than days past a file line — and can never again be the thing that silently
+clamps a catch-up run.
+
+### Bug caught while re-auditing for this block
+
+The first pass left `refresh.main()` still setting `work["end_date"] = asof` — a key the
+downloaders had stopped reading. Harmless on the routine path (as-of defaults to the same
+cutoff-gated yesterday), but a `--date 2026-09-15` catch-up would have fetch-planned the whole
+current month instead of stopping at the 15th. Fixed: the plan key is `fetch_asof`, and the
+as-of date flows from the one place that owns it (`--date` → `asof_date` → the downloaders'
+`_http.asof_date` bound). Proven live: with `fetch_asof: 2026-09-21` the udiff month loop accepts
+Sep-1 rows (its bounds check passed the probe before the probe's toy config ran out of fixture),
+and the module self-check pins both refusal directions.
+
+### New invariant replacing the old write
+
+`bump_end_date` was the refresh's mechanism for keeping the cutoff monotonic. It is gone with the
+key, so the guarantee moved into an assertion right after normalize:
+
+```python
+if not after["bhav"][1] or after["bhav"][1] < before["bhav"][1]:
+    raise AssertionError(f"normalize shrank bhav: {before['bhav'][1]} -> {after['bhav'][1]}")
+assert after["bhav"][1] <= asof, f"bhav holds {after['bhav'][1]}, past as-of {asof}"
+```
+
+A normalize run can no longer silently lose the newest bhav day (which would move every downstream
+cutoff, rank and label backwards), and bhav cannot hold a date past the fetch plan. The refresh
+log now states the property outright: *the cutoff downstream stages read is that bhav max date
+(panels.data_cutoff)*.
+
+### Zero drift, measured
+
+The refactor rewired reads only, so the derived tables must be bit-identical. Every chain stage
+was rebuilt through its real entry point and compared to the Phase 2/3 checkpoints above:
+
+| Table / check | Baseline (this ledger) | After the refactor | |
+|---|---|---|---|
+| data cutoff | config `end_date: 2026-09-22` | `2026-09-22` from `max(bhav.date)` | **IDENTICAL** |
+| `universe_rank` | 33,567 rows / 13 decision months | 33,567 / 13 | **IDENTICAL** |
+| `eligible` | 17,204 eligible of 33,567 | 17,204 of 33,567 | **IDENTICAL** |
+| `winners` | 724 winner flags / 11 months | 724 / 11 | **IDENTICAL** |
+| independent recompute | 10/10 months exact (returns < 1e-9, sets identical) | 10/10, same months printed side by side | **IDENTICAL** |
+| `feature_panel` / `feature_matrix` | 17,204 rows; labeled 14,373 at 5.0% winners | 17,204; 14,373 / 5.0% | **IDENTICAL** |
+
+Suite after the change: `python -m src.selfcheck` → **ALL PASS (17 checks) in 57.8s**, and
+`config.load()` reports `end_date in config: False` — with the new guard in place, a config that
+tried to bring the key back refuses to load rather than silently half-working.
+
+### Honest caveats
+
+1. The three downloader self-checks now pin their offline upper bound to an explicit `fetch_asof`
+   fixture and take the live bound from the database cutoff — the month-count asserts are
+   unchanged (2024-01: 21 files, 2026-08: 21, MTO 20), but the *mechanism* of the bound changed;
+   anyone diffing M2.3's check descriptions against these will see that, and it is intended.
+2. The as-of bound is one knob with two spellings: `--date` (the refresh's CLI) and
+   `cfg["fetch_asof"]` (what the downloaders read). The refresh is its only writer today; a
+   future second caller should go through `_http.asof_date` rather than invent another.
+3. `_window_start`'s backward-compat `end_date` branch exists so its self-check stays pure and
+   offline; nothing in the repo sets that key anymore. If a third caller ever appears, delete the
+   branch and test against the database cutoff instead.
+
+Consequence for the plan: actionplan's M2.3 status clause "the scheduler's `end_date` write is
+now atomic" describes a mechanism that no longer exists — the write is gone, and the 2026-09-23
+audit finding it answered is closed at the root rather than defended in place.

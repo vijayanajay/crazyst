@@ -100,6 +100,22 @@ def has_table(con, table: str) -> bool:
                        [table]).fetchone()[0] > 0
 
 
+def data_cutoff(con) -> str:
+    """The data cutoff, ISO date: the newest bhav date, read-only.
+
+    Single source of truth in place of the old config `end_date`, which the daily refresh had
+    to mutate in a versioned file (state does not belong in config). The price backbone decides
+    what is reported — the delivery feed legitimately runs a day ahead and must not move the
+    cutoff. Everything downstream (rank, winners, report) reads the cutoff through here, so the
+    database cannot disagree with the build inputs; empty/missing bhav gives a sentinel that no
+    real date can match.
+    """
+    if not has_table(con, "bhav"):
+        return "1900-01-01"
+    mx = con.execute("SELECT max(date) FROM bhav").fetchone()[0]
+    return mx.isoformat() if mx else "1900-01-01"
+
+
 def series_sql(cfg: dict, alias: str = "b") -> str:
     """The universe's series filter, rendered from config (BRD §4 "EQ series; not in T2T/BE").
 

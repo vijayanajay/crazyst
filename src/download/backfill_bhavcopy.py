@@ -16,6 +16,7 @@ import requests
 
 from src.config import load
 from src.download import _http
+from src.download._http import asof_date
 from src.download.bhavcopy_old import OLD_FORMAT_LAST_DAY, download_month as old_month
 from src.download.bhavcopy_udiff import FIRST_DAY as UDIFF_FIRST, download_month as udiff_month
 
@@ -31,17 +32,18 @@ def months_between(start: date, end: date):
 
 def main() -> int:
     cfg = load("quick")
+    end = asof_date(None, cfg)   # the fetch-plan bound: the cutoff-gated as-of date
     totals = {"downloaded": 0, "cached": 0, "holidays": 0}
     with requests.Session() as s:
         print(f"backfill start: old 2011-01..{OLD_FORMAT_LAST_DAY:%Y-%m}, "
-              f"UDiFF {UDIFF_FIRST:%Y-%m}..{cfg['end_date'][:7]}", flush=True)
+              f"UDiFF {UDIFF_FIRST:%Y-%m}..{end:%Y-%m}", flush=True)
         for y, m in months_between(date(2011, 1, 1), OLD_FORMAT_LAST_DAY):
             up_to = OLD_FORMAT_LAST_DAY if (y, m) == (OLD_FORMAT_LAST_DAY.year, OLD_FORMAT_LAST_DAY.month) else None
             r = old_month(s, y, m, cfg, up_to=up_to)
             _add(totals, r)
             print(f"== old {y}-{m:02d}: +{r['downloaded']} new, {r['cached']} cached, "
                   f"{len(r['holidays'])} holidays | totals {totals}", flush=True)
-        for y, m in months_between(UDIFF_FIRST, date.fromisoformat(cfg["end_date"])):
+        for y, m in months_between(UDIFF_FIRST, end):
             from_d = UDIFF_FIRST if (y, m) == (UDIFF_FIRST.year, UDIFF_FIRST.month) else None
             r = udiff_month(s, y, m, cfg, from_d=from_d)
             _add(totals, r)

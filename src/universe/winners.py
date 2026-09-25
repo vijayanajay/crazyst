@@ -68,7 +68,7 @@ def build(con, cfg: dict) -> dict:
     s, w = cfg["stats"], cfg["stats"]["secondary_winner_labels"]
     con.execute(_WINNERS_SQL.format(winner_pct=s["winner_top_pct"],
                                     decile_pct=w["top_decile_pct"], top20=w["top_n_abs"],
-                                    end=cfg["end_date"]))
+                                    end=panels.data_cutoff(con)))
     months, nw = con.execute(
         "SELECT count(DISTINCT mdate), count(*) FILTER (WHERE is_winner) FROM winners").fetchone()
     return {"months": months, "winners": nw}
@@ -80,7 +80,7 @@ def _synth_check() -> None:
     import tempfile
     tmp = tempfile.mkdtemp()
     cfg = copy.deepcopy(load("quick"))
-    cfg["data_start_date"], cfg["end_date"] = "2024-01-01", "2024-09-30"
+    cfg["data_start_date"] = "2024-01-01"   # end bound comes from the bhav fixture itself
     cfg["universe"]["top_n"] = 5   # ranks D,A,G,B,C — so C (rank 5) stays inside the universe
     cfg["paths"]["duckdb"] = os.path.join(tmp, "test.duckdb")
     con = duckdb.connect(cfg["paths"]["duckdb"])
