@@ -48,6 +48,7 @@ CHECKS = [
     ("features.matrix", "src.features.matrix"),
     ("universe.winners", "src.universe.winners"),
     ("backtest.engine", "src.backtest.engine"),
+    ("backtest.portfolio", "src.backtest.portfolio"),
 ]
 
 SUITE_KEY = "selfcheck"
