@@ -845,3 +845,121 @@ entry point exercised. The live run is the check.
 - **Honest caveats:** pick-level means on a fixed top-5% slice ignore slot competition and
   capacity; month-end-close fills differ from the engine's T+1 open; validation slice only —
   Phase 6 re-asks this inside the real engine on the test window.
+
+---
+
+## Phase 5 checkpoint — engine + portfolio rules + toy momentum, end to end (2026-09-26, commit `d0125bf`)
+
+Not an experiment — the plan's Phase 5 checkpoint line ("run engine on synthetic data with a
+trivial buy momentum model. Show equity curve + trade log"). With 5.6 (bucket attribution)
+landed the same day, all Phase 5 tasks (5.1–5.6) are done; this block records the integration
+run the checkpoint asks to see: `src/backtest/checkpoint.py`, results in
+`src/backtest/checkpoint_results.json` (config snapshot + git hash embedded).
+
+### The tape (declared simplifications)
+
+6 names × 19 sessions spanning 4 curve months (Jan–Apr 2026); every bar has **open == close**
+so fill prices are exactly the marks; **zero costs and no ADV history** (the engine's gate and
+impact are off) so every equity value is hand-computable to the rupee. Cost math is
+engine-tested separately; E006's 0.5%/side default is a Phase 6 report parameter, not this
+tape's job. n_slots = 2, start 100,000. The toy model scores each month as first-to-last
+close return; the checkpoint's point is deterministic plumbing and exact paper math, not edge.
+
+### The story — each §8 rule firing exactly once (all asserted)
+
+1. **Jan 12, initial selection:** ME (+10%) and MO (+5%) lead the momentum board → top-2
+   buys; T+1 fills land Feb 02 at the open (the month-boundary case).
+2. **Feb 09, monthly review:** ME has faded to the 5th of 6 ranks (0.667 > the 0.25 sell
+   percentile) → sell; MB (+7.9%, rank 0) is the only candidate inside the 15% replace
+   percentile → replacement buy (221 sh @ 218), fills Mar 02.
+3. **Mar 04, Trigger B stop:** MO closes 96.0 ≤ its 96.6 stop (entry 105 × 0.92; the 12%
+   trail from the 110 month-high sits at 96.8 — the stop wins by trigger_b's priority order)
+   → mid-month sell, fills Mar 05. The one churn event.
+4. **Mar 09, review with a cash slot:** MO's freed slot finds no candidate inside the top
+   15% (MB is held; every other name ranks 1/6 or worse) → the slot **holds cash** (§8.1
+   fallback). ME is already out (its round trip completed Mar 02).
+
+Trigger A and C never fire on this tape (the monthly momentum spread stays under the 20%
+relative excess) — both are unit-tested in `src.backtest.portfolio`'s own check.
+
+### Equity curve (19 rows, asserted exact)
+
+```
+date          cash   market_value    equity
+2026-01-05  100000             0    100000   (…flat through 01-12: capital uninvested)
+2026-02-02      25         99975    100000   T+1 fills: ME 909 @ 55, MO 476 @ 105
+2026-02-03      25        100451    100476
+2026-02-04      25        100018    100043
+2026-02-05      25        100494    100519
+2026-02-06      25        100061    100086
+2026-02-09      25        100537    100562
+2026-03-02      24        100538    100562   fills: ME -909 @ 53, MB 221 @ 218
+2026-03-03      24         95999     96023   MO gaps down
+2026-03-04      24         94316     94340   close 96 <= stop 96.6 -> Trigger B
+2026-03-05   45244         48841     94085   MO -476 @ 95 fills
+2026-03-06   45244         49062     94306
+2026-03-09   45244         49283     94527
+2026-04-01   45244         49283     94527
+```
+
+### Trade log (5 fills, asserted exact, engine order = (date, symbol, qty))
+
+```
+signal 2026-01-12  fill 2026-02-02  ME   909 @ 55.00  select_momentum
+signal 2026-01-12  fill 2026-02-02  MO   476 @ 105.00 select_momentum
+signal 2026-02-09  fill 2026-03-02  MB   221 @ 218.00 replace
+signal 2026-02-09  fill 2026-03-02  ME  -909 @ 53.00  monthly_review
+signal 2026-03-04  fill 2026-03-05  MO  -476 @ 95.00  trigger_b_stop
+```
+
+### Paper math (how every number above is derived)
+
+- **Sizing:** 50,000/slot → ME 909 = floor(50,000/55) costing 49,995, MO 476 =
+  floor(50,000/105) costing 49,980 → cash 25.0. (The first paper draft said 486 MO shares —
+  486 × 105 = 51,030 overdraws the slot; the assert caught the arithmetic, floor is the rule.)
+- **Replacement sizing:** the Feb 09 buy is sized on cash + expected sell proceeds
+  (25 + 909 × 53 = 48,202 → 221 = floor(48,202/218)); it fills at exactly 218 because the
+  tape pins MB's Feb 09 close to its Mar 02 open — on real data the est and the fill price
+  diverge and the engine's cash guard (never negative) is what binds.
+- **State moves twice, on purpose:** sell decisions free portfolio slots at decision time
+  (portfolio.py's contract) while cash/positions move at the T+1 fill — the Mar 02 fills
+  settle both the ME sale and the MB buy on one session.
+- **P&L at Apr 01:** ME −1,818 realized (909 × (53−55)), MO −4,760 realized (476 × (95−105)),
+  MB +1,105 open (221 × (223−218)); sum −5,473 = final equity 94,527 − 100,000, with cash
+  45,244 + MB mark 49,283. The tape is hostile on purpose: both completed picks are losers,
+  and the asserts still hold to the rupee.
+- **Churn:** 1 mid-month sell / 4 curve months = 0.25/month (< the 1.5 §8.3 flag). (First
+  draft divided by 12 sessions; the metric's window is curve months — caught by the assert.)
+
+### Bucket attribution on the checkpoint's own picks (task 5.6, review gates enforced)
+
+```
+201-600   picks 1   hit  0%   mean  -3.64%   churn/mo 0.00    (ME: Jan decision)
+top200    picks 1   hit  0%   mean  -9.52%   churn/mo 0.25    (MO: Jan decision)
+blended   picks 2   hit  0%   mean  -6.58%   churn/mo 0.25
+```
+
+601–1500 is absent: MB is still open, and the table only counts completed round trips.
+Buckets are **as-of the decision month** — this checkpoint drove the fix that makes that
+true: `TradeEvent` now carries `signal_month`, because a month-end signal fills in the next
+month and attribution keyed on the fill month would file Jan's picks under February.
+
+### What the checkpoint caught
+
+- the real `signal_month` provenance fix above (a genuine attribution bug, not a tape quirk);
+- two paper errors of the author's own (486-vs-476 share sizing; churn window in sessions
+  vs months) — the asserts did their job, which is the point of asserting hand-computed
+  values rather than re-deriving them in code.
+
+### Honest caveats
+
+1. Zero costs / no ADV gate are declared simplifications (see The tape); a real run adds
+   E006's 0.5%/side, impact, and non-fills — the fill model remains the open question.
+2. The toy momentum model is not composite_2f; Phase 6 wires the real model to real data.
+   Nothing here predicts the test window — BRD §10's walk-forward stays the only result
+   that counts.
+3. Trigger A/C and the delisting/suspension paths are unexercised on this tape (unit-tested
+   in their own modules); a tape that fires them end to end remains possible future work.
+4. Determinism is asserted by running the checkpoint twice and comparing curve, trade log
+   and decisions bit-for-bit; the run is 0.1s and registered as selfcheck
+   `backtest.checkpoint` — suite **ALL PASS (23 checks)** after this block.
