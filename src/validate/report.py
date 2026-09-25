@@ -15,6 +15,9 @@ Sections:
   6. adj_close coverage       — still-trading EQ symbols with Yahoo adjusted closes (all-time
                                 count reported alongside: delisted tickers are absent on Yahoo)
                                 (prerequisite gate for the momentum canary)
+  7. surveillance rejects     — malformed quarantine rows from the last snapshot import; FAIL
+                                while non-empty (quarantine keeps the refresh alive, this keeps
+                                it honest)
 
 The NSE-vs-Yahoo raw-price cross-check is live-network and lives in
 `python -m src.normalize.adj_close` (20-symbol cross-check) — run it after a refresh.
@@ -151,6 +154,22 @@ def main() -> int:
                   f"(BRD §4: survivorship — as-of lists, never today's)")
         else:
             print("  adj_close table absent — run python -m src.normalize.adj_close --backfill (task 1.6)")
+
+        # ---- 7. surveillance quarantine (non-empty = the last import had bad rows) ----
+        print("\n[7] surveillance rejects (malformed CSV rows quarantined by the last import)")
+        if con.execute("SELECT count(*) FROM duckdb_tables() WHERE table_name = 'surveillance_rejects'").fetchone()[0]:
+            rej = con.execute("SELECT source, line, error FROM surveillance_rejects ORDER BY line").fetchall()
+            if rej:
+                for source, line, err in rej[:10]:
+                    print(f"  {source}:{line}: {err}")
+                if len(rej) > 10:
+                    print(f"  ... and {len(rej) - 10} more")
+                failures.append(f"{len(rej)} quarantined surveillance row(s) in "
+                                f"surveillance_rejects — fix the CSV and re-run the import")
+            else:
+                print("  none")
+        else:
+            print("  no quarantine table (no snapshot import has run)")
     finally:
         con.close()
 

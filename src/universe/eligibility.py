@@ -30,8 +30,11 @@ Per-rule detail:
 - GSM/ASM: enforced as of D from the `surveillance` table (symbol, effective_from, list, stage),
   which load_surveillance() fills from paths.surveillance_csv when a snapshot is supplied — NSE
   publishes current lists only, and no historical archive exists (BRD §5 D5, §15), so in the
-  backtest the rule excludes nothing and nothing is faked. The rule that FORCES an exit at
-  stage >= 2 is the engine's daily check (task 5.3, BRD §8.2) — a different decision from this one.
+  backtest the rule excludes nothing and nothing is faked. A malformed CSV row is QUARANTINED
+  into `surveillance_rejects` (source, line, raw row, error) instead of aborting the build — the
+  nightly refresh must survive one bad hand-edited line — but never silently: validate.report
+  fails while rejects are non-empty. The rule that FORCES an exit at stage >= 2 is the engine's
+  daily check (task 5.3, BRD §8.2) — a different decision from this one.
 - turnover floor: BRD §4 keeps ₹5cr "as a config guard, subsumed by the top-1500 rank". Measured,
   that premise fails — rank 1500 turns over ₹1.94cr/day and 6,010 in-universe symbol-months sit
   below ₹5cr — so the floor is implemented (config > 0 excludes, reason turnover<Ncr) but left OFF
@@ -176,34 +179,54 @@ def _ensure_rank(con, cfg: dict) -> None:
 def load_surveillance(con, cfg: dict) -> int:
     """Import a GSM/ASM snapshot into `surveillance`; returns the rows loaded.
 
-    The CSV is the trust boundary (a hand-downloaded NSE list), so every row is validated and a
-    malformed one raises instead of being silently skipped. No file → no build, and any existing
-    table is left alone rather than cleared.
+    The CSV is the trust boundary (a hand-downloaded NSE list): every row is validated. A
+    malformed row is quarantined into `surveillance_rejects` (source, line, raw, error) rather
+    than aborting the build — one bad hand-edited line must not kill the nightly refresh — but
+    the import is loud about it and validate.report FAILS while rejects are non-empty. No file
+    → no build, and any existing table is left alone rather than cleared.
     """
     path = cfg["paths"].get("surveillance_csv")
     if not path or not os.path.exists(path):
         return 0
-    rows = []
+    rows, rejects = [], []
     with open(path, newline="") as f:
         for i, r in enumerate(csv.DictReader(f), start=2):
             sym, eff, lst, stg = ((r.get(k) or "").strip() for k in
                                   ("symbol", "effective_from", "list", "stage"))
             if not (sym or eff or lst or stg):
                 continue  # blank line
+            err = None
             try:
                 eff_d = date.fromisoformat(eff)
                 stage = int(stg)
             except ValueError as e:
-                raise ValueError(f"{path}:{i}: bad effective_from/stage ({eff!r}, {stg!r}): {e}") from e
-            if stage < 0 or lst.upper() not in ("GSM", "ASM", ""):
-                raise ValueError(f"{path}:{i}: stage must be >= 0 and list GSM|ASM, got "
-                                 f"{stage}, {lst!r}")
+                err = f"bad effective_from/stage ({eff!r}, {stg!r}): {e}"
+            if err is None and not sym:
+                err = "empty symbol"
+            if err is None and (stage < 0 or lst.upper() not in ("GSM", "ASM", "")):
+                err = f"stage must be >= 0 and list GSM|ASM, got {stage}, {lst!r}"
+            if err is not None:
+                rejects.append((os.path.basename(path), i, csv_row_str(r), err))
+                continue
             rows.append((sym.upper(), eff_d, lst.upper(), stage))
     con.execute("CREATE OR REPLACE TABLE surveillance (symbol VARCHAR, effective_from DATE, "
                 "list VARCHAR, stage INTEGER)")
     if rows:
         con.executemany("INSERT INTO surveillance VALUES (?, ?, ?, ?)", rows)
+    # Quarantine is a table, not an exception: the reject survives the run and every report sees it.
+    con.execute("CREATE OR REPLACE TABLE surveillance_rejects (source VARCHAR, line INTEGER, "
+                "raw VARCHAR, error VARCHAR)")
+    if rejects:
+        con.executemany("INSERT INTO surveillance_rejects VALUES (?, ?, ?, ?)", rejects)
+        print(f"surveillance: QUARANTINED {len(rejects)} malformed row(s) from {path} "
+              f"(surveillance_rejects) — validate.report will FAIL until the CSV is fixed",
+              flush=True)
     return len(rows)
+
+
+def csv_row_str(row: dict) -> str:
+    """Stable one-line rendering of a rejected CSV row (quarantine evidence, not a re-parse)."""
+    return "|".join(f"{k}={v}" for k, v in sorted(row.items()) if v not in (None, ""))
 
 
 def build(con, cfg: dict) -> dict:
@@ -354,16 +377,25 @@ def _synth_check() -> None:
         "supplying a snapshot replaces the table — G is in no CSV and so is under no list"
     bad = os.path.join(tmp, "bad.csv")
     with open(bad, "w") as f:
-        f.write("symbol,effective_from,list,stage\nB,09-01-2024,ASM,1\n")
+        f.write("symbol,effective_from,list,stage\n")
+        f.write("B,09-01-2024,ASM,1\n")          # malformed: quarantined, does not abort
+        f.write("C,2024-01-01,GSM,2\n")          # valid row on a poisoned file still loads
     cfg["paths"]["surveillance_csv"] = bad
-    try:
-        load_surveillance(con, cfg)
-        raise AssertionError("a malformed surveillance row must raise, not be skipped")
-    except ValueError:
-        pass
+    n_loaded = load_surveillance(con, cfg)
+    assert n_loaded == 1, f"the valid row must load despite its bad sibling: {n_loaded}"
+    rej = con.execute("SELECT source, line, error FROM surveillance_rejects").fetchall()
+    assert len(rej) == 1 and rej[0][1] == 2 and "bad effective_from/stage" in rej[0][2], \
+        f"the malformed row must land in surveillance_rejects with its line + reason: {rej}"
+    con.execute("DROP TABLE surveillance_rejects")
+    assert load_surveillance(con, cfg) == 1  # re-import rebuilds the quarantine from scratch
+    rej = con.execute("SELECT count(*) FROM surveillance_rejects").fetchone()[0]
+    assert rej == 1, f"quarantine must be rebuilt per import, never accumulated: {rej}"
+    cfg["paths"]["surveillance_csv"] = csv_path
+    assert load_surveillance(con, cfg) == 2, "the loader must import every valid row"
+    con.execute("DROP TABLE surveillance_rejects")   # the live DB carries no reject table
     con.close()
     print("synthetic check passed (standalone on a fresh DB, 6 plan cases + series rule, as-of "
-          "GSM/ASM stages, config threshold, CSV loader validation, table == point form)",
+          "GSM/ASM stages, config threshold, CSV loader with quarantine, table == point form)",
           flush=True)
 
 
