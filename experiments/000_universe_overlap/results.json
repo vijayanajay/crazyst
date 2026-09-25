@@ -1,0 +1,418 @@
+{
+  "experiment": "E000",
+  "profile": "full",
+  "git_hash": "f9f0994e8335b7c83df26915b4f2d9c629d782f4",
+  "config_snapshot": {
+    "profile": "full",
+    "quick": {
+      "start_date": "2025-09-01",
+      "walkforward_months": 12
+    },
+    "full": {
+      "start_date": "2011-01-01",
+      "walkforward_months": 36
+    },
+    "decision_month_end": true,
+    "adj_history_start": "2009-01-01",
+    "universe": {
+      "top_n": 1500,
+      "liquidity_lookback_months": 3,
+      "min_price": 20.0,
+      "min_listed_months": 6,
+      "min_median_turnover_cr": 0.0,
+      "allowed_series": [
+        "EQ"
+      ],
+      "gsm_asm_max_allowed_stage": 0,
+      "size_buckets": [
+        200,
+        600
+      ],
+      "rank_percentiles": {
+        "sell_below_top_pct": 0.25,
+        "replace_above_top_pct": 0.15
+      }
+    },
+    "portfolio": {
+      "n_slots": 4,
+      "cash_earns": 0.0,
+      "monthly_review": {
+        "ma_window_days": 50,
+        "ma_below_consecutive_closes": 5
+      },
+      "midmonth": {
+        "check_freq": "weekly",
+        "trigger_a_score_excess": 0.2,
+        "trigger_a_cap": 2,
+        "trigger_b_stop_pct": 0.08,
+        "trigger_b_trail_pct": 0.12,
+        "trigger_b_ma_close_below": 2,
+        "trigger_b_deliv_z": -2.0,
+        "trigger_b_deliv_days": 3,
+        "gsm_asm_stage_exit": 2
+      },
+      "churn_report_threshold": 1.5
+    },
+    "backtest": {
+      "cost_per_side_pct": 0.2,
+      "cost_sensitivity_pct": [
+        0.2,
+        0.5,
+        1.0
+      ],
+      "suspension_exit_days": 5,
+      "purge_months": 1,
+      "random_seed": 42
+    },
+    "features": {
+      "daily_lookback_sessions": 20,
+      "delivery_flat_lookback_sessions": 5,
+      "delivery_spike_z": 2.0,
+      "delivery_flat_max_return": 0.01,
+      "atr_sessions": 14,
+      "squeeze_range_frac": 0.5,
+      "big_body_mult": 2.0
+    },
+    "stats": {
+      "winner_top_pct": 0.05,
+      "secondary_winner_labels": {
+        "top_decile_pct": 0.1,
+        "top_n_abs": 20
+      },
+      "baseline_hit_rate": 0.05,
+      "bh_fdr_alpha": 0.05
+    },
+    "validate": {
+      "min_year_coverage_pct": 93.0,
+      "max_join_mismatch_pct": 1.0,
+      "canary_min_adj_coverage": 0.9,
+      "canary_min_ic_months": 6,
+      "canary_min_ic_names": 100,
+      "canary_min_deliv_pairs": 1000,
+      "canary_min_deliv_autocorr": 0.1
+    },
+    "paths": {
+      "raw_404_cache": "data/raw/404_cache.txt",
+      "raw_bhavcopy_old": "data/raw/bhavcopy_old/",
+      "raw_bhavcopy_udiff": "data/raw/bhavcopy_udiff/",
+      "raw_delivery": "data/raw/delivery/",
+      "raw_yf_adj": "data/raw/yf_adj/",
+      "surveillance_csv": "data/surveillance/surveillance.csv",
+      "duckdb": "data/duckdb/quant.duckdb",
+      "runs": "runs/",
+      "reports": "reports/"
+    },
+    "download": {
+      "retry_attempts": 3,
+      "sleep_seconds": 2,
+      "publish_cutoff_ist": "19:00",
+      "refresh_retry_minutes": 20
+    },
+    "data_start_date": "2011-01-01",
+    "walkforward_months": 36
+  },
+  "data_cutoff": "2026-09-24",
+  "snapshot_file": "data\\index\\ind_nifty200list.csv",
+  "snapshot_symbols": 200,
+  "snapshot_downloaded": "current list, hand-downloaded (see hypothesis.md for the bias)",
+  "random_seed": 42,
+  "decision_years": [
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "runtime_seconds": 1.283,
+  "overlap": {
+    "2011": {
+      "snapshot": 129,
+      "trading": 129,
+      "in_universe": 128,
+      "not_ever_traded_by_year_end": 71
+    },
+    "2012": {
+      "snapshot": 133,
+      "trading": 132,
+      "in_universe": 130,
+      "not_ever_traded_by_year_end": 67
+    },
+    "2013": {
+      "snapshot": 133,
+      "trading": 133,
+      "in_universe": 131,
+      "not_ever_traded_by_year_end": 66
+    },
+    "2014": {
+      "snapshot": 134,
+      "trading": 134,
+      "in_universe": 131,
+      "not_ever_traded_by_year_end": 65
+    },
+    "2015": {
+      "snapshot": 137,
+      "trading": 137,
+      "in_universe": 134,
+      "not_ever_traded_by_year_end": 62
+    },
+    "2016": {
+      "snapshot": 140,
+      "trading": 140,
+      "in_universe": 137,
+      "not_ever_traded_by_year_end": 59
+    },
+    "2017": {
+      "snapshot": 151,
+      "trading": 151,
+      "in_universe": 149,
+      "not_ever_traded_by_year_end": 48
+    },
+    "2018": {
+      "snapshot": 155,
+      "trading": 155,
+      "in_universe": 153,
+      "not_ever_traded_by_year_end": 44
+    },
+    "2019": {
+      "snapshot": 160,
+      "trading": 160,
+      "in_universe": 158,
+      "not_ever_traded_by_year_end": 39
+    },
+    "2020": {
+      "snapshot": 167,
+      "trading": 167,
+      "in_universe": 165,
+      "not_ever_traded_by_year_end": 32
+    },
+    "2021": {
+      "snapshot": 173,
+      "trading": 173,
+      "in_universe": 169,
+      "not_ever_traded_by_year_end": 26
+    },
+    "2022": {
+      "snapshot": 177,
+      "trading": 177,
+      "in_universe": 175,
+      "not_ever_traded_by_year_end": 22
+    },
+    "2023": {
+      "snapshot": 181,
+      "trading": 181,
+      "in_universe": 181,
+      "not_ever_traded_by_year_end": 18
+    },
+    "2024": {
+      "snapshot": 191,
+      "trading": 190,
+      "in_universe": 189,
+      "not_ever_traded_by_year_end": 9
+    },
+    "2025": {
+      "snapshot": 199,
+      "trading": 199,
+      "in_universe": 199,
+      "not_ever_traded_by_year_end": 1
+    }
+  },
+  "overlap_pct": {
+    "2011": 0.9922480620155039,
+    "2012": 0.9848484848484849,
+    "2013": 0.9849624060150376,
+    "2014": 0.9776119402985075,
+    "2015": 0.9781021897810219,
+    "2016": 0.9785714285714285,
+    "2017": 0.9867549668874173,
+    "2018": 0.9870967741935484,
+    "2019": 0.9875,
+    "2020": 0.9880239520958084,
+    "2021": 0.976878612716763,
+    "2022": 0.9887005649717514,
+    "2023": 1.0,
+    "2024": 0.9947368421052631,
+    "2025": 1.0
+  },
+  "hit_rates": {
+    "2011": {
+      "eligible": 1048,
+      "eligible_n200": 123,
+      "labeled": 655,
+      "labeled_n200": 123,
+      "winners": 33,
+      "winners_n200": 0,
+      "hit_all": 0.050381679389312976,
+      "hit_n200": 0.0
+    },
+    "2012": {
+      "eligible": 1095,
+      "eligible_n200": 128,
+      "labeled": 709,
+      "labeled_n200": 128,
+      "winners": 36,
+      "winners_n200": 12,
+      "hit_all": 0.05077574047954866,
+      "hit_n200": 0.09375
+    },
+    "2013": {
+      "eligible": 938,
+      "eligible_n200": 126,
+      "labeled": 654,
+      "labeled_n200": 126,
+      "winners": 33,
+      "winners_n200": 5,
+      "hit_all": 0.05045871559633028,
+      "hit_n200": 0.03968253968253968
+    },
+    "2014": {
+      "eligible": 1145,
+      "eligible_n200": 129,
+      "labeled": 795,
+      "labeled_n200": 129,
+      "winners": 40,
+      "winners_n200": 4,
+      "hit_all": 0.050314465408805034,
+      "hit_n200": 0.031007751937984496
+    },
+    "2015": {
+      "eligible": 1194,
+      "eligible_n200": 132,
+      "labeled": 879,
+      "labeled_n200": 132,
+      "winners": 44,
+      "winners_n200": 4,
+      "hit_all": 0.05005688282138794,
+      "hit_n200": 0.030303030303030304
+    },
+    "2016": {
+      "eligible": 1210,
+      "eligible_n200": 134,
+      "labeled": 928,
+      "labeled_n200": 134,
+      "winners": 47,
+      "winners_n200": 2,
+      "hit_all": 0.05064655172413793,
+      "hit_n200": 0.014925373134328358
+    },
+    "2017": {
+      "eligible": 1223,
+      "eligible_n200": 140,
+      "labeled": 981,
+      "labeled_n200": 140,
+      "winners": 49,
+      "winners_n200": 7,
+      "hit_all": 0.04994903160040775,
+      "hit_n200": 0.05
+    },
+    "2018": {
+      "eligible": 1239,
+      "eligible_n200": 150,
+      "labeled": 1027,
+      "labeled_n200": 150,
+      "winners": 52,
+      "winners_n200": 8,
+      "hit_all": 0.05063291139240506,
+      "hit_n200": 0.05333333333333334
+    },
+    "2019": {
+      "eligible": 1151,
+      "eligible_n200": 153,
+      "labeled": 983,
+      "labeled_n200": 153,
+      "winners": 50,
+      "winners_n200": 2,
+      "hit_all": 0.0508646998982706,
+      "hit_n200": 0.013071895424836602
+    },
+    "2020": {
+      "eligible": 1195,
+      "eligible_n200": 158,
+      "labeled": 1031,
+      "labeled_n200": 158,
+      "winners": 52,
+      "winners_n200": 5,
+      "hit_all": 0.0504364694471387,
+      "hit_n200": 0.03164556962025317
+    },
+    "2021": {
+      "eligible": 1254,
+      "eligible_n200": 163,
+      "labeled": 1109,
+      "labeled_n200": 163,
+      "winners": 56,
+      "winners_n200": 6,
+      "hit_all": 0.05049594229035167,
+      "hit_n200": 0.03680981595092025
+    },
+    "2022": {
+      "eligible": 1337,
+      "eligible_n200": 171,
+      "labeled": 1218,
+      "labeled_n200": 171,
+      "winners": 61,
+      "winners_n200": 4,
+      "hit_all": 0.05008210180623974,
+      "hit_n200": 0.023391812865497075
+    },
+    "2023": {
+      "eligible": 1289,
+      "eligible_n200": 174,
+      "labeled": 1220,
+      "labeled_n200": 174,
+      "winners": 61,
+      "winners_n200": 4,
+      "hit_all": 0.05,
+      "hit_n200": 0.022988505747126436
+    },
+    "2024": {
+      "eligible": 1299,
+      "eligible_n200": 181,
+      "labeled": 1249,
+      "labeled_n200": 181,
+      "winners": 63,
+      "winners_n200": 18,
+      "hit_all": 0.05044035228182546,
+      "hit_n200": 0.09944751381215469
+    },
+    "2025": {
+      "eligible": 1283,
+      "eligible_n200": 190,
+      "labeled": 1268,
+      "labeled_n200": 190,
+      "winners": 64,
+      "winners_n200": 13,
+      "hit_all": 0.050473186119873815,
+      "hit_n200": 0.06842105263157895
+    }
+  },
+  "hit_rate_deltas_pp": {
+    "2011": 0.050381679389312976,
+    "2012": 0.04297425952045134,
+    "2013": 0.010776175913790598,
+    "2014": 0.01930671347082054,
+    "2015": 0.019753852518357637,
+    "2016": 0.03572117858980957,
+    "2017": 5.096839959225358e-05,
+    "2018": 0.0027004219409282743,
+    "2019": 0.037792804473434,
+    "2020": 0.018790899826885532,
+    "2021": 0.01368612633943142,
+    "2022": 0.026690288940742664,
+    "2023": 0.027011494252873566,
+    "2024": 0.04900716153032923,
+    "2025": 0.017947866511705136
+  },
+  "min_overlap": 0.976878612716763,
+  "mean_overlap": 0.987069081633369,
+  "mean_abs_delta_pp": 0.024839459441230984
+}

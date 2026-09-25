@@ -1,0 +1,561 @@
+{
+  "experiment": "E001",
+  "profile": "quick",
+  "git_hash": "f9f0994e8335b7c83df26915b4f2d9c629d782f4",
+  "config_snapshot": {
+    "profile": "quick",
+    "quick": {
+      "start_date": "2025-09-01",
+      "walkforward_months": 12
+    },
+    "full": {
+      "start_date": "2011-01-01",
+      "walkforward_months": 36
+    },
+    "decision_month_end": true,
+    "adj_history_start": "2009-01-01",
+    "universe": {
+      "top_n": 1500,
+      "liquidity_lookback_months": 3,
+      "min_price": 20.0,
+      "min_listed_months": 6,
+      "min_median_turnover_cr": 0.0,
+      "allowed_series": [
+        "EQ"
+      ],
+      "gsm_asm_max_allowed_stage": 0,
+      "size_buckets": [
+        200,
+        600
+      ],
+      "rank_percentiles": {
+        "sell_below_top_pct": 0.25,
+        "replace_above_top_pct": 0.15
+      }
+    },
+    "portfolio": {
+      "n_slots": 4,
+      "cash_earns": 0.0,
+      "monthly_review": {
+        "ma_window_days": 50,
+        "ma_below_consecutive_closes": 5
+      },
+      "midmonth": {
+        "check_freq": "weekly",
+        "trigger_a_score_excess": 0.2,
+        "trigger_a_cap": 2,
+        "trigger_b_stop_pct": 0.08,
+        "trigger_b_trail_pct": 0.12,
+        "trigger_b_ma_close_below": 2,
+        "trigger_b_deliv_z": -2.0,
+        "trigger_b_deliv_days": 3,
+        "gsm_asm_stage_exit": 2
+      },
+      "churn_report_threshold": 1.5
+    },
+    "backtest": {
+      "cost_per_side_pct": 0.2,
+      "cost_sensitivity_pct": [
+        0.2,
+        0.5,
+        1.0
+      ],
+      "suspension_exit_days": 5,
+      "purge_months": 1,
+      "random_seed": 42
+    },
+    "features": {
+      "daily_lookback_sessions": 20,
+      "delivery_flat_lookback_sessions": 5,
+      "delivery_spike_z": 2.0,
+      "delivery_flat_max_return": 0.01,
+      "atr_sessions": 14,
+      "squeeze_range_frac": 0.5,
+      "big_body_mult": 2.0
+    },
+    "stats": {
+      "winner_top_pct": 0.05,
+      "secondary_winner_labels": {
+        "top_decile_pct": 0.1,
+        "top_n_abs": 20
+      },
+      "baseline_hit_rate": 0.05,
+      "bh_fdr_alpha": 0.05
+    },
+    "validate": {
+      "min_year_coverage_pct": 93.0,
+      "max_join_mismatch_pct": 1.0,
+      "canary_min_adj_coverage": 0.9,
+      "canary_min_ic_months": 6,
+      "canary_min_ic_names": 100,
+      "canary_min_deliv_pairs": 1000,
+      "canary_min_deliv_autocorr": 0.1
+    },
+    "paths": {
+      "raw_404_cache": "data/raw/404_cache.txt",
+      "raw_bhavcopy_old": "data/raw/bhavcopy_old/",
+      "raw_bhavcopy_udiff": "data/raw/bhavcopy_udiff/",
+      "raw_delivery": "data/raw/delivery/",
+      "raw_yf_adj": "data/raw/yf_adj/",
+      "surveillance_csv": "data/surveillance/surveillance.csv",
+      "duckdb": "data/duckdb/quant.duckdb",
+      "runs": "runs/",
+      "reports": "reports/"
+    },
+    "download": {
+      "retry_attempts": 3,
+      "sleep_seconds": 2,
+      "publish_cutoff_ist": "19:00",
+      "refresh_retry_minutes": 20
+    },
+    "data_start_date": "2025-09-01",
+    "walkforward_months": 12
+  },
+  "data_cutoff": "2026-09-24",
+  "random_seed": 42,
+  "alpha": 0.05,
+  "decision_months": 11,
+  "labeled_rows": 14373,
+  "winners": 724,
+  "runtime_seconds": 1.609,
+  "features": {
+    "mom_1m": {
+      "direction": -1,
+      "n_winners": 724,
+      "n_rest": 13641,
+      "median_shift": 0.022167247188495165,
+      "auc": 0.5452346800614495,
+      "p": 3.981831873894398e-05,
+      "months_with_shift": 11,
+      "sign_consistency": 0.18181818181818182,
+      "regime": null,
+      "size_buckets": null
+    },
+    "mom_3m": {
+      "direction": -1,
+      "n_winners": 724,
+      "n_rest": 13627,
+      "median_shift": 0.050256199795082335,
+      "auc": 0.5659955840026726,
+      "p": 2.04707307195184e-09,
+      "months_with_shift": 11,
+      "sign_consistency": 0.18181818181818182,
+      "regime": null,
+      "size_buckets": null
+    },
+    "mom_6m": {
+      "direction": 1,
+      "n_winners": 723,
+      "n_rest": 13617,
+      "median_shift": 0.057922504763221805,
+      "auc": 0.5612341724418799,
+      "p": 2.73161896261868e-08,
+      "months_with_shift": 11,
+      "sign_consistency": 0.6363636363636364,
+      "regime": {
+        "up": {
+          "auc": 0.5612341724418799,
+          "shift": 0.057922504763221805,
+          "months": 11
+        },
+        "down": {
+          "auc": null,
+          "shift": null,
+          "months": 0
+        }
+      },
+      "size_buckets": {
+        "201-600": {
+          "auc": 0.6360825449648773,
+          "shift": 0.1817994148551224,
+          "n": 3947
+        },
+        "601-1500": {
+          "auc": 0.5397518452145916,
+          "shift": 0.03755252286730598,
+          "n": 8368
+        },
+        "top200": {
+          "auc": 0.5664300202839757,
+          "shift": 0.09050616063373185,
+          "n": 2058
+        }
+      }
+    },
+    "mom_12m_1m": {
+      "direction": 1,
+      "n_winners": 687,
+      "n_rest": 12988,
+      "median_shift": 0.05006811548741741,
+      "auc": 0.5437985752384129,
+      "p": 0.00010643395393125159,
+      "months_with_shift": 11,
+      "sign_consistency": 0.6363636363636364,
+      "regime": {
+        "up": {
+          "auc": 0.5437985752384129,
+          "shift": 0.05006811548741741,
+          "months": 11
+        },
+        "down": {
+          "auc": null,
+          "shift": null,
+          "months": 0
+        }
+      },
+      "size_buckets": {
+        "201-600": {
+          "auc": 0.653150174152385,
+          "shift": 0.19397472502874546,
+          "n": 3947
+        },
+        "601-1500": {
+          "auc": 0.507301793260307,
+          "shift": 0.004742236063044192,
+          "n": 8368
+        },
+        "top200": {
+          "auc": 0.5873606181882253,
+          "shift": 0.14303966981450678,
+          "n": 2058
+        }
+      }
+    },
+    "volume_zscore": {
+      "direction": 0,
+      "n_winners": 714,
+      "n_rest": 13555,
+      "median_shift": 0.03202537507276915,
+      "auc": 0.5181545875450881,
+      "p": 0.1014610425677057,
+      "months_with_shift": 11,
+      "sign_consistency": null,
+      "regime": {
+        "up": {
+          "auc": 0.5181545875450881,
+          "shift": 0.03202537507276915,
+          "months": 11
+        },
+        "down": {
+          "auc": null,
+          "shift": null,
+          "months": 0
+        }
+      },
+      "size_buckets": {
+        "201-600": {
+          "auc": 0.4961555975900238,
+          "shift": -0.013398812667164611,
+          "n": 3947
+        },
+        "601-1500": {
+          "auc": 0.5383359778462914,
+          "shift": 0.070966690947499,
+          "n": 8368
+        },
+        "top200": {
+          "auc": 0.4811370819378273,
+          "shift": -0.12730198472827023,
+          "n": 2058
+        }
+      }
+    },
+    "up_volume_20d": {
+      "direction": 0,
+      "n_winners": 710,
+      "n_rest": 13457,
+      "median_shift": -204995.0,
+      "auc": 0.5047571974164972,
+      "p": 0.6686891066028493,
+      "months_with_shift": 11,
+      "sign_consistency": null,
+      "regime": null,
+      "size_buckets": null
+    },
+    "down_volume_20d": {
+      "direction": 0,
+      "n_winners": 710,
+      "n_rest": 13457,
+      "median_shift": -230715.0,
+      "auc": 0.48956320968091377,
+      "p": 0.34779616404983027,
+      "months_with_shift": 11,
+      "sign_consistency": null,
+      "regime": null,
+      "size_buckets": null
+    },
+    "up_down_volume_ratio": {
+      "direction": 1,
+      "n_winners": 709,
+      "n_rest": 13370,
+      "median_shift": 0.08994566336394305,
+      "auc": 0.5437944453880179,
+      "p": 8.271954454909335e-05,
+      "months_with_shift": 11,
+      "sign_consistency": 0.7272727272727273,
+      "regime": null,
+      "size_buckets": null
+    },
+    "breakout_volume_confirmed": {
+      "direction": 1,
+      "n_winners": 709,
+      "n_rest": 13456,
+      "median_shift": 0.0,
+      "auc": 0.5045128540977311,
+      "p": 0.156364359334907,
+      "months_with_shift": 11,
+      "sign_consistency": 0.0,
+      "regime": null,
+      "size_buckets": null
+    },
+    "delivery_pct": {
+      "direction": 1,
+      "n_winners": 724,
+      "n_rest": 13649,
+      "median_shift": -3.039999999999999,
+      "auc": 0.43946437903086416,
+      "p": 3.833575045811646e-08,
+      "months_with_shift": 11,
+      "sign_consistency": 0.18181818181818182,
+      "regime": null,
+      "size_buckets": null
+    },
+    "delivery_pct_zscore": {
+      "direction": 1,
+      "n_winners": 714,
+      "n_rest": 13555,
+      "median_shift": -0.045722641688121124,
+      "auc": 0.4777845627369354,
+      "p": 0.045052934188894674,
+      "months_with_shift": 11,
+      "sign_consistency": 0.45454545454545453,
+      "regime": {
+        "up": {
+          "auc": 0.4777845627369354,
+          "shift": -0.045722641688121124,
+          "months": 11
+        },
+        "down": {
+          "auc": null,
+          "shift": null,
+          "months": 0
+        }
+      },
+      "size_buckets": {
+        "201-600": {
+          "auc": 0.5055608098640886,
+          "shift": 0.09274035785123744,
+          "n": 3947
+        },
+        "601-1500": {
+          "auc": 0.48362881644786726,
+          "shift": -0.09634104948178951,
+          "n": 8368
+        },
+        "top200": {
+          "auc": 0.4052785508750413,
+          "shift": -0.27280879593337737,
+          "n": 2058
+        }
+      }
+    },
+    "delivery_pct_trend": {
+      "direction": 1,
+      "n_winners": 715,
+      "n_rest": 13562,
+      "median_shift": -1.0700000000000038,
+      "auc": 0.48352930803159383,
+      "p": 0.13703948124352322,
+      "months_with_shift": 11,
+      "sign_consistency": 0.2727272727272727,
+      "regime": null,
+      "size_buckets": null
+    },
+    "delivery_spike_while_flat": {
+      "direction": 1,
+      "n_winners": 713,
+      "n_rest": 13492,
+      "median_shift": 0.0,
+      "auc": 0.49805577997703904,
+      "p": 0.3548745582720914,
+      "months_with_shift": 11,
+      "sign_consistency": 0.0,
+      "regime": null,
+      "size_buckets": null
+    },
+    "atr_ratio": {
+      "direction": -1,
+      "n_winners": 714,
+      "n_rest": 13493,
+      "median_shift": 0.007320572165532682,
+      "auc": 0.6389772391577249,
+      "p": 4.722355592700808e-36,
+      "months_with_shift": 11,
+      "sign_consistency": 0.0,
+      "regime": {
+        "up": {
+          "auc": 0.6389772391577249,
+          "shift": 0.007320572165532682,
+          "months": 11
+        },
+        "down": {
+          "auc": null,
+          "shift": null,
+          "months": 0
+        }
+      },
+      "size_buckets": {
+        "201-600": {
+          "auc": 0.6300812768800982,
+          "shift": 0.0057665749863823335,
+          "n": 3947
+        },
+        "601-1500": {
+          "auc": 0.6382923398637163,
+          "shift": 0.007148135128038621,
+          "n": 8368
+        },
+        "top200": {
+          "auc": 0.6255932303686609,
+          "shift": 0.004868048812830619,
+          "n": 2058
+        }
+      }
+    },
+    "nr7": {
+      "direction": 0,
+      "n_winners": 717,
+      "n_rest": 13554,
+      "median_shift": 0.0,
+      "auc": 0.4918861667848982,
+      "p": 0.22927029975957855,
+      "months_with_shift": 11,
+      "sign_consistency": null,
+      "regime": null,
+      "size_buckets": null
+    },
+    "squeeze_days_20d": {
+      "direction": 1,
+      "n_winners": 710,
+      "n_rest": 13457,
+      "median_shift": 0.0,
+      "auc": 0.4842775685098179,
+      "p": 0.14368833692953792,
+      "months_with_shift": 11,
+      "sign_consistency": 0.18181818181818182,
+      "regime": {
+        "up": {
+          "auc": 0.4842775685098179,
+          "shift": 0.0,
+          "months": 11
+        },
+        "down": {
+          "auc": null,
+          "shift": null,
+          "months": 0
+        }
+      },
+      "size_buckets": {
+        "201-600": {
+          "auc": 0.5115515122586116,
+          "shift": 0,
+          "n": 3947
+        },
+        "601-1500": {
+          "auc": 0.4658053516168371,
+          "shift": 0,
+          "n": 8368
+        },
+        "top200": {
+          "auc": 0.4995118054322741,
+          "shift": 0.0,
+          "n": 2058
+        }
+      }
+    },
+    "range_compression_20d": {
+      "direction": -1,
+      "n_winners": 705,
+      "n_rest": 13400,
+      "median_shift": 0.006480938770793733,
+      "auc": 0.6462675981793162,
+      "p": 2.794318604101967e-39,
+      "months_with_shift": 11,
+      "sign_consistency": 0.0,
+      "regime": null,
+      "size_buckets": null
+    },
+    "close_in_range": {
+      "direction": 1,
+      "n_winners": 722,
+      "n_rest": 13628,
+      "median_shift": -0.00224126798886215,
+      "auc": 0.495831815628082,
+      "p": 0.7053728081095707,
+      "months_with_shift": 11,
+      "sign_consistency": 0.45454545454545453,
+      "regime": null,
+      "size_buckets": null
+    },
+    "upper_wick_ratio": {
+      "direction": -1,
+      "n_winners": 722,
+      "n_rest": 13628,
+      "median_shift": 0.027741901264992708,
+      "auc": 0.5268285231562524,
+      "p": 0.01490707783181215,
+      "months_with_shift": 11,
+      "sign_consistency": 0.18181818181818182,
+      "regime": null,
+      "size_buckets": null
+    },
+    "lower_wick_ratio": {
+      "direction": 1,
+      "n_winners": 722,
+      "n_rest": 13628,
+      "median_shift": -0.01470803339042151,
+      "auc": 0.48644685822817124,
+      "p": 0.21889581553205184,
+      "months_with_shift": 11,
+      "sign_consistency": 0.36363636363636365,
+      "regime": null,
+      "size_buckets": null
+    },
+    "consec_higher_lows": {
+      "direction": 1,
+      "n_winners": 724,
+      "n_rest": 13644,
+      "median_shift": 0.0,
+      "auc": 0.5269189217205952,
+      "p": 0.00612487632640541,
+      "months_with_shift": 11,
+      "sign_consistency": 0.2727272727272727,
+      "regime": null,
+      "size_buckets": null
+    },
+    "big_body_day_in_trend": {
+      "direction": 1,
+      "n_winners": 709,
+      "n_rest": 13456,
+      "median_shift": 0.0,
+      "auc": 0.5079687712257387,
+      "p": 0.14393517641785347,
+      "months_with_shift": 11,
+      "sign_consistency": 0.0,
+      "regime": null,
+      "size_buckets": null
+    }
+  },
+  "bh_rejects": [
+    "mom_1m",
+    "mom_3m",
+    "mom_6m",
+    "mom_12m_1m",
+    "up_down_volume_ratio",
+    "delivery_pct",
+    "atr_ratio",
+    "range_compression_20d",
+    "upper_wick_ratio",
+    "consec_higher_lows"
+  ]
+}
