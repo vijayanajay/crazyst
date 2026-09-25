@@ -11,7 +11,7 @@ experiment's `results.json`.
 | E002b | Full-profile confirmation IC sweep (mean monthly IC, month fixed effects removed) | Momentum features (mom_6m / mom_12m_1m) confirmed at 15 years; volatility-state finding reproduces with a stable sign | **confirmed, with one major reversal** — mom_12m_1m +0.052 (p = 1.1e-6) and mom_6m confirmed; **delivery family CONFIRMED at full history** (delivery_pct +0.049, p = 1.2e-11) — E002's quick rejection was a bull-window artifact; atr_ratio is regime-flipping (+0.045 up / −0.183 down, 94% down-month consistency), so its pre-registered sign holds only in the regime quick never sampled. See 2026-09-25 E002b block | 2026-09-25 |
 | E001 | Anatomy of winners: winners differ from rest on momentum/delivery features | Winners' 6–12M momentum and 20-day delivery% z-score distributions sit above the eligible rest (median shift > 0) | **partial** — momentum anatomy confirmed (mom_12m_1m AUC 0.544, +0.050 median shift, 64% per-month consistency); delivery z-score anatomy REJECTED (AUC 0.478, wrong sign — matches E002); strongest separator is volatility state with the LORE-DIRECTION wrong (atr_ratio AUC 0.639 at every month, uniform across size buckets — not a small-cap artifact; momentum vanishes in the 601–1500 bucket, AUC 0.507). See 2026-09-25 block | 2026-09-25 |
 | E002 | Univariate IC sweep (all features) | 6–12M momentum and delivery% z-score have positive pooled Spearman IC, surviving BH at α = 0.05 | **partial** — mom_12m_1m confirmed (+0.065, right sign, BH-surviving); delivery z-score REJECTED (−0.010, n.s.); mom_6m wrong sign; volatility-state features dominate (see 2026-09-24 block) | 2026-09-24 |
-| E006 | Cost sensitivity: 0.2 / 0.5 / 1.0 % per side | Net edge at 0.2% does not survive 1.0% for picks ranked below ~600 (BRD §9.7) | pending | — |
+| P4.1 | Composite v0 (rank-avg of E002b survivors) beats the best single feature on the pre-test-window validation slice (paired monthly t, α = 0.05); atr overlay additive on the same test | **inconclusive** — composite 0.0625 vs best single (mom_12m_1m) 0.0529 mean monthly IC, diff +0.0096 over 145 months, p = 0.0585: point estimate wins, pre-registered bar missed ⇒ **mom_12m_1m ships as v0** (tie ⇒ simpler). Atr overlay REJECTED as an addition (−0.0390, p = 0.0033): the trailing-market regime proxy dilutes, not captures. Overlay's 0.0625-vs-0.0529 gap is the number the 4.2 ranker must justify. See 2026-09-25 P4.1 block | 2026-09-25 |
 | E003 | Bulk/block deal net buying overlay (Phase 7) | Net institutional buying in the prior month adds IC on top of E002 survivors | pending | — |
 | E004 | SAST/insider buying overlay (Phase 7) | Insider % acquisitions in the prior quarter add IC on top of E002 survivors | pending | — |
 | E005 | F&O OI overlay, optional (Phase 7) | OI build-up with price adds IC on top of E002 survivors | pending | — |
@@ -710,3 +710,40 @@ entry point exercised. The live run is the check.
 - **Method note:** the survivorship-drift column was initially computed from the trading
   subset (structurally zero — a mislabeled denominator). Caught on the live run and fixed
   before the verdict: `not_ever_traded_by_year_end` now reads the snapshot directly.
+
+---
+
+## Experiment P4.1 — composite score v0 (2026-09-25, profile `full`)
+
+- **Universe decision implemented:** as-of top-1500, turnover floor OFF — the top-1500 /
+  floor-off default from `docs/brd_decisions_universe.md`, flagged BRD-owner-review-pending
+  in the pre-registration. (The full-profile feature matrix had been left at the quick
+  profile by the selfcheck suite's rebuilds; the chain was rebuilt through its real entry
+  points before the run — 218,648 rows × 183 months, 47.7s.)
+- **Prediction (pre-registered in `experiments/004_composite_v0/hypothesis.md`, written
+  before the run):** the rank-average composite of the E002b survivors
+  (`mom_12m_1m`, `mom_6m`, `delivery_pct`; equal weights, parameter-free) beats the best
+  single feature on the pre-test-window validation slice (paired monthly t, α = 0.05); the
+  atr-regime overlay is additive on the same test. The comparator is selected ON the slice
+  (winner's curse included) — the conservative form of BRD M3's bar. The test window (last
+  36 months, BRD §10.1; boundary 2023-09-24) is excluded and not scored.
+- **Run:** `experiments/004_composite_v0/run.py --profile full` — validation slice
+  **145 decision months / 132,530 labeled rows** (2011-07 → 2023-08), 35 test-window months
+  excluded. All arm ICs, paired tests and precisions in `results.json`.
+- **Verdict: INCONCLUSIVE — mom_12m_1m ships as v0** (details in the ledger row and
+  `verdict.md`):
+  - composite **0.0625** vs best single (mom_12m_1m) **0.0529** mean monthly IC; paired diff
+    +0.0096, t = 1.91, **p = 0.0585** — the point estimate wins, the pre-registered α does
+    not clear, and the tie rule (⇒ simpler ships) applies as written.
+  - atr overlay **rejected**: 0.0223 vs 0.0625 (diff −0.0390, p = 0.0033) — E002b's
+    regime flip is real in cross-section but the pre-registered trailing-market proxy
+    dilutes the composite instead of capturing it. A real regime classifier remains an open,
+    separately-pre-registrable idea.
+  - top-5% precision on the slice: composite 55.4% > overlay 53.2% > single 53.0% — the
+    composite's edge concentrates in the picked tail.
+- **Consequence for the plan:** 4.1 ships the single feature; 4.2 (learned ranker) proceeds
+  against the unchanged gate ("beats best single feature out-of-sample"), with the honest
+  reference number to justify complexity being the composite's 0.0625. The walk-forward
+  (Phase 6) remains the only result that counts (BRD §10).
+- **Honest caveats:** p = 0.0585 is a near-miss recorded as a near-miss; the comparator's
+  0.0529 carries its own winner's curse; nothing here predicts the Phase 6 test window.

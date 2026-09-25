@@ -128,7 +128,7 @@ Work in this order. Each task depends on the previous.
 
 **Checkpoint: present IC table + anatomy findings + E000 overlap. Expect some priors to die here — that is the deliverable.**
 
-## Phase 4 — Selection model (M3) (3–4 days) — *parallel-safe from 3.5 with Phase 5*
+## Phase 4 — Selection model (M3) (3–4 days) — *IN PROGRESS: 4.1 run (2026-09-25), verdict `inconclusive` — mom_12m_1m ships as v0 (composite near-miss, p = 0.0585; atr overlay rejected, p = 0.0033). 4.2 next.*
 
 | # | Task | Details | Done when |
 |---|---|---|---|
