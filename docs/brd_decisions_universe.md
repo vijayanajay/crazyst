@@ -1,10 +1,12 @@
-# Two decisions for the BRD owner — universe scope (2026-09-25)
+# Three decisions for the BRD owner — universe scope + exit fills (2026-09-25 / 2026-09-26)
 
 From the Phase 3 experiments (E000, E002b; pre-registered per BRD §12, evidence in
 `experiments/000_universe_overlap/` and `experiments/002b_ic_sweep_full/`, verdicts in
-`LEDGER.md`). Both decisions block Phase 4/6: the composite and the walk-forward report must
-state which universe they are claims about, and today every experiment's evidence is on
-**top-1500**.
+`LEDGER.md`) and the Phase 5→6 engine smoke on real full-profile data
+(`src/backtest/smoke_e2e.py`, commit `af68a4c`). The first two decisions block Phase 4/6: the
+composite and the walk-forward report must state which universe they are claims about, and
+today every experiment's evidence is on **top-1500**. The third blocks 6.4: the walk-forward's
+exit semantics are undefined when the fill gate refuses a sell.
 
 ---
 
@@ -79,3 +81,52 @@ Either way, the choice is recorded in the ledger with the experiment numbers att
 hypothesis files stay untouched (BRD §12), and Phase 4's pre-registration states the
 universe. If you defer: the default path is top-1500 / floor-off, flagged as
 "BRD-owner-review-pending" in the Phase 4 hypothesis.
+
+---
+
+## Decision 3 — What happens when the fill gate refuses an EXIT? (§9 gate vs §8.2 exits)
+
+**What we measured (`src/backtest/smoke_e2e.py`, engine pass: 12 consecutive validation-slice
+months 2011-07→2012-06 on real bars through Market/Facts/Portfolio/Engine; results in
+`runs/smoke_e2e/smoke_results.json`, gitignored — regenerate with
+`python -m src.backtest.smoke_e2e`).** BRD §9's fill gate (`backtest.fill.
+max_position_adv_frac: 0.05` of trailing-20-session median turnover) is written for entries
+but the engine applies it to every order, sells included. On real data it bites exits:
+
+| measurement | value |
+|---|---|
+| distinct exit attempts | 2 (SOLARINDS monthly review; ECLERX trigger_b_stop) |
+| exits blocked by the ADV gate | **1 of 2 — SOLARINDS, refused at T+1 and re-refused at 8 consecutive monthly reviews (2011-09 → 2012-04); 8 of the pass's 10 non-fills** |
+| consequence | the slot froze: that month's replacement buy skipped every month (8×); the §8.2 stop/track machinery had no exit path |
+| outcome (luck, not design) | the forced hold closed at **+19.59%** after ~9 months — the pass's best closed pick, on the name the strategy tried hardest to leave |
+| structural direction | the pick set skews 601–1500 (4,839 of 6,622 pick-months) — exactly where the gate bites; a liquidity-drying small-cap under a stop has **no §8 exit path at all** |
+
+A stop-loss that the fill model can veto is decorative: §8.2 promises "stop = sell", §9
+quietly answers "not necessarily". Phase 6.4 cannot report drawdowns or turnover honestly
+until you choose the semantics.
+
+**The options:**
+
+- **(a) Stuck-and-retried** (current behaviour, the smoke's documented default): the review
+  re-submits the exit every month; the slot stays frozen; no config change. Risk: an
+  unbounded hold — the 8% stop becomes fiction, one illiquid pick can pin a slot
+  indefinitely, and monthly-review names drift for months.
+- **(b) Force-exit at any price**: a risk-management exit (trigger_b_*, gsm/asm, and the
+  monthly review's out-of-universe sell) fills regardless of the gate, impact uncapped (or
+  capped at a much higher bound), realized exit cost reported separately. Implements §8.2's
+  guarantee literally; the cost is real but bounded and measurable. The entry gate stays
+  untouched — a position too big to initiate is still refused.
+- **(c) Escalate on a timer**: an exit refused at N consecutive review attempts (config,
+  suggested N = 2) is marked `exit_impaired` — reported as a risk event, excluded from
+  re-entry, and force-exited at the next session at any price. Bounded hold, loud report,
+  one config knob.
+
+**Recommendation: (c), N = 2, force-exit at any price with uncapped impact reported
+separately.** Risk-management exits must dominate fill-model optimism or §8.2's protections
+are decorative; the forced small-cap exit cost is bounded and reportable, while an unbounded
+hold is an unbounded risk (the smoke's lucky +19.59% has an unlucky twin in every other
+tape). Amend §9 with one sentence making the scope explicit: *the gate protects entries and
+routine exits; a risk-management exit may exceed it, at reported uncapped cost.* Whatever
+you choose, the smoke's current (a) behaviour stays BRD-normative until you decide — the
+same pattern as Decision 2's floor. **Decision needed before Phase 6.4** (the walk-forward's
+drawdown, churn and turnover numbers all move with this choice).
