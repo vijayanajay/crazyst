@@ -39,6 +39,7 @@ universe:
                               # gsm_asm_stage_exit: 2). Historical stages do not exist (BRD §5 D5),
                               # so this excludes nothing until a snapshot is supplied via
                               # paths.surveillance_csv.
+  size_buckets: [200, 600]    # as-of rank buckets: top200 / 201-600 / 601-1500 (task 3.5 matrix)
   rank_percentiles:           # all rank cutoffs are percentiles of the eligible universe, never counts (§8)
     sell_below_top_pct: 0.25  # monthly sell trigger: rank falls below top 25% (§8.1)
     replace_above_top_pct: 0.15  # replacement must rank in top 15% (§8.1)
@@ -70,6 +71,16 @@ backtest:
   suspension_exit_days: 5      # mark at last close if no trade within 5 days
   purge_months: 1              # 1-month purge gap between train end and test month (§10.2)
   random_seed: 42
+
+# ---- Feature windows (BRD §6) ----
+features:
+  daily_lookback_sessions: 20    # trailing/prior 20 NSE sessions for volume and delivery features
+  delivery_flat_lookback_sessions: 5  # price-flat test horizon, using adjusted close
+  delivery_spike_z: 2.0          # delivery% is a spike at or above this rolling z-score
+  delivery_flat_max_return: 0.01 # "price flat": abs adjusted return <= 1% over that horizon
+  atr_sessions: 14               # ATR window for atr_ratio = ATR(adjusted true range) / adjusted close
+  squeeze_range_frac: 0.5        # a squeeze day: true range below this x the 20-session mean TR
+  big_body_mult: 2.0             # big body: body exceeds this x the prior-20-session mean body
 
 # ---- Statistical checks (BRD §11) ----
 stats:

@@ -93,8 +93,10 @@ def bump_end_date(new_date: str, path: str = CONFIG) -> bool:
     assert n == 1, f"expected exactly one end_date line in {path}, found {n}"
     if new_txt == txt:
         return False
-    with open(path, "w") as f:
+    part = path + ".part"  # atomic replace (same discipline as _http.fetch): a concurrent
+    with open(part, "w") as f:  # load() sees the old or the new config, never a half-written one
         f.write(new_txt)
+    os.replace(part, path)
     return True
 
 

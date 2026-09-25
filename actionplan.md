@@ -4,6 +4,31 @@ Companion to `BRD.md`. Written for one developer. Follow the order unless a task
 
 Universe note: we track ~1500 stocks via an as-of liquidity rank (top 1500 by trailing 3-month median turnover, computed from bhav data per decision date). Winners = top 5% of eligible stocks (BRD §4). No index-membership scraping on the critical path.
 
+## Status (updated 2026-09-23)
+
+Phases 0–2 are complete; every Phase 1/2 done-when is implemented and verified (audit + live
+re-runs), and the selfcheck suite is green at **15/15 checks**. Evidence lives in `LEDGER.md`:
+milestones **M2**, **M2.2**, **M2.3** and **"Phase 2 (M1) complete"**, which also record the
+checkpoint artifacts (validation-report sign-off; the three winner lists vs re-computation).
+
+Post-audit repairs (2026-09-23), all proven on live data: task 1.6's cross-check was dead code —
+fixed (row unpacking, 0/0→NaN handling, date-index alignment, still-trading sampling,
+recent-window comparison) and registered in the suite; the scheduler's `end_date` write is now
+atomic (temp file + replace); the daily-refresh gate (agreement 1.0 on 105 pairs) and a full
+backfill slice (638 rows, 99.8% vs NSE) were re-run through their real entry points.
+
+Open items carried forward (none blocks a Phase 1/2 done-when):
+
+- **₹5cr turnover floor** — BRD §4's "subsumed" premise is measurably false (enforcing it
+  excludes ~31% of the universe); rule implemented, shipped OFF. Needs the BRD owner.
+- Quality debt recorded in the ledger's "Open items for the next pass": `eligible()`'s
+  connection/table dependency vs this plan's pure-function wording, the hand-synchronised
+  `_CHECKS`/point-form rule pair, quarantine for malformed surveillance rows.
+- **Phase 3 in progress**: tasks 3.1–3.5 implemented and verified; **E002 (3.7) has run** —
+  verdict `partial` in the ledger (momentum 12M−1M confirmed, delivery z-score rejected,
+  low-volatility state dominates). Open: 3.6 (E001 anatomy), 3.8 (E000 overlap),
+  `experiments/001_anatomy/` still empty.
+
 ## Working rules (read first)
 
 1. One config file (`config.yaml`) holds every threshold, path, cost, and date. No magic numbers in code.
@@ -39,7 +64,7 @@ LEDGER.md
 
 ---
 
-## Phase 0 — Setup (0.5 day)
+## Phase 0 — Setup (0.5 day) — ✅ DONE
 
 | # | Task | Done when |
 |---|---|---|
@@ -49,7 +74,7 @@ LEDGER.md
 
 **Checkpoint: nothing to show. Proceed.**
 
-## Phase 1 — Data pipeline (M0) (4–5 days)
+## Phase 1 — Data pipeline (M0) (4–5 days) — ✅ DONE 2026-09-22 (LEDGER M2/M2.2/M2.3; task 1.6 cross-check repaired and re-proven 2026-09-23)
 
 Work in this order. Each task depends on the previous.
 
@@ -67,7 +92,7 @@ Work in this order. Each task depends on the previous.
 
 **Checkpoint: show the validation report. Get sign-off before continuing.**
 
-## Phase 2 — Universe + labels (M1) (2–3 days)
+## Phase 2 — Universe + labels (M1) (2–3 days) — ✅ DONE 2026-09-23 (LEDGER "Phase 2 (M1) complete")
 
 | # | Task | Details | Done when |
 |---|---|---|---|
@@ -81,13 +106,13 @@ Work in this order. Each task depends on the previous.
 
 | # | Task | Details | Done when |
 |---|---|---|---|
-| 3.1 | Feature framework | Panel-wide computation: one DuckDB `CREATE TABLE AS` with window functions ordered by date — past-only by construction, no per-symbol-month Python calls | One call computes all features panel-wide; missing inputs → NaN, never 0, never exception |
+| 3.1 | Feature framework | Panel-wide computation: one DuckDB `CREATE TABLE AS` with window functions ordered by date — past-only by construction, no per-symbol-month Python calls | ✅ Implemented in `src/features/panel.py`; one CTAS computes monthly momentum (1M/3M/6M/12M−1M) over the existing panels; synthetic hand-values, calendar gaps, NULL/empty inputs, future-isolation, and live quick-profile build pass; registered self-check (`src.features.panel`) passes |
 | 3.2 | Momentum group | BRD §6 momentum features | Each has a hand-computed test case |
-| 3.3 | Volume + delivery group | BRD §6 volume structure, delivery features | Same |
-| 3.4 | Volatility + candle group | BRD §6; candles as features, not triggers | Same |
-| 3.5 | Feature matrix build | One table: symbol, month, all features, next-month return, is_winner (top 5%), plus liquidity rank and size bucket (top 200 / 201–600 / 601–1500) | Row count = eligible stock-months; sanity: no duplicate keys |
+| 3.3 | Volume + delivery group | BRD §6 volume structure, delivery features | ✅ Implemented in `src/features/panel.py` (same CTAS as 3.1): volume z-score, 20-session up/down volume split + ratio, breakout-with-volume confirmation, delivery% level/z-score/20-session trend, delivery-spike-while-flat; windows ride the EQ session calendar so absent sessions NULL rather than shift lags; synthetic hand-values (up-volume 95/down 144, both z-scores), missing-session/-delivery, future-isolation and live build pass |
+| 3.4 | Volatility + candle group | BRD §6; candles as features, not triggers | ✅ Implemented in `src/features/panel.py` (same CTAS): ATR ratio (14-session adjusted TR / close), NR7, squeeze days (TR below the configured fraction of its own prior-20 mean), 20-session range compression, close-in-range position, upper/lower wick ratios, consecutive-higher-lows streak, big-body-day-in-trend — all on adjusted OHLC (split-safe), all completeness-gated (TR windows need a prior close, so `source_days` warms up one extra session); synthetic hand-values (ATR 7/112 and 7/104 and 7/125, NR7 with a tie, squeeze 1, 13/14 close-in-range, 20-session higher-low streak), missing-session NULLing, future isolation and live build pass |
+| 3.5 | Feature matrix build | One table: symbol, month, all features, next-month return, is_winner (top 5%), plus liquidity rank and size bucket (top 200 / 201–600 / 601–1500) | ✅ Implemented in `src/features/matrix.py`: `feature_matrix` = feature_panel LEFT-joined to as-of rank and to the FORWARD label — `winners` rows are keyed by the date their return ends at, so decision D's label is read at the NEXT decision date (lead over the decision calendar); unmeasured forward months stay NULL, never False. Row count = eligible symbol-months, no duplicate keys, all buckets populated, 5.0% winner rate live; synthetic checks prove the forward direction (the +30% month read from its prior decision row), per-month as-of buckets, last-month NULLs and schema completeness |
 | 3.6 | **Experiment 001 — anatomy of winners** | Hypothesis: winners differ from rest on momentum/delivery features. Output: feature distribution table winners vs rest, per regime | `hypothesis.md` written and committed BEFORE `run.py` executes; results + verdict in ledger |
-| 3.7 | **Experiment 002 — univariate IC sweep** | Spearman IC per feature per month + pooled; top-5% precision vs 5% baseline; Benjamini–Hochberg correction across the ~20 features | Every feature has a ledger row with pre-registered direction |
+| 3.7 | **Experiment 002 — univariate IC sweep** | Spearman IC per feature per month + pooled; top-5% precision vs 5% baseline; Benjamini–Hochberg correction across the ~20 features | ✅ Ran per BRD §12: `experiments/002_ic_sweep/hypothesis.md` (pre-registered directions for all 22 features, written before the run) → `run.py` (per-month + pooled Spearman via `src.stats`, exact t-tail p, top-5% precision, BH) → `results.json` (config/git/cutoff snapshot) → verdict + ledger block. Result: **partial** — mom_12m_1m confirmed (+0.065, BH-surviving), delivery z-score and mom_6m rejected on direction, low-volatility state is the sweep's dominant signal |
 | 3.8 | **Experiment 000 — universe overlap** | Hypothesis: the as-of top-1500 liquidity universe approximates the large/mid-cap intent. Output: per-year overlap with Nifty 200 constituents, hit-rate delta if winners were computed on the Nifty-200-only universe | Overlap table in ledger; E000 verdict decides whether index membership is ever needed |
 
 **Checkpoint: present IC table + anatomy findings + E000 overlap. Expect some priors to die here — that is the deliverable.**

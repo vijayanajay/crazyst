@@ -53,6 +53,10 @@ def _validate(cfg: dict) -> None:
     u, p, b, s = cfg["universe"], cfg["portfolio"], cfg["backtest"], cfg["stats"]
     assert u["top_n"] > 0 and u["liquidity_lookback_months"] > 0, f"universe rank params must be positive, got {u}"
     assert u["min_price"] > 0 and u["min_listed_months"] > 0, f"eligibility floors must be positive, got {u}"
+    sb = u["size_buckets"]
+    assert (isinstance(sb, list) and len(sb) == 2 and all(isinstance(x, int) for x in sb)
+            and 0 < sb[0] < sb[1] <= u["top_n"]), \
+        f"universe.size_buckets must be two ints 0 < b1 < b2 <= top_n, got {sb!r}"
     assert isinstance(u["allowed_series"], list) and u["allowed_series"], \
         f"universe.allowed_series must be a non-empty list of series codes, got {u['allowed_series']}"
     assert u["min_median_turnover_cr"] >= 0, \
@@ -74,6 +78,20 @@ def _validate(cfg: dict) -> None:
     assert 0 < s["winner_top_pct"] < 1 and 0 < s["baseline_hit_rate"] < 1, f"winner/baseline must be fractions, got {s}"
     assert s["winner_top_pct"] == s["baseline_hit_rate"], "baseline must equal the winner definition (BRD §11)"
     assert cfg["walkforward_months"] > 0, f"walkforward_months must be positive, got {cfg['walkforward_months']}"
+    f = cfg["features"]
+    assert isinstance(f["daily_lookback_sessions"], int) and f["daily_lookback_sessions"] >= 7, \
+        f"features.daily_lookback_sessions must be an int >= 7 (NR7 window), got {f['daily_lookback_sessions']!r}"
+    atr = f["atr_sessions"]
+    assert isinstance(atr, int) and 2 <= atr <= f["daily_lookback_sessions"], \
+        f"features.atr_sessions must be an int in [2, {f['daily_lookback_sessions']}], got {atr!r}"
+    assert 0 < f["squeeze_range_frac"] < 1, \
+        f"features.squeeze_range_frac must be in (0, 1), got {f['squeeze_range_frac']!r}"
+    assert f["big_body_mult"] > 1, f"features.big_body_mult must exceed 1, got {f['big_body_mult']!r}"
+    flat_n = f["delivery_flat_lookback_sessions"]
+    assert isinstance(flat_n, int) and 1 <= flat_n < f["daily_lookback_sessions"], \
+        f"features.delivery_flat_lookback_sessions must be in [1, {f['daily_lookback_sessions']}), got {flat_n!r}"
+    assert f["delivery_spike_z"] > 0 and 0 < f["delivery_flat_max_return"] < 1, \
+        f"invalid delivery feature thresholds: {f}"
 
 
 if __name__ == "__main__":

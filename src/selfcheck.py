@@ -31,17 +31,21 @@ from src.config import load
 # once months are cached they run in seconds and hit NSE only for missing files.
 CHECKS = [
     ("config", "src.config"),
+    ("stats", "src.stats"),
     ("stamp", "src.stamp"),
     ("bhavcopy_old", "src.download.bhavcopy_old"),
     ("bhavcopy_udiff", "src.download.bhavcopy_udiff"),
     ("delivery", "src.download.delivery"),
     ("normalize.bhav", "src.normalize.bhav"),
     ("normalize.delivery", "src.normalize.delivery"),
+    ("normalize.adj_close", "src.normalize.adj_close"),
     ("normalize.panels", "src.normalize.panels"),
     ("validate.report", "src.validate.report"),
     ("validate.canary", "src.validate.canary"),
     ("universe.rank", "src.universe.rank"),
     ("universe.eligibility", "src.universe.eligibility"),
+    ("features.panel", "src.features.panel"),
+    ("features.matrix", "src.features.matrix"),
     ("universe.winners", "src.universe.winners"),
 ]
 
@@ -63,6 +67,8 @@ def suite_inputs(cfg: dict) -> list:
         "table:adj_me.mdate",
         "table:liq_me.mdate",
         "table:deliv_me.mdate",
+        "table:feature_panel.mdate",
+        "table:feature_matrix.mdate",
         "table:universe_rank.mdate",
         "table:eligible.mdate",
         "table:winners.mdate",

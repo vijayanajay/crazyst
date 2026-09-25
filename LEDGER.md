@@ -9,7 +9,7 @@ experiment's `results.json`.
 |---|---|---|---|---|
 | E000 | Universe overlap: as-of top-1500 liquidity vs Nifty 200 | Overlap ≥ 80% of Nifty 200 constituents per year; hit rates computed on the two universes differ by < 2pp | pending | — |
 | E001 | Anatomy of winners: winners differ from rest on momentum/delivery features | Winners' 6–12M momentum and 20-day delivery% z-score distributions sit above the eligible rest (median shift > 0) | pending | — |
-| E002 | Univariate IC sweep (all features) | 6–12M momentum and delivery% z-score have positive pooled Spearman IC, surviving BH at α = 0.05 | pending | — |
+| E002 | Univariate IC sweep (all features) | 6–12M momentum and delivery% z-score have positive pooled Spearman IC, surviving BH at α = 0.05 | **partial** — mom_12m_1m confirmed (+0.065, right sign, BH-surviving); delivery z-score REJECTED (−0.010, n.s.); mom_6m wrong sign; volatility-state features dominate (see 2026-09-24 block) | 2026-09-24 |
 | E006 | Cost sensitivity: 0.2 / 0.5 / 1.0 % per side | Net edge at 0.2% does not survive 1.0% for picks ranked below ~600 (BRD §9.7) | pending | — |
 | E003 | Bulk/block deal net buying overlay (Phase 7) | Net institutional buying in the prior month adds IC on top of E002 survivors | pending | — |
 | E004 | SAST/insider buying overlay (Phase 7) | Insider % acquisitions in the prior quarter add IC on top of E002 survivors | pending | — |
@@ -459,3 +459,43 @@ in 28.5s**.
    excludes it (benign — no return is provisional — but previously undocumented); 2.1's "5
    hand-picked dates" are deterministic picks (first, quartiles, last); and printing `₹` raises
    `UnicodeEncodeError` on this cp1252 console, so new output says `Rs`.
+
+---
+
+## Experiment E002 — univariate IC sweep (2026-09-24, profile `quick`)
+
+- **Prediction (pre-registered in the ledger row above and in
+  `experiments/002_ic_sweep/hypothesis.md`, written before the run):** 6–12M momentum and
+  delivery% z-score have positive pooled Spearman IC, surviving BH at α = 0.05.
+- **Run:** `experiments/002_ic_sweep/run.py --profile quick` — 22 features × 11 decision months,
+  14,373 labeled rows (as-of top-1500 universe), cutoff 2026-09-22, git `d37580c`, 64s. All
+  per-month and pooled ICs, p-values, top-5% precisions and the BH step-up are in
+  `experiments/002_ic_sweep/results.json`; every number is reproducible from that config snapshot.
+- **Verdict: PARTIALLY CONFIRMED.**
+  - **CONFIRMED, right sign, BH-surviving: `mom_12m_1m` pooled IC +0.065 (p = 2.5e-14) — exactly
+    the +0.065 the M2 momentum canary measured on its own universe, now on the as-of top-1500
+    with the proper forward label.** `mom_1m` −0.095 (p = 2e-30): monthly reversal confirmed at
+    the pre-registered negative sign, top-5%-by-value precision 72%.
+  - **REJECTED, pre-registered positive direction: `delivery_pct_zscore` IC −0.010
+    (p = 0.22, not even significant).** The E001/E002 delivery prior is falsified on quick data.
+  - **`mom_6m` IC −0.024 (p = 0.004, wrong sign): rejected as a positive-direction prior** —
+    on 12 months of quick data the 6M horizon still carries reversal, not momentum.
+  - **Direction-agnostic findings (no pre-registered direction, reported not celebrated):**
+    `squeeze_days_20d` −0.196 (p = 7e-123) and `atr_ratio` +0.126 (p = 2e-51) are the two
+    strongest signals in the sweep — **low volatility predicts higher next-month returns** on
+    this universe (volatility-compression "breakout lore" points the WRONG way here), and
+    `volume_zscore` +0.106. Volatility-state features dominate the sweep; most candle features
+    are weak-to-negative.
+  - 18 of 22 features survive BH (n = 14k ⇒ tiny ICs are "significant"); the discipline that
+    matters is the pre-registered sign + the per-month view: pooled ranks mix market-wide level
+    shifts, and several features flip sign between pooled and monthly means (e.g. `mom_3m`
+    pooled −0.019, monthly mean +0.028) — pooled-only verdicts would be fragile. The 0.10 IC
+    "conventional" threshold leaves only `mom_12m_1m` (monthly mean +0.102) standing.
+- **Honest caveats:** quick profile = 11 months, one regime; monthly IC counts are small
+  (~1,300 rows/month) so per-month ICs are noisy; multiple-testing across 22 features is
+  handled by BH but the direction-agnostic features get no such protection — their findings are
+  hypotheses for E001/the full-profile re-run, not conclusions. The full-profile sweep is the
+  same code with `--profile full` and is NOT pre-registered here.
+- **Consequence for the plan:** Phase 4's composite (4.1) must rank-average features that
+  survived E002 **with the measured signs** — low volatility is now a candidate factor, the
+  delivery z-score is not.

@@ -42,6 +42,7 @@ ADJ_COLS = ["symbol", "date", "adj_close"]
 SCHEMA = """CREATE TABLE IF NOT EXISTS adj_close (
     symbol VARCHAR, date DATE, adj_close DOUBLE)"""
 MATCH_TOL = 0.005  # raw closes should agree to 0.5% on matched days
+RECENT_DAYS = 365  # cross-check window: see cross_check's docstring for why not full history
 
 
 def yahoo_ticker(symbol: str) -> str:
@@ -49,11 +50,16 @@ def yahoo_ticker(symbol: str) -> str:
 
 
 def match_fraction(nse: "pd.Series[float]", yf: "pd.Series[float]") -> float:
-    """Fraction of inner-joined dates where raw closes agree within MATCH_TOL."""
+    """Fraction of inner-joined dates where raw closes agree within MATCH_TOL.
+
+    Relative form `|d| <= tol * |nse|` (not a division): a zero NSE close must give a
+    definite verdict — equal closes match, unequal don't — never a NaN that mean()
+    would silently drop from the denominator.
+    """
     j = pd.concat([nse.rename("nse"), yf.rename("yf")], axis=1, join="inner").dropna()
     if j.empty:
         return 0.0
-    return float((abs(j["nse"] - j["yf"]) / j["nse"].abs() <= MATCH_TOL).mean())
+    return float(((j["nse"] - j["yf"]).abs() <= MATCH_TOL * j["nse"].abs()).mean())
 
 
 def _fetch_batch(tickers: list[str], cfg: dict, start: str | None = None) -> dict[str, pd.DataFrame]:
@@ -288,29 +294,58 @@ def refresh_recent(cfg: dict, chunk: int = 100, buffer_days: int = 7, fetcher=No
 
 
 def cross_check(cfg: dict, n: int = 20, fetcher=None) -> bool:
-    """Done-when: n random symbols, NSE vs Yahoo raw closes match on >=95% of overlap days."""
-    import yfinance as yf
+    """Done-when: n random symbols, NSE vs Yahoo raw closes match on >=95% of overlap days.
+
+    Sampled from symbols that still traded in the last 30 days: Yahoo serves no delisted
+    or renamed ticker (26% of all-time EQ symbols), and a dead name is a survivorship
+    fact, not a symbol-mapping bug — the bug this check exists to catch corrupts live
+    symbols too. Same still-trading scoping the refresh, the canary and report [6] use.
+
+    Compared over the last RECENT_DAYS only. ponytail: Yahoo back-adjusts its RAW close
+    through old corporate actions on some names (measured: SMSPHARMA x0.095, JAGSNPHARM
+    x0.4 before their old split eras, both 100.0% on the last 365 days), so a full-history
+    raw-close comparison measures Yahoo's lineage, not our mapping. The adjusted HISTORY
+    is validated separately — refresh_recent re-fetches a symbol whose adjustment basis
+    moved, and the momentum canary would smear if adj_close history were wrong.
+    """
     con = duckdb.connect(cfg["paths"]["duckdb"], read_only=True)
     try:
         cand = con.execute("""SELECT symbol, count(*) c FROM bhav WHERE series='EQ'
-                              GROUP BY symbol HAVING c >= 250 ORDER BY symbol""").fetchall()
-        nse_all = {sym: pd.Series(rows, index=pd.to_datetime(dates)) for sym, rows, dates in
-                   [tuple(x) for x in con.execute("""
-                       SELECT symbol, close, date FROM bhav WHERE series='EQ' ORDER BY symbol, date""").fetchall()]}
+                              GROUP BY symbol
+                              HAVING c >= 250
+                                 AND max(date) > (SELECT max(date) FROM bhav WHERE series = 'EQ')
+                                                  - INTERVAL 30 DAY
+                              ORDER BY symbol""").fetchall()
+        cutoff, = con.execute(
+            "SELECT max(date) FROM bhav WHERE series = 'EQ'").fetchone()
+        cutoff = pd.Timestamp(cutoff) - pd.Timedelta(days=RECENT_DAYS)
+        nse_all: dict = {}
+        for sym, d, c in con.execute("""
+                SELECT symbol, date, close FROM bhav WHERE series='EQ' ORDER BY symbol, date""").fetchall():
+            if c is not None and d >= cutoff.date():  # NULL can never agree; keep Series float-typed
+                nse_all.setdefault(sym, ([], []))
+                nse_all[sym][0].append(d)
+                nse_all[sym][1].append(c)
     finally:
         con.close()
+    nse_all = {s: pd.Series(cl, index=pd.to_datetime(ds)) for s, (ds, cl) in nse_all.items()}
     rng = random.Random(cfg["backtest"]["random_seed"])
     sample = [sym for sym, _ in rng.sample(cand, n)]
     fetcher = fetcher or (lambda syms: _fetch_batch(syms, cfg))
     yf_data = fetcher(sample)
-    fracs = {sym: match_fraction(nse_all[sym], yf_data[sym]["close_raw"])
-             for sym in sample if sym in yf_data}
-    missing = [s for s in sample if s not in yf_data]
+    # _fetch_batch frames are column-keyed with a RangeIndex; match_fraction joins on the
+    # index, so the close must be re-indexed by date for the comparison to see any overlap
+    yf_close = {s: pd.Series(df["close_raw"].values, index=pd.to_datetime(df["date"]))
+                for s, df in yf_data.items()}
+    yf_close = {s: v[v.index >= cutoff] for s, v in yf_close.items()}
+    fracs = {sym: match_fraction(nse_all[sym], yf_close[sym])
+             for sym in sample if sym in yf_close}
+    missing = [s for s in sample if s not in yf_close]
     for sym in sample:
         f = fracs.get(sym)
         print(f"  {sym:<12} {'MISSING on Yahoo' if f is None else f'{f * 100:5.1f}% match'}", flush=True)
-    ok_syms = [s for s, f in fracs.items() if f >= 0.9]
-    print(f"cross-check: {len(ok_syms)}/{n} symbols match >=90% of overlap days; "
+    ok_syms = [s for s, f in fracs.items() if f >= 0.95]
+    print(f"cross-check: {len(ok_syms)}/{n} symbols match >=95% of overlap days; "
           f"{len(missing)} missing on Yahoo", flush=True)
     return len(ok_syms) >= n - 2  # tolerate 2 renamed/dead symbols out of 20
 
@@ -342,9 +377,10 @@ def _self_check() -> None:
     # 1. mapping edge cases
     assert yahoo_ticker("M&M") == "M&M.NS" and yahoo_ticker("BAJAJ-AUTO") == "BAJAJ-AUTO.NS"
 
-    # 2. fraction logic on synthetic frames
+    # 2. fraction logic on synthetic frames (prices start at 1: a 0 close is the degenerate
+    #    case the relative form above settles by equality, not a realistic fixture price)
     idx = pd.date_range("2024-01-01", periods=10, freq="D")
-    nse = pd.Series(range(10), index=idx, dtype=float)
+    nse = pd.Series(range(1, 11), index=idx, dtype=float)
     assert match_fraction(nse, nse.copy()) == 1.0, "identical series must match fully"
     assert match_fraction(nse, nse * 1.02) == 0.0, "2% shifted series must match nowhere"
     noisy = nse.copy()
