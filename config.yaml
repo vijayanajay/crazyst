@@ -48,6 +48,7 @@ universe:
 
 # ---- Portfolio rules (BRD §8) ----
 portfolio:
+  start_capital: 1000000      # engine starting cash, Rs (synthetic checks + Phase 6 runs)
   n_slots: 4                  # 4 positions, equal weight 25% each (§7.2/§7.3)
   cash_earns: 0.0             # interest on cash slots, 0 = conservative default (§13: reported)
   monthly_review:
@@ -70,6 +71,11 @@ backtest:
   cost_per_side_pct: 0.20      # brokerage + STT + slippage + impact
   cost_sensitivity_pct: [0.20, 0.50, 1.00]  # E006 pre-registered sensitivity
   suspension_exit_days: 5      # mark at last close if no trade within 5 days
+  fill:                        # E006's lesson: the fill model is the hard part, not the cost
+    max_position_adv_frac: 0.05  # a position above this fraction of the trailing-20-session
+                                 # median daily turnover does NOT fill (non-fill, logged)
+    impact_coef: 0.10            # impact fraction = coef x position/ADV, linear, per side
+    impact_cap_pct: 0.01         # impact capped at 1% per side
   purge_months: 1              # 1-month purge gap between train end and test month (§10.2)
   random_seed: 42
 
