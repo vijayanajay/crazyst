@@ -1,0 +1,168 @@
+{
+  "experiment": "P4.2_learned_ranker",
+  "profile": "full",
+  "git_hash": "6bd1800214f866f62f01c98efe0ff9c64c57c1aa",
+  "config_snapshot": {
+    "profile": "full",
+    "quick": {
+      "start_date": "2025-09-01",
+      "walkforward_months": 12
+    },
+    "full": {
+      "start_date": "2011-01-01",
+      "walkforward_months": 36
+    },
+    "decision_month_end": true,
+    "adj_history_start": "2009-01-01",
+    "universe": {
+      "top_n": 1500,
+      "liquidity_lookback_months": 3,
+      "min_price": 20.0,
+      "min_listed_months": 6,
+      "min_median_turnover_cr": 0.0,
+      "allowed_series": [
+        "EQ"
+      ],
+      "gsm_asm_max_allowed_stage": 0,
+      "size_buckets": [
+        200,
+        600
+      ],
+      "rank_percentiles": {
+        "sell_below_top_pct": 0.25,
+        "replace_above_top_pct": 0.15
+      }
+    },
+    "portfolio": {
+      "n_slots": 4,
+      "cash_earns": 0.0,
+      "monthly_review": {
+        "ma_window_days": 50,
+        "ma_below_consecutive_closes": 5
+      },
+      "midmonth": {
+        "check_freq": "weekly",
+        "trigger_a_score_excess": 0.2,
+        "trigger_a_cap": 2,
+        "trigger_b_stop_pct": 0.08,
+        "trigger_b_trail_pct": 0.12,
+        "trigger_b_ma_close_below": 2,
+        "trigger_b_deliv_z": -2.0,
+        "trigger_b_deliv_days": 3,
+        "gsm_asm_stage_exit": 2
+      },
+      "churn_report_threshold": 1.5
+    },
+    "backtest": {
+      "cost_per_side_pct": 0.2,
+      "cost_sensitivity_pct": [
+        0.2,
+        0.5,
+        1.0
+      ],
+      "suspension_exit_days": 5,
+      "purge_months": 1,
+      "random_seed": 42
+    },
+    "features": {
+      "daily_lookback_sessions": 20,
+      "delivery_flat_lookback_sessions": 5,
+      "delivery_spike_z": 2.0,
+      "delivery_flat_max_return": 0.01,
+      "atr_sessions": 14,
+      "squeeze_range_frac": 0.5,
+      "big_body_mult": 2.0
+    },
+    "stats": {
+      "winner_top_pct": 0.05,
+      "secondary_winner_labels": {
+        "top_decile_pct": 0.1,
+        "top_n_abs": 20
+      },
+      "baseline_hit_rate": 0.05,
+      "bh_fdr_alpha": 0.05
+    },
+    "validate": {
+      "min_year_coverage_pct": 93.0,
+      "max_join_mismatch_pct": 1.0,
+      "canary_min_adj_coverage": 0.9,
+      "canary_min_ic_months": 6,
+      "canary_min_ic_names": 100,
+      "canary_min_deliv_pairs": 1000,
+      "canary_min_deliv_autocorr": 0.1
+    },
+    "paths": {
+      "raw_404_cache": "data/raw/404_cache.txt",
+      "raw_bhavcopy_old": "data/raw/bhavcopy_old/",
+      "raw_bhavcopy_udiff": "data/raw/bhavcopy_udiff/",
+      "raw_delivery": "data/raw/delivery/",
+      "raw_yf_adj": "data/raw/yf_adj/",
+      "surveillance_csv": "data/surveillance/surveillance.csv",
+      "duckdb": "data/duckdb/quant.duckdb",
+      "runs": "runs/",
+      "reports": "reports/"
+    },
+    "download": {
+      "retry_attempts": 3,
+      "sleep_seconds": 2,
+      "publish_cutoff_ist": "19:00",
+      "refresh_retry_minutes": 20
+    },
+    "data_start_date": "2011-01-01",
+    "walkforward_months": 36
+  },
+  "data_cutoff": "2026-09-24",
+  "validation_boundary": "2023-09-24",
+  "validation_months": 145,
+  "validation_rows": 132530,
+  "excluded_test_months": 35,
+  "ranker_warmup_months": 25,
+  "hyperparameters": {
+    "max_iter": 200,
+    "learning_rate": 0.05,
+    "max_leaf_nodes": 15,
+    "min_samples_leaf": 100,
+    "l2_regularization": 1.0,
+    "early_stopping": false
+  },
+  "random_seed": 42,
+  "sklearn_version": "1.8.0",
+  "mean_monthly_ic": {
+    "ranker": {
+      "ic": 0.04017580133452166,
+      "months": 120
+    },
+    "composite_2f": {
+      "ic": 0.06812432294843898,
+      "months": 145
+    }
+  },
+  "paired_comparisons": {
+    "ranker_vs_composite_2f": {
+      "n_months": 120,
+      "mean_diff": -0.02207385170285527,
+      "t": -2.4458003042400214,
+      "p": 0.01591652176409109
+    }
+  },
+  "top5_precision_slice": {
+    "ranker": {
+      "precision": 0.5454216098295901
+    },
+    "composite_2f": {
+      "precision": 0.5476217447352109
+    }
+  },
+  "determinism_checks": {
+    "first": {
+      "month": "2013-08-30",
+      "max_abs_diff": 0.0
+    },
+    "last": {
+      "month": "2023-07-31",
+      "max_abs_diff": 0.0
+    }
+  },
+  "artifact": "artifact/model_meta.json",
+  "runtime_seconds": 108.822
+}

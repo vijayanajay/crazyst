@@ -1,0 +1,761 @@
+{
+  "model": "sklearn.HistGradientBoostingRegressor",
+  "sklearn_version": "1.8.0",
+  "hyperparameters": {
+    "max_iter": 200,
+    "learning_rate": 0.05,
+    "max_leaf_nodes": 15,
+    "min_samples_leaf": 100,
+    "l2_regularization": 1.0,
+    "early_stopping": false
+  },
+  "random_seed": 42,
+  "features": [
+    "mom_1m",
+    "mom_3m",
+    "mom_6m",
+    "mom_12m_1m",
+    "volume_zscore",
+    "up_volume_20d",
+    "down_volume_20d",
+    "up_down_volume_ratio",
+    "breakout_volume_confirmed",
+    "delivery_pct",
+    "delivery_pct_zscore",
+    "delivery_pct_trend",
+    "delivery_spike_while_flat",
+    "atr_ratio",
+    "nr7",
+    "squeeze_days_20d",
+    "range_compression_20d",
+    "close_in_range",
+    "upper_wick_ratio",
+    "lower_wick_ratio",
+    "consec_higher_lows",
+    "big_body_day_in_trend"
+  ],
+  "walk_forward": "monthly refit, 1-month purge by label end (BRD 10.2)",
+  "warmup_rule": ">= 24 training months",
+  "folds": [
+    {
+      "month": "2013-08-30",
+      "train_months": 24,
+      "train_rows": 16353,
+      "ic": 0.00099546125178943
+    },
+    {
+      "month": "2013-09-30",
+      "train_months": 25,
+      "train_rows": 16972,
+      "ic": 0.044211278993473824
+    },
+    {
+      "month": "2013-10-31",
+      "train_months": 26,
+      "train_rows": 17587,
+      "ic": 0.07541779046621834
+    },
+    {
+      "month": "2013-11-29",
+      "train_months": 27,
+      "train_rows": 18213,
+      "ic": 0.010763199877320126
+    },
+    {
+      "month": "2013-12-31",
+      "train_months": 28,
+      "train_rows": 18858,
+      "ic": 0.16384659225931852
+    },
+    {
+      "month": "2014-01-31",
+      "train_months": 29,
+      "train_rows": 19518,
+      "ic": 0.020634208310131234
+    },
+    {
+      "month": "2014-02-28",
+      "train_months": 30,
+      "train_rows": 20172,
+      "ic": -0.06030122709804049
+    },
+    {
+      "month": "2014-03-31",
+      "train_months": 31,
+      "train_rows": 20825,
+      "ic": 0.026189193432713326
+    },
+    {
+      "month": "2014-04-30",
+      "train_months": 32,
+      "train_rows": 21477,
+      "ic": -0.005596711169000329
+    },
+    {
+      "month": "2014-05-30",
+      "train_months": 33,
+      "train_rows": 22165,
+      "ic": 0.030680312986419375
+    },
+    {
+      "month": "2014-06-30",
+      "train_months": 34,
+      "train_rows": 22857,
+      "ic": -0.005475151284716093
+    },
+    {
+      "month": "2014-07-31",
+      "train_months": 35,
+      "train_rows": 23587,
+      "ic": 0.1764319179875058
+    },
+    {
+      "month": "2014-08-28",
+      "train_months": 36,
+      "train_rows": 24296,
+      "ic": 0.22527497507553676
+    },
+    {
+      "month": "2014-09-30",
+      "train_months": 37,
+      "train_rows": 24998,
+      "ic": -0.05957514005115965
+    },
+    {
+      "month": "2014-10-31",
+      "train_months": 38,
+      "train_rows": 25777,
+      "ic": 0.15756746246287887
+    },
+    {
+      "month": "2014-11-28",
+      "train_months": 39,
+      "train_rows": 26563,
+      "ic": 0.1442808738149996
+    },
+    {
+      "month": "2014-12-31",
+      "train_months": 40,
+      "train_rows": 27363,
+      "ic": 0.04840924937520312
+    },
+    {
+      "month": "2015-01-30",
+      "train_months": 41,
+      "train_rows": 28166,
+      "ic": -0.02350118796138535
+    },
+    {
+      "month": "2015-02-27",
+      "train_months": 42,
+      "train_rows": 28961,
+      "ic": 0.26080091598787236
+    },
+    {
+      "month": "2015-03-31",
+      "train_months": 43,
+      "train_rows": 29764,
+      "ic": -0.03265637980505059
+    },
+    {
+      "month": "2015-04-30",
+      "train_months": 44,
+      "train_rows": 30573,
+      "ic": 0.015217060019754917
+    },
+    {
+      "month": "2015-05-29",
+      "train_months": 45,
+      "train_rows": 31364,
+      "ic": 0.047168482864298596
+    },
+    {
+      "month": "2015-06-30",
+      "train_months": 46,
+      "train_rows": 32164,
+      "ic": 0.14342011800654753
+    },
+    {
+      "month": "2015-07-31",
+      "train_months": 47,
+      "train_rows": 32967,
+      "ic": -0.0903289585200551
+    },
+    {
+      "month": "2015-08-31",
+      "train_months": 48,
+      "train_rows": 33773,
+      "ic": 0.0007930997130429679
+    },
+    {
+      "month": "2015-09-30",
+      "train_months": 49,
+      "train_rows": 34599,
+      "ic": 0.16630077743909238
+    },
+    {
+      "month": "2015-10-30",
+      "train_months": 50,
+      "train_rows": 35410,
+      "ic": 0.13292349127410258
+    },
+    {
+      "month": "2015-11-30",
+      "train_months": 51,
+      "train_rows": 36234,
+      "ic": 0.08353977189967662
+    },
+    {
+      "month": "2015-12-31",
+      "train_months": 52,
+      "train_rows": 37075,
+      "ic": -0.08131712434765381
+    },
+    {
+      "month": "2016-01-29",
+      "train_months": 53,
+      "train_rows": 37937,
+      "ic": -0.1645612965389292
+    },
+    {
+      "month": "2016-02-29",
+      "train_months": 54,
+      "train_rows": 38816,
+      "ic": 0.14638214601131733
+    },
+    {
+      "month": "2016-03-31",
+      "train_months": 55,
+      "train_rows": 39683,
+      "ic": 0.09114041821151422
+    },
+    {
+      "month": "2016-04-29",
+      "train_months": 56,
+      "train_rows": 40528,
+      "ic": -0.03920365992378229
+    },
+    {
+      "month": "2016-05-31",
+      "train_months": 57,
+      "train_rows": 41389,
+      "ic": 0.10643454827771884
+    },
+    {
+      "month": "2016-06-30",
+      "train_months": 58,
+      "train_rows": 42261,
+      "ic": 0.0331250599835709
+    },
+    {
+      "month": "2016-07-29",
+      "train_months": 59,
+      "train_rows": 43141,
+      "ic": 0.06926654554349324
+    },
+    {
+      "month": "2016-08-31",
+      "train_months": 60,
+      "train_rows": 44037,
+      "ic": 0.09410588755875389
+    },
+    {
+      "month": "2016-09-30",
+      "train_months": 61,
+      "train_rows": 44948,
+      "ic": 0.19338545161604756
+    },
+    {
+      "month": "2016-10-28",
+      "train_months": 62,
+      "train_rows": 45857,
+      "ic": -0.1375464022414781
+    },
+    {
+      "month": "2016-11-30",
+      "train_months": 63,
+      "train_rows": 46770,
+      "ic": 0.10092808757992962
+    },
+    {
+      "month": "2016-12-30",
+      "train_months": 64,
+      "train_rows": 47698,
+      "ic": 0.048659063110744506
+    },
+    {
+      "month": "2017-01-31",
+      "train_months": 65,
+      "train_rows": 48625,
+      "ic": -0.047189588404455286
+    },
+    {
+      "month": "2017-02-28",
+      "train_months": 66,
+      "train_rows": 49553,
+      "ic": 0.03285194963623869
+    },
+    {
+      "month": "2017-03-31",
+      "train_months": 67,
+      "train_rows": 50482,
+      "ic": 0.06116791801948887
+    },
+    {
+      "month": "2017-04-28",
+      "train_months": 68,
+      "train_rows": 51424,
+      "ic": 0.07791565178668337
+    },
+    {
+      "month": "2017-05-31",
+      "train_months": 69,
+      "train_rows": 52367,
+      "ic": 0.0993282944122881
+    },
+    {
+      "month": "2017-06-30",
+      "train_months": 70,
+      "train_rows": 53312,
+      "ic": 0.006083747458860191
+    },
+    {
+      "month": "2017-07-31",
+      "train_months": 71,
+      "train_rows": 54279,
+      "ic": 0.04380786407211763
+    },
+    {
+      "month": "2017-08-31",
+      "train_months": 72,
+      "train_rows": 55251,
+      "ic": 0.06800604817691325
+    },
+    {
+      "month": "2017-09-29",
+      "train_months": 73,
+      "train_rows": 56234,
+      "ic": 0.06505528025681617
+    },
+    {
+      "month": "2017-10-31",
+      "train_months": 74,
+      "train_rows": 57217,
+      "ic": 2.7932505314155976e-05
+    },
+    {
+      "month": "2017-11-30",
+      "train_months": 75,
+      "train_rows": 58206,
+      "ic": 0.05265530123729417
+    },
+    {
+      "month": "2017-12-29",
+      "train_months": 76,
+      "train_rows": 59189,
+      "ic": -0.06703494245320116
+    },
+    {
+      "month": "2018-01-31",
+      "train_months": 77,
+      "train_rows": 60181,
+      "ic": 0.06391276633265325
+    },
+    {
+      "month": "2018-02-28",
+      "train_months": 78,
+      "train_rows": 61162,
+      "ic": -0.03451445939945891
+    },
+    {
+      "month": "2018-03-28",
+      "train_months": 79,
+      "train_rows": 62132,
+      "ic": 0.12518252087142243
+    },
+    {
+      "month": "2018-04-30",
+      "train_months": 80,
+      "train_rows": 63150,
+      "ic": -0.03153199308530238
+    },
+    {
+      "month": "2018-05-31",
+      "train_months": 81,
+      "train_rows": 64152,
+      "ic": 0.04314692967627512
+    },
+    {
+      "month": "2018-06-29",
+      "train_months": 82,
+      "train_rows": 65171,
+      "ic": 0.008675988638786701
+    },
+    {
+      "month": "2018-07-31",
+      "train_months": 83,
+      "train_rows": 66173,
+      "ic": 0.012306877782512698
+    },
+    {
+      "month": "2018-08-31",
+      "train_months": 84,
+      "train_rows": 67169,
+      "ic": 0.07573084520440995
+    },
+    {
+      "month": "2018-09-28",
+      "train_months": 85,
+      "train_rows": 68188,
+      "ic": -0.07094815045477192
+    },
+    {
+      "month": "2018-10-31",
+      "train_months": 86,
+      "train_rows": 69205,
+      "ic": 0.0707013014146788
+    },
+    {
+      "month": "2018-11-30",
+      "train_months": 87,
+      "train_rows": 70207,
+      "ic": 0.04231957760427565
+    },
+    {
+      "month": "2018-12-31",
+      "train_months": 88,
+      "train_rows": 71223,
+      "ic": -0.019845871482552947
+    },
+    {
+      "month": "2019-01-31",
+      "train_months": 89,
+      "train_rows": 72244,
+      "ic": -0.014518671950958894
+    },
+    {
+      "month": "2019-02-28",
+      "train_months": 90,
+      "train_rows": 73271,
+      "ic": -0.18490133030076616
+    },
+    {
+      "month": "2019-03-29",
+      "train_months": 91,
+      "train_rows": 74295,
+      "ic": 0.10561854552054213
+    },
+    {
+      "month": "2019-04-30",
+      "train_months": 92,
+      "train_rows": 75309,
+      "ic": 0.0397902621935566
+    },
+    {
+      "month": "2019-05-31",
+      "train_months": 93,
+      "train_rows": 76331,
+      "ic": 0.12119413984475155
+    },
+    {
+      "month": "2019-06-28",
+      "train_months": 94,
+      "train_rows": 77344,
+      "ic": 0.07741383927007972
+    },
+    {
+      "month": "2019-07-31",
+      "train_months": 95,
+      "train_rows": 78352,
+      "ic": -0.03520824495490535
+    },
+    {
+      "month": "2019-08-30",
+      "train_months": 96,
+      "train_rows": 79354,
+      "ic": 0.09250053509872226
+    },
+    {
+      "month": "2019-09-30",
+      "train_months": 97,
+      "train_rows": 80328,
+      "ic": -0.022350157304641783
+    },
+    {
+      "month": "2019-10-31",
+      "train_months": 98,
+      "train_rows": 81296,
+      "ic": 0.017837254815193375
+    },
+    {
+      "month": "2019-11-29",
+      "train_months": 99,
+      "train_rows": 82272,
+      "ic": 0.032993308858687724
+    },
+    {
+      "month": "2019-12-31",
+      "train_months": 100,
+      "train_rows": 83252,
+      "ic": 0.05975330712573066
+    },
+    {
+      "month": "2020-01-31",
+      "train_months": 101,
+      "train_rows": 84223,
+      "ic": 0.1768833274318895
+    },
+    {
+      "month": "2020-02-28",
+      "train_months": 102,
+      "train_rows": 85206,
+      "ic": 0.11417515569252677
+    },
+    {
+      "month": "2020-03-31",
+      "train_months": 103,
+      "train_rows": 86204,
+      "ic": 0.1593800551762022
+    },
+    {
+      "month": "2020-04-30",
+      "train_months": 104,
+      "train_rows": 87182,
+      "ic": -0.06644707249069692
+    },
+    {
+      "month": "2020-05-29",
+      "train_months": 105,
+      "train_rows": 88082,
+      "ic": 0.1679023502076783
+    },
+    {
+      "month": "2020-06-30",
+      "train_months": 106,
+      "train_rows": 89022,
+      "ic": 0.10985913209323235
+    },
+    {
+      "month": "2020-07-31",
+      "train_months": 107,
+      "train_rows": 89983,
+      "ic": -0.022882226242874053
+    },
+    {
+      "month": "2020-08-31",
+      "train_months": 108,
+      "train_rows": 90979,
+      "ic": 0.171815294752192
+    },
+    {
+      "month": "2020-09-30",
+      "train_months": 109,
+      "train_rows": 91957,
+      "ic": -0.026625721017401967
+    },
+    {
+      "month": "2020-10-30",
+      "train_months": 110,
+      "train_rows": 92977,
+      "ic": -0.17754375349930362
+    },
+    {
+      "month": "2020-11-27",
+      "train_months": 111,
+      "train_rows": 93986,
+      "ic": 0.0066614732914519964
+    },
+    {
+      "month": "2020-12-31",
+      "train_months": 112,
+      "train_rows": 94985,
+      "ic": 0.02495522112059702
+    },
+    {
+      "month": "2021-01-29",
+      "train_months": 113,
+      "train_rows": 96024,
+      "ic": 0.05696704970937762
+    },
+    {
+      "month": "2021-02-26",
+      "train_months": 114,
+      "train_rows": 97055,
+      "ic": 0.009542176780173347
+    },
+    {
+      "month": "2021-03-31",
+      "train_months": 115,
+      "train_rows": 98086,
+      "ic": -0.022179375017462418
+    },
+    {
+      "month": "2021-04-30",
+      "train_months": 116,
+      "train_rows": 99152,
+      "ic": 0.00029536886501276336
+    },
+    {
+      "month": "2021-05-31",
+      "train_months": 117,
+      "train_rows": 100197,
+      "ic": 0.11295986734628395
+    },
+    {
+      "month": "2021-06-30",
+      "train_months": 118,
+      "train_rows": 101301,
+      "ic": 0.21100788043221153
+    },
+    {
+      "month": "2021-07-30",
+      "train_months": 119,
+      "train_rows": 102423,
+      "ic": -0.18771544581826663
+    },
+    {
+      "month": "2021-08-31",
+      "train_months": 120,
+      "train_rows": 103511,
+      "ic": -0.029953547295059453
+    },
+    {
+      "month": "2021-09-30",
+      "train_months": 121,
+      "train_rows": 104588,
+      "ic": 0.05427784278890945
+    },
+    {
+      "month": "2021-10-29",
+      "train_months": 122,
+      "train_rows": 105659,
+      "ic": 0.1018688477618818
+    },
+    {
+      "month": "2021-11-30",
+      "train_months": 123,
+      "train_rows": 106769,
+      "ic": 0.09219924218856139
+    },
+    {
+      "month": "2021-12-31",
+      "train_months": 124,
+      "train_rows": 107896,
+      "ic": 0.09479466666807444
+    },
+    {
+      "month": "2022-01-31",
+      "train_months": 125,
+      "train_rows": 109001,
+      "ic": -0.022362699450576243
+    },
+    {
+      "month": "2022-02-28",
+      "train_months": 126,
+      "train_rows": 110110,
+      "ic": 0.14099280160132208
+    },
+    {
+      "month": "2022-03-31",
+      "train_months": 127,
+      "train_rows": 111224,
+      "ic": 0.022961512336155586
+    },
+    {
+      "month": "2022-04-29",
+      "train_months": 128,
+      "train_rows": 112336,
+      "ic": -0.14681862783150854
+    },
+    {
+      "month": "2022-05-31",
+      "train_months": 129,
+      "train_rows": 113488,
+      "ic": 0.06971014543179664
+    },
+    {
+      "month": "2022-06-30",
+      "train_months": 130,
+      "train_rows": 114638,
+      "ic": -0.033329479356470355
+    },
+    {
+      "month": "2022-07-29",
+      "train_months": 131,
+      "train_rows": 115783,
+      "ic": 0.00955565111777091
+    },
+    {
+      "month": "2022-08-30",
+      "train_months": 132,
+      "train_rows": 116940,
+      "ic": 0.10534467443257799
+    },
+    {
+      "month": "2022-09-30",
+      "train_months": 133,
+      "train_rows": 118101,
+      "ic": 0.10948186857584565
+    },
+    {
+      "month": "2022-10-31",
+      "train_months": 134,
+      "train_rows": 119279,
+      "ic": -0.011606556205320667
+    },
+    {
+      "month": "2022-11-30",
+      "train_months": 135,
+      "train_rows": 120463,
+      "ic": -0.007769998842482277
+    },
+    {
+      "month": "2022-12-30",
+      "train_months": 136,
+      "train_rows": 121652,
+      "ic": 0.06984903898394677
+    },
+    {
+      "month": "2023-01-31",
+      "train_months": 137,
+      "train_rows": 122842,
+      "ic": -0.07033758212078901
+    },
+    {
+      "month": "2023-02-28",
+      "train_months": 138,
+      "train_rows": 124060,
+      "ic": 0.07304346722254174
+    },
+    {
+      "month": "2023-03-31",
+      "train_months": 139,
+      "train_rows": 125270,
+      "ic": 0.1456252479059782
+    },
+    {
+      "month": "2023-04-28",
+      "train_months": 140,
+      "train_rows": 126483,
+      "ic": 0.020230061284203977
+    },
+    {
+      "month": "2023-05-31",
+      "train_months": 141,
+      "train_rows": 127696,
+      "ic": -0.02343553715696603
+    },
+    {
+      "month": "2023-06-30",
+      "train_months": 142,
+      "train_rows": 128920,
+      "ic": 0.10528350475633584
+    },
+    {
+      "month": "2023-07-31",
+      "train_months": 143,
+      "train_rows": 130155,
+      "ic": 0.006316076060031163
+    }
+  ]
+}

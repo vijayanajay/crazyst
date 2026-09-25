@@ -128,7 +128,7 @@ Work in this order. Each task depends on the previous.
 
 **Checkpoint: present IC table + anatomy findings + E000 overlap. Expect some priors to die here — that is the deliverable.**
 
-## Phase 4 — Selection model (M3) (3–4 days) — *IN PROGRESS: 4.1 run (2026-09-25) `inconclusive` (3f composite p = 0.0585; atr overlay rejected); 4.1b run same day — **two-feature composite (mom_12m_1m + delivery_pct) confirmed, ships as v0** (p = 0.0140 vs the slice-selected best single). 4.2 next; the ranker must beat composite_2f (0.0681 slice IC).*
+## Phase 4 — Selection model (M3) (3–4 days) — *MODEL CHOSEN (2026-09-25): **composite_2f** (mom_12m_1m + delivery_pct, parameter-free rank-average). 4.1 `inconclusive` (3f p = 0.0585); 4.1b `confirmed` (2f p = 0.0140); 4.2 ranker `rejected` (0.0402 vs 0.0681, p = 0.0159) with the 4.3 freeze protocol proven (bit-identical refits, exact pick reproduction). Remaining: 4.4 (E006 cost sensitivity).*
 
 | # | Task | Details | Done when |
 |---|---|---|---|

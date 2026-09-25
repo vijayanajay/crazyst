@@ -13,6 +13,7 @@ experiment's `results.json`.
 | E002 | Univariate IC sweep (all features) | 6–12M momentum and delivery% z-score have positive pooled Spearman IC, surviving BH at α = 0.05 | **partial** — mom_12m_1m confirmed (+0.065, right sign, BH-surviving); delivery z-score REJECTED (−0.010, n.s.); mom_6m wrong sign; volatility-state features dominate (see 2026-09-24 block) | 2026-09-24 |
 | P4.1 | Composite v0 (rank-avg of E002b survivors) beats the best single feature on the pre-test-window validation slice (paired monthly t, α = 0.05); atr overlay additive on the same test | **inconclusive** — composite 0.0625 vs best single (mom_12m_1m) 0.0529 mean monthly IC, diff +0.0096 over 145 months, p = 0.0585: point estimate wins, pre-registered bar missed ⇒ **mom_12m_1m ships as v0** (tie ⇒ simpler). Atr overlay REJECTED as an addition (−0.0390, p = 0.0033): the trailing-market regime proxy dilutes, not captures. Overlay's 0.0625-vs-0.0529 gap is the number the 4.2 ranker must justify. See 2026-09-25 P4.1 block | 2026-09-25 |
 | P4.1b | Two-feature composite (mom_12m_1m + delivery_pct; P4.1's weakest-vote follow-up) clears the M3 bar vs the slice-selected best single | **confirmed** — 0.0681 vs 0.0529, diff +0.0153 over 145 months, p = 0.0140; 3f control recomputed (0.0625), 2f > 3f +0.0057 (p = 0.196, mom_6m was dead weight, not poison). **composite_2f ships as v0**, superseding P4.1's single-feature ship; precision flip (3f 55.4% > 2f 54.8%) disclosed. See 2026-09-25 P4.1b block | 2026-09-25 |
+| P4.2 | Learned ranker (HistGBR, monthly walk-forward refits, all 22 features, fixed hyperparameters) beats composite_2f on the same validation-slice gate; freeze protocol reproduces picks | **rejected** — ranker 0.0402 vs composite_2f 0.0681, paired diff −0.0221 over 120 months, p = 0.0159: a clear loss (all-features rope + squared-error loss grabs noise the two-feature blindness avoids). **composite_2f ships as the Phase 4 model**; freeze protocol passed (bit-identical refits, max|diff| 0.00e+00; top-5% picks reproduce exactly; artifact round-trips). sklearn dependency justified in requirements.txt. See 2026-09-25 P4.2 block | 2026-09-25 |
 | E003 | Bulk/block deal net buying overlay (Phase 7) | Net institutional buying in the prior month adds IC on top of E002 survivors | pending | — |
 | E004 | SAST/insider buying overlay (Phase 7) | Insider % acquisitions in the prior quarter add IC on top of E002 survivors | pending | — |
 | E005 | F&O OI overlay, optional (Phase 7) | OI build-up with price adds IC on top of E002 survivors | pending | — |
@@ -779,3 +780,36 @@ entry point exercised. The live run is the check.
 - **Honest caveats:** post-hoc refinement after P4.1 (pre-registration is the only
   protection); shared slice with P4.1, family error unadjusted by pre-registration as
   declared; the comparator's 0.0529 is itself winner's-curse-optimistic.
+
+---
+
+## Experiment P4.2 — learned ranker (2026-09-25, profile `full`)
+
+- **Prediction (pre-registered in `experiments/0042_learned_ranker/hypothesis.md`, before
+  the run):** a HistGradientBoosting ranker, refit walk-forward monthly (fixed
+  hyperparameters, never swept; all 22 E002 features; 1-month purge by label end; ≥ 24
+  training months before the first fold), beats `composite_2f` on the paired monthly IC
+  test at α = 0.05 — and the 4.3 freeze protocol reproduces its picks exactly.
+- **Run:** `experiments/0042_learned_ranker/run.py --profile full` — **120 walk-forward
+  fits** over the 145 validation months (25 warm-up months scored for the baseline only),
+  ~130k training rows per late fold, boundary 2023-09-24, test window untouched.
+- **Verdict: REJECTED — composite_2f ships** (details in the ledger row and `verdict.md`):
+  - ranker **0.0402** vs composite_2f **0.0681** mean monthly IC; paired diff **−0.0221**
+    over the 120 shared months, t = −2.45, **p = 0.0159** — significantly worse, a clear
+    loss, not a tie. All-features rope + squared-error-on-raw-returns grabs noise the
+    two-feature blindness avoids; the plan's gate design (composite first) did its job.
+  - **Freeze protocol (4.3) passed inside the run:** `artifact/model_meta.json`
+    (hyperparameters, feature list, sklearn version, seed, 120-fold manifest); first and
+    last scored folds refit **bit-identically** (max |diff| 0.00e+00); the last fold's
+    top-5% pick set reproduces exactly from a fresh refit; the artifact fold count
+    round-trips. Re-running with saved artifacts reproduces picks — the plan's done-when.
+- **Consequence for the plan:** Phase 4's model is `composite_2f`; Phase 6 walks it
+  forward. sklearn enters `requirements.txt` with the justification the plan demands
+  (no lightgbm; NaN-native matching the panel's missing-data semantics; deterministic under
+  a fixed seed with early stopping off) — earned by the experiment even though the model
+  lost, as the Phase 6 harness may need it for diagnostics.
+- **Honest caveats:** hyperparameters were fixed a priori — a tuned ranker might close the
+  gap, and that is a future pre-registration, not a loophole pulled now; the paired test
+  uses the 120 shared months (warm-up excluded for the ranker arm); the gate is the
+  validation slice only — BRD §10's walk-forward on the test window remains the only result
+  that counts.

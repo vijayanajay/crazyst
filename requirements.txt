@@ -4,4 +4,7 @@ requests>=2.31
 PyYAML>=6.0
 matplotlib>=3.8
 yfinance>=0.2.40   # BRD D3 names it explicitly: adjusted closes + corporate actions from Yahoo
+scikit-learn>=1.4  # plan 4.2 learned ranker (HistGradientBoosting, walk-forward refits); ledger P4.2 justifies:
+                   # rank-aware loss without a second dependency (no lightgbm), NaN-native, deterministic
+                   # under a fixed seed with early stopping off
 pyinstaller>=6.0   # build-time only: build_exe.py (the portable quantdata.exe); not needed to run
