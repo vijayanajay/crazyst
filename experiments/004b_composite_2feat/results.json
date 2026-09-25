@@ -1,0 +1,282 @@
+{
+  "experiment": "P4.1b_composite_2feat",
+  "profile": "full",
+  "git_hash": "a75c28e68530ded0df2eebe0bcfa591650586830",
+  "config_snapshot": {
+    "profile": "full",
+    "quick": {
+      "start_date": "2025-09-01",
+      "walkforward_months": 12
+    },
+    "full": {
+      "start_date": "2011-01-01",
+      "walkforward_months": 36
+    },
+    "decision_month_end": true,
+    "adj_history_start": "2009-01-01",
+    "universe": {
+      "top_n": 1500,
+      "liquidity_lookback_months": 3,
+      "min_price": 20.0,
+      "min_listed_months": 6,
+      "min_median_turnover_cr": 0.0,
+      "allowed_series": [
+        "EQ"
+      ],
+      "gsm_asm_max_allowed_stage": 0,
+      "size_buckets": [
+        200,
+        600
+      ],
+      "rank_percentiles": {
+        "sell_below_top_pct": 0.25,
+        "replace_above_top_pct": 0.15
+      }
+    },
+    "portfolio": {
+      "n_slots": 4,
+      "cash_earns": 0.0,
+      "monthly_review": {
+        "ma_window_days": 50,
+        "ma_below_consecutive_closes": 5
+      },
+      "midmonth": {
+        "check_freq": "weekly",
+        "trigger_a_score_excess": 0.2,
+        "trigger_a_cap": 2,
+        "trigger_b_stop_pct": 0.08,
+        "trigger_b_trail_pct": 0.12,
+        "trigger_b_ma_close_below": 2,
+        "trigger_b_deliv_z": -2.0,
+        "trigger_b_deliv_days": 3,
+        "gsm_asm_stage_exit": 2
+      },
+      "churn_report_threshold": 1.5
+    },
+    "backtest": {
+      "cost_per_side_pct": 0.2,
+      "cost_sensitivity_pct": [
+        0.2,
+        0.5,
+        1.0
+      ],
+      "suspension_exit_days": 5,
+      "purge_months": 1,
+      "random_seed": 42
+    },
+    "features": {
+      "daily_lookback_sessions": 20,
+      "delivery_flat_lookback_sessions": 5,
+      "delivery_spike_z": 2.0,
+      "delivery_flat_max_return": 0.01,
+      "atr_sessions": 14,
+      "squeeze_range_frac": 0.5,
+      "big_body_mult": 2.0
+    },
+    "stats": {
+      "winner_top_pct": 0.05,
+      "secondary_winner_labels": {
+        "top_decile_pct": 0.1,
+        "top_n_abs": 20
+      },
+      "baseline_hit_rate": 0.05,
+      "bh_fdr_alpha": 0.05
+    },
+    "validate": {
+      "min_year_coverage_pct": 93.0,
+      "max_join_mismatch_pct": 1.0,
+      "canary_min_adj_coverage": 0.9,
+      "canary_min_ic_months": 6,
+      "canary_min_ic_names": 100,
+      "canary_min_deliv_pairs": 1000,
+      "canary_min_deliv_autocorr": 0.1
+    },
+    "paths": {
+      "raw_404_cache": "data/raw/404_cache.txt",
+      "raw_bhavcopy_old": "data/raw/bhavcopy_old/",
+      "raw_bhavcopy_udiff": "data/raw/bhavcopy_udiff/",
+      "raw_delivery": "data/raw/delivery/",
+      "raw_yf_adj": "data/raw/yf_adj/",
+      "surveillance_csv": "data/surveillance/surveillance.csv",
+      "duckdb": "data/duckdb/quant.duckdb",
+      "runs": "runs/",
+      "reports": "reports/"
+    },
+    "download": {
+      "retry_attempts": 3,
+      "sleep_seconds": 2,
+      "publish_cutoff_ist": "19:00",
+      "refresh_retry_minutes": 20
+    },
+    "data_start_date": "2011-01-01",
+    "walkforward_months": 36
+  },
+  "data_cutoff": "2026-09-24",
+  "validation_boundary": "2023-09-24",
+  "validation_months": 145,
+  "validation_rows": 132530,
+  "excluded_test_months": 35,
+  "composite_2f_features": [
+    "mom_12m_1m",
+    "delivery_pct"
+  ],
+  "composite_3f_features": [
+    "mom_12m_1m",
+    "mom_6m",
+    "delivery_pct"
+  ],
+  "universe_note": "as-of top-1500, floor OFF; BRD-owner decisions pending flag",
+  "random_seed": 42,
+  "mean_monthly_ic": {
+    "composite_2f": {
+      "ic": 0.06812432294843898,
+      "months": 145
+    },
+    "composite_3f": {
+      "ic": 0.06246230791944248,
+      "months": 145
+    },
+    "mom_1m": {
+      "ic": -0.01967468125805737,
+      "months": 145
+    },
+    "mom_3m": {
+      "ic": 0.013547433583624284,
+      "months": 145
+    },
+    "mom_6m": {
+      "ic": 0.02758335778889598,
+      "months": 145
+    },
+    "mom_12m_1m": {
+      "ic": 0.05285462294476755,
+      "months": 145
+    },
+    "volume_zscore": {
+      "ic": -0.005488035502178436,
+      "months": 145
+    },
+    "up_volume_20d": {
+      "ic": -0.021614705013295956,
+      "months": 137
+    },
+    "down_volume_20d": {
+      "ic": -0.014838108499793588,
+      "months": 137
+    },
+    "up_down_volume_ratio": {
+      "ic": -0.020582966714614955,
+      "months": 137
+    },
+    "breakout_volume_confirmed": {
+      "ic": -0.01465088528808659,
+      "months": 136
+    },
+    "delivery_pct": {
+      "ic": 0.04451007634586429,
+      "months": 145
+    },
+    "delivery_pct_zscore": {
+      "ic": 0.013095637564020584,
+      "months": 145
+    },
+    "delivery_pct_trend": {
+      "ic": 0.020345668274018545,
+      "months": 145
+    },
+    "delivery_spike_while_flat": {
+      "ic": 0.0013661112316541303,
+      "months": 139
+    },
+    "atr_ratio": {
+      "ic": -0.041387391078925674,
+      "months": 138
+    },
+    "nr7": {
+      "ic": 0.00755491220904715,
+      "months": 141
+    },
+    "squeeze_days_20d": {
+      "ic": 0.0007986748602019215,
+      "months": 137
+    },
+    "range_compression_20d": {
+      "ic": -0.04663695564013909,
+      "months": 137
+    },
+    "close_in_range": {
+      "ic": -0.016477456604950574,
+      "months": 144
+    },
+    "upper_wick_ratio": {
+      "ic": 0.00850789031041742,
+      "months": 144
+    },
+    "lower_wick_ratio": {
+      "ic": 0.007626647401288527,
+      "months": 144
+    },
+    "consec_higher_lows": {
+      "ic": -0.01373182869815531,
+      "months": 144
+    },
+    "big_body_day_in_trend": {
+      "ic": -0.010877797437752721,
+      "months": 137
+    }
+  },
+  "best_single": "mom_12m_1m",
+  "single_feature_slice_ics": {
+    "mom_1m": -0.01967468125805737,
+    "mom_3m": 0.013547433583624284,
+    "mom_6m": 0.02758335778889598,
+    "mom_12m_1m": 0.05285462294476755,
+    "volume_zscore": -0.005488035502178436,
+    "up_volume_20d": -0.021614705013295956,
+    "down_volume_20d": -0.014838108499793588,
+    "up_down_volume_ratio": -0.020582966714614955,
+    "breakout_volume_confirmed": -0.01465088528808659,
+    "delivery_pct": 0.04451007634586429,
+    "delivery_pct_zscore": 0.013095637564020584,
+    "delivery_pct_trend": 0.020345668274018545,
+    "delivery_spike_while_flat": 0.0013661112316541303,
+    "atr_ratio": -0.041387391078925674,
+    "nr7": 0.00755491220904715,
+    "squeeze_days_20d": 0.0007986748602019215,
+    "range_compression_20d": -0.04663695564013909,
+    "close_in_range": -0.016477456604950574,
+    "upper_wick_ratio": 0.00850789031041742,
+    "lower_wick_ratio": 0.007626647401288527,
+    "consec_higher_lows": -0.01373182869815531,
+    "big_body_day_in_trend": -0.010877797437752721
+  },
+  "paired_comparisons": {
+    "composite_2f_vs_best_single": {
+      "n_months": 145,
+      "mean_diff": 0.015269700003671428,
+      "t": 2.486860742615052,
+      "p": 0.014029397049686997
+    },
+    "composite_2f_vs_composite_3f": {
+      "n_months": 145,
+      "mean_diff": 0.005662015028996496,
+      "t": 1.2991274466840785,
+      "p": 0.19597642098008217
+    }
+  },
+  "top5_precision_slice": {
+    "composite_2f": {
+      "precision": 0.5476217447352109,
+      "months": 145
+    },
+    "composite_3f": {
+      "precision": 0.554041418087918,
+      "months": 145
+    },
+    "best_single": {
+      "precision": 0.5296479517436051,
+      "months": 145
+    }
+  },
+  "runtime_seconds": 13.071
+}

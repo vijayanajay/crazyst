@@ -12,6 +12,7 @@ experiment's `results.json`.
 | E001 | Anatomy of winners: winners differ from rest on momentum/delivery features | Winners' 6–12M momentum and 20-day delivery% z-score distributions sit above the eligible rest (median shift > 0) | **partial** — momentum anatomy confirmed (mom_12m_1m AUC 0.544, +0.050 median shift, 64% per-month consistency); delivery z-score anatomy REJECTED (AUC 0.478, wrong sign — matches E002); strongest separator is volatility state with the LORE-DIRECTION wrong (atr_ratio AUC 0.639 at every month, uniform across size buckets — not a small-cap artifact; momentum vanishes in the 601–1500 bucket, AUC 0.507). See 2026-09-25 block | 2026-09-25 |
 | E002 | Univariate IC sweep (all features) | 6–12M momentum and delivery% z-score have positive pooled Spearman IC, surviving BH at α = 0.05 | **partial** — mom_12m_1m confirmed (+0.065, right sign, BH-surviving); delivery z-score REJECTED (−0.010, n.s.); mom_6m wrong sign; volatility-state features dominate (see 2026-09-24 block) | 2026-09-24 |
 | P4.1 | Composite v0 (rank-avg of E002b survivors) beats the best single feature on the pre-test-window validation slice (paired monthly t, α = 0.05); atr overlay additive on the same test | **inconclusive** — composite 0.0625 vs best single (mom_12m_1m) 0.0529 mean monthly IC, diff +0.0096 over 145 months, p = 0.0585: point estimate wins, pre-registered bar missed ⇒ **mom_12m_1m ships as v0** (tie ⇒ simpler). Atr overlay REJECTED as an addition (−0.0390, p = 0.0033): the trailing-market regime proxy dilutes, not captures. Overlay's 0.0625-vs-0.0529 gap is the number the 4.2 ranker must justify. See 2026-09-25 P4.1 block | 2026-09-25 |
+| P4.1b | Two-feature composite (mom_12m_1m + delivery_pct; P4.1's weakest-vote follow-up) clears the M3 bar vs the slice-selected best single | **confirmed** — 0.0681 vs 0.0529, diff +0.0153 over 145 months, p = 0.0140; 3f control recomputed (0.0625), 2f > 3f +0.0057 (p = 0.196, mom_6m was dead weight, not poison). **composite_2f ships as v0**, superseding P4.1's single-feature ship; precision flip (3f 55.4% > 2f 54.8%) disclosed. See 2026-09-25 P4.1b block | 2026-09-25 |
 | E003 | Bulk/block deal net buying overlay (Phase 7) | Net institutional buying in the prior month adds IC on top of E002 survivors | pending | — |
 | E004 | SAST/insider buying overlay (Phase 7) | Insider % acquisitions in the prior quarter add IC on top of E002 survivors | pending | — |
 | E005 | F&O OI overlay, optional (Phase 7) | OI build-up with price adds IC on top of E002 survivors | pending | — |
@@ -747,3 +748,34 @@ entry point exercised. The live run is the check.
   (Phase 6) remains the only result that counts (BRD §10).
 - **Honest caveats:** p = 0.0585 is a near-miss recorded as a near-miss; the comparator's
   0.0529 carries its own winner's curse; nothing here predicts the Phase 6 test window.
+
+---
+
+## Experiment P4.1b — two-feature composite (2026-09-25, profile `full`)
+
+- **Why:** P4.1's verdict flagged `mom_6m` as the weakest third vote (slice IC 0.0276 vs its
+  siblings' 0.0529/0.0445) and asked, pre-registered, whether dropping it lets the composite
+  clear the M3 bar the three-feature form missed (p = 0.0585).
+- **Prediction (pre-registered in `experiments/004b_composite_2feat/hypothesis.md`, before
+  the run):** `composite_2f` (mean percentile rank of `mom_12m_1m` + `delivery_pct`) vs the
+  slice-selected best single (paired monthly t, α = 0.05) — same gate, same slice, P4.1's
+  three-feature form recomputed as the within-experiment control.
+- **Run:** `experiments/004b_composite_2feat/run.py --profile full` — reuses P4.1's slice and
+  scoring code by importlib (the two experiments cannot drift); asserts the full-history
+  matrix before scoring (145 months / 132,530 rows, boundary 2023-09-24; 35 test-window
+  months excluded, untouched).
+- **Verdict: CONFIRMED — `composite_2f` ships as Phase 4's v0** (details in the ledger row
+  and `verdict.md`):
+  - vs best single (mom_12m_1m, winner's curse included): 0.0681 vs 0.0529, paired diff
+    **+0.0153**, t = 2.49, **p = 0.0140** — the gate clears.
+  - vs the 3f control: +0.0057 (p = 0.196) — `mom_6m` was dead weight, not poison; the form
+    wins by being simpler and no worse.
+  - precision flip disclosed: top-5% slice precision prefers 3f (55.4%) to 2f (54.8%); mean
+    monthly IC was the pre-registered primary, and the flip is recorded, not hidden.
+- **Consequence for the plan:** the shipped v0 score is the two-feature composite; 4.2's
+  ranker must beat it at the same gate (reference number 0.0681); task 4.3's freeze protocol
+  applies to the two-feature definition. Phase 6 re-tests it out-of-sample — the only result
+  that counts (BRD §10).
+- **Honest caveats:** post-hoc refinement after P4.1 (pre-registration is the only
+  protection); shared slice with P4.1, family error unadjusted by pre-registration as
+  declared; the comparator's 0.0529 is itself winner's-curse-optimistic.
