@@ -963,3 +963,78 @@ month and attribution keyed on the fill month would file Jan's picks under Febru
 4. Determinism is asserted by running the checkpoint twice and comparing curve, trade log
    and decisions bit-for-bit; the run is 0.1s and registered as selfcheck
    `backtest.checkpoint` — suite **ALL PASS (23 checks)** after this block.
+
+---
+
+## Phase 5→6 smoke — composite_2f through the real engine on real data (2026-09-26, commit `af68a4c`)
+
+Not an experiment — the bridge between Phase 5's synthetic checkpoints and Phase 6's harness:
+`src/backtest/smoke_e2e.py` runs the shipped model's top-5% picks through the REAL
+Market/Facts/Portfolio/Engine stack on the full-profile database (chain restored first via
+its real entry points, commit `af060c8`: 218,648 rows × 183 months, labeled 178,171/181 —
+E002b's numbers exactly). Results in `runs/smoke_e2e/smoke_results.json` (gitignored;
+regenerate with `python -m src.backtest.smoke_e2e`, 6s). Deliberately **not** registered in
+the selfcheck suite — it asserts on the full-profile matrix, which the suite's own rebuilds
+reset to quick; the suite stays 23/23 unchanged.
+
+### Light pass — the pick pipeline reproduces, except where it should not
+
+All 145 validation slice months scored with P4.1b's `score_month_2f` (importlib, no drift):
+**6,622 pick-months — exactly E006's count**, and the tie-stable cross-check the smoke
+really exists for: the slice's **mean monthly IC = 0.0681243229, bit-identical to P4.1b's
+frozen value to 1e-9**. The scoring pipeline is stable across table rebuilds. Bucket split
+of picks (net at 0.2%/side): top200 221 / 59.3% hit / +2.60%; 201-600 1,562 / 53.8% /
++2.18%; 601-1500 4,839 / 52.2% / +3.34% — E006's committed table.
+
+### Finding 1 — E006's pick sets are row-order-fragile at score ties
+
+E006's *pick mean* does not reproduce to the float on today's rebuilt tables (delta
+−1.02e-4 for the smoke's tie-broken picks, −1.09e-4 for E006's own code re-run — both within
+the smoke's 5e-4 tolerance). Root cause, isolated before any conclusion was written:
+**21 of 145 slice months have an exact composite_2f score tie crossing the top-5% boundary**, and
+E006's `sorted(scored, key=-score)` breaks those ties by physical row order — a table rebuild
+reorders tied rows, swapping boundary names. The frozen `results.json` remains the verdict's
+evidence (its config/git snapshot is intact); the honest reading is that its pick-level means
+carry a ±~1e-4 row-order band. **Consequence — the Phase 6 tie-break contract:** every
+harness pick list is top-5% by composite_2f with **ties broken by symbol** (the contract
+`src/backtest/audit.py` already uses), so no Phase 6 number depends on row order.
+
+### Finding 2 — the fill gate vetoes exits: SOLARINDS, 8 consecutive reviews
+
+The engine pass drives 12 consecutive slice months (2011-07→2012-06) of real bars through
+the stack: 44 fills, 10 non-fills (all `non_fill_adv`), 16 completed FIFO picks (25% hit —
+a hostile 2011-12 tape), churn 1.25/mo, final equity 1,022,878 (+2.29%; plumbing evidence,
+not a result). The structural finding: **§9's ADV gate applies to sells too — 8 of the pass's
+18 exit attempt-months were refused, all of them one position (SOLARINDS) re-refused at 8
+consecutive monthly reviews (2011-09→2012-04)**. The slot froze (its month's replacement buy
+skipped 8×, contingency semantics, logged), the §8.2 stop machinery had no exit path, and the
+forced hold happened to close at **+19.59%** — the pass's best pick, on the name the strategy
+tried hardest to leave: luck, not design. The pick set skews 601–1500 (4,839 of 6,622
+pick-months), exactly where the gate bites. Handed to the BRD owner as **Decision 3** in
+`docs/brd_decisions_universe.md` (stuck-and-retried / force-exit / escalate-after-N;
+recommendation: escalate at N = 2 with uncapped reported impact) — **blocks 6.4**, since
+drawdown, churn and turnover all move with the choice. Current behaviour stays
+BRD-normative until decided, per the Decision-2 pattern.
+
+### What the smoke itself caught (bugs the asserts fixed)
+
+- `TradeEvent.qty` was passed unsigned in the smoke — sells disguised as buys, FIFO never
+  closed a round trip; `completed_picks` returned 0 and the bucket gate failed loudly.
+- Bucket attribution keys on the **decision month** (`signal_month`), not the fill month —
+  the same fix the Phase 5 checkpoint drove, re-proven necessary on real data (a Jul 29
+  signal fills in August).
+- Two smoke-only wiring bugs (an int where a list belonged; the bucket map keyed on
+  `mdate` vs `YYYY-MM`).
+
+### Honest caveats
+
+1. The smoke is a 12-month plumbing bridge: monthly-cadence rules only (no mid-month Trigger
+   A/B checks, no delivery-z clause, no surveillance — nothing historical exists to load),
+   50-close DMA window inside the month, engine costs at config's 0.20%/side with capped
+   impact on real ADV. None of it is a return claim; 6.4 produces the first claim.
+2. Blocked-sell re-owning and contingent-buy skipping are the smoke's declared stopgaps
+   pending Decision 3 — they are logged in `smoke_results.json` (`sell_nonfills`,
+   `buys_skipped_no_slot`), not hidden.
+3. E006's frozen artifacts are point-in-time row-order evidence for its pick-level means
+   (Finding 1); its verdict direction rests on the rank-group pattern, which the smoke
+   reproduces at every cost level's sign and ordering.
