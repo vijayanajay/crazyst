@@ -14,6 +14,7 @@ experiment's `results.json`.
 | P4.1 | Composite v0 (rank-avg of E002b survivors) beats the best single feature on the pre-test-window validation slice (paired monthly t, α = 0.05); atr overlay additive on the same test | **inconclusive** — composite 0.0625 vs best single (mom_12m_1m) 0.0529 mean monthly IC, diff +0.0096 over 145 months, p = 0.0585: point estimate wins, pre-registered bar missed ⇒ **mom_12m_1m ships as v0** (tie ⇒ simpler). Atr overlay REJECTED as an addition (−0.0390, p = 0.0033): the trailing-market regime proxy dilutes, not captures. Overlay's 0.0625-vs-0.0529 gap is the number the 4.2 ranker must justify. See 2026-09-25 P4.1 block | 2026-09-25 |
 | P4.1b | Two-feature composite (mom_12m_1m + delivery_pct; P4.1's weakest-vote follow-up) clears the M3 bar vs the slice-selected best single | **confirmed** — 0.0681 vs 0.0529, diff +0.0153 over 145 months, p = 0.0140; 3f control recomputed (0.0625), 2f > 3f +0.0057 (p = 0.196, mom_6m was dead weight, not poison). **composite_2f ships as v0**, superseding P4.1's single-feature ship; precision flip (3f 55.4% > 2f 54.8%) disclosed. See 2026-09-25 P4.1b block | 2026-09-25 |
 | P4.2 | Learned ranker (HistGBR, monthly walk-forward refits, all 22 features, fixed hyperparameters) beats composite_2f on the same validation-slice gate; freeze protocol reproduces picks | **rejected** — ranker 0.0402 vs composite_2f 0.0681, paired diff −0.0221 over 120 months, p = 0.0159: a clear loss (all-features rope + squared-error loss grabs noise the two-feature blindness avoids). **composite_2f ships as the Phase 4 model**; freeze protocol passed (bit-identical refits, max|diff| 0.00e+00; top-5% picks reproduce exactly; artifact round-trips). sklearn dependency justified in requirements.txt. See 2026-09-25 P4.2 block | 2026-09-25 |
+| E006 | Cost sensitivity: 0.2 / 0.5 / 1.0 % per side | Net edge at 0.2% does not survive 1.0% for picks ranked below ~600 (BRD §9.7) | **rejected** — the >600 tail's edge SURVIVES: 3.34% → 1.74% mean net per pick (52% of base, above the 50% line), the strongest group at every cost level. The uniform-haircut model cannot see impact/non-fill — the fill model (Phase 5) is the open question, not the cost constant. Phase 6 default set to 0.5% per side (edge 82% of base), all three levels reported. See 2026-09-25 E006 block | 2026-09-25 |
 | E003 | Bulk/block deal net buying overlay (Phase 7) | Net institutional buying in the prior month adds IC on top of E002 survivors | pending | — |
 | E004 | SAST/insider buying overlay (Phase 7) | Insider % acquisitions in the prior quarter add IC on top of E002 survivors | pending | — |
 | E005 | F&O OI overlay, optional (Phase 7) | OI build-up with price adds IC on top of E002 survivors | pending | — |
@@ -813,3 +814,34 @@ entry point exercised. The live run is the check.
   uses the 120 shared months (warm-up excluded for the ranker arm); the gate is the
   validation slice only — BRD §10's walk-forward on the test window remains the only result
   that counts.
+
+---
+
+## Experiment E006 — cost sensitivity (2026-09-25, profile `full`)
+
+- **Prediction (pre-registered in `experiments/006_cost_sensitivity/hypothesis.md`, before
+  the run):** per plan 4.4 and the ledger row — the net edge at 0.2% per side does not
+  survive 1.0% for picks ranked below ~600 (BRD §9.7). Rule: >600 edge halves by 1.0% ⇒
+  partial; turns negative or below 25% parity ⇒ confirmed; survives ≥ 50% ⇒ rejected.
+- **Run:** `experiments/006_cost_sensitivity.run --profile full` — composite_2f's top-5%
+  picks (6,622 pick-months, 145 validation months, boundary 2023-09-24), net = gross −
+  2 × cost at 0.2 / 0.5 / 1.0% per side, split by the §9.7 rank boundary (≤ 600 vs > 600)
+  and by size bucket. Test window excluded as in P4.1/P4.1b/P4.2.
+- **Verdict: REJECTED — the warning does not bind at equal fills** (details in the ledger
+  row and `verdict.md`):
+  - rank > 600: **3.34%** mean net per pick at 0.2% → **1.74%** at 1.0% = **52.1% of base**,
+    above the ≥ 50% survival line, positive at every level, and the strongest group at every
+    level (rank ≤ 600: 2.25% → 0.65%).
+  - the small-cap tail is the cost-resilient group, not the victim — the gross edge there
+    (3.34% vs 2.25%) is bigger than the added cost.
+- **The caveat that still bites (recorded in the verdict):** the scan models cost as a
+  uniform haircut on month-end closes; it cannot see impact, slippage, or non-fill — the
+  actual mechanism behind §9.7's warning. Conclusion: at equal fills the small-cap edge
+  survives 1% costs; **whether fills are equal is Phase 5's fill model's job to test** (T+1
+  open, circuit locks, liquidity-aware slippage) before Phase 6 believes it.
+- **Consequence for the plan:** the Phase 6 report's default cost assumption is set to
+  **0.5% per side** (edge at 82% of base; 0.2% optimistic for a 601–1500-heavy pick set,
+  1.0% survivable but halves the hit rate), with all three levels reported per §9.7.
+- **Honest caveats:** pick-level means on a fixed top-5% slice ignore slot competition and
+  capacity; month-end-close fills differ from the engine's T+1 open; validation slice only —
+  Phase 6 re-asks this inside the real engine on the test window.

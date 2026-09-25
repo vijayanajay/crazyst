@@ -128,7 +128,7 @@ Work in this order. Each task depends on the previous.
 
 **Checkpoint: present IC table + anatomy findings + E000 overlap. Expect some priors to die here — that is the deliverable.**
 
-## Phase 4 — Selection model (M3) (3–4 days) — *MODEL CHOSEN (2026-09-25): **composite_2f** (mom_12m_1m + delivery_pct, parameter-free rank-average). 4.1 `inconclusive` (3f p = 0.0585); 4.1b `confirmed` (2f p = 0.0140); 4.2 ranker `rejected` (0.0402 vs 0.0681, p = 0.0159) with the 4.3 freeze protocol proven (bit-identical refits, exact pick reproduction). Remaining: 4.4 (E006 cost sensitivity).*
+## Phase 4 — Selection model (M3) (3–4 days) — ✅ COMPLETE (2026-09-25): **composite_2f** (mom_12m_1m + delivery_pct, parameter-free rank-average) is the model. 4.1 `inconclusive` (3f p = 0.0585); 4.1b `confirmed` (2f p = 0.0140); 4.2 ranker `rejected` (0.0402 vs 0.0681, p = 0.0159) with the 4.3 freeze protocol proven; 4.4 E006 `rejected` — the >600 tail's edge survives 1.0%/side (52% of base), Phase 6 report default set to 0.5%/side, all three levels reported; the fill model (Phase 5) is the open question, not the cost constant. Next: Phase 5 engine on synthetic data; Phase 6 walks composite_2f forward.*
 
 | # | Task | Details | Done when |
 |---|---|---|---|
