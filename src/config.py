@@ -121,6 +121,12 @@ def _validate(cfg: dict) -> None:
         f"trigger B thresholds are fractions < 1, got {mm['trigger_b_stop_pct']}, {mm['trigger_b_trail_pct']}"
     assert 0 < b["cost_per_side_pct"] < 5, f"cost_per_side_pct is a percent, got {b['cost_per_side_pct']}"
     assert len(b["cost_sensitivity_pct"]) == 3, "E006 needs exactly three cost levels"
+    gate = b.get("exit_gate", {}) or {}
+    assert gate.get("mode", "stuck") in ("stuck", "force", "escalate"), \
+        (f"backtest.exit_gate.mode must be stuck|force|escalate, got "
+         f"{gate.get('mode', 'stuck')!r}")
+    assert int(gate.get("escalate_after", 2)) >= 1, \
+        "backtest.exit_gate.escalate_after must be >= 1"
     assert 0 < s["winner_top_pct"] < 1 and 0 < s["baseline_hit_rate"] < 1, f"winner/baseline must be fractions, got {s}"
     assert s["winner_top_pct"] == s["baseline_hit_rate"], "baseline must equal the winner definition (BRD §11)"
     assert cfg["walkforward_months"] > 0, f"walkforward_months must be positive, got {cfg['walkforward_months']}"

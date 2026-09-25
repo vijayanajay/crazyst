@@ -2,6 +2,11 @@
 real full-profile data. The Phase 5 -> Phase 6 bridge: prove the layers compose before
 the 6.1 walk-forward harness is built on them.
 
+Exit semantics follow `backtest.exit_gate.mode` (BRD-owner Decision 3): stuck (the default
+and today's committed behaviour), force, or escalate-after-N. Forced exits appear as fills
+with forced=True and uncapped impact, reported separately (`forced_exits` in the results).
+Set the mode here (or via config.yaml) and rerun to compare behaviours on the same tape.
+
 Two passes over the validation slice (P4.1's split: 145 months, boundary 2023-09-24):
 
 1. **Light pass, all 145 months:** score each month with P4.1b's `score_month_2f`
@@ -59,7 +64,8 @@ def _cfg_test() -> dict:
     return {
         "backtest": {"cost_per_side_pct": 0.20, "purge_months": 1, "random_seed": 42,
                      "fill": {"max_position_adv_frac": 0.05, "impact_coef": 0.10,
-                              "impact_cap_pct": 1.0}},
+                              "impact_cap_pct": 1.0},
+                     "exit_gate": {"mode": "stuck", "escalate_after": 2}},
         "portfolio": {
             "start_capital": 1_000_000.0, "n_slots": 4, "cash_earns": 0.0,
             "monthly_review_sell_below_top_pct": 0.25,
@@ -253,6 +259,7 @@ def main() -> int:
     curve, events, decisions_log, resized = [], [], [], []
     sell_nonfills: list[dict] = []
     skipped_no_slot: list[dict] = []
+    forced_exits: list[dict] = []
     last_px: dict[str, float] = {}
     month_rows = []
 
@@ -275,9 +282,11 @@ def main() -> int:
         if pending:
             engine.submit(pending)
             pending = []
-        # a SELL the ADV gate refused leaves the position stuck (real illiquidity);
-        # re-own its slot at the ORIGINAL entry price so the portfolio's state matches
-        # reality and the next review retries the exit
+        # a SELL the ADV gate refused: under mode=stuck the position stays stuck (real
+        # illiquidity) - re-own its slot at the ORIGINAL entry price so the portfolio's
+        # state matches reality and the next review retries the exit. Under force/escalate
+        # the engine's forced fill lands here as a normal fill (forced=True, uncapped
+        # impact) and no re-own is needed.
         for n in engine.non_fills[n_nonfill:]:
             if n.qty < 0 and positions.get(n.symbol, 0):
                 pf.apply_fill(n.symbol, positions[n.symbol],
@@ -292,6 +301,9 @@ def main() -> int:
                     # contingent on it and does not fill (contingency semantics, logged)
                     skipped_no_slot.append({"month": m, "symbol": f.symbol, "qty": f.qty})
                     continue
+                if f.forced:
+                    forced_exits.append({"month": m, "symbol": f.symbol, "qty": f.qty,
+                                         "impact_pct": f.impact_pct})
                 afford = math.floor(cash / f.price)
                 q = min(f.qty, afford)
                 if q < f.qty:
@@ -310,6 +322,10 @@ def main() -> int:
                     positions[f.symbol] = 0
                     pf.apply_fill(f.symbol, f.qty, f.price)
                     last_px.pop(f.symbol, None)
+                if f.forced:
+                    forced_exits.append({"month": m, "symbol": f.symbol, "qty": f.qty,
+                                         "impact_pct": f.impact_pct,
+                                         "fill_date": f.fill_date})
             events.append(TradeEvent(f.fill_date, f.symbol, f.qty > 0, f.qty, f.price,
                                      Engine.fill_cost(f), f.reason.startswith("trigger_"),
                                      f.signal_date[:7]))   # qty SIGNED: sells negative
@@ -404,6 +420,8 @@ def main() -> int:
                         "non_fill_reasons": sorted({n.reason for n in engine.non_fills}),
                         "resized_buys": resized, "sell_nonfills": sell_nonfills,
                         "buys_skipped_no_slot": skipped_no_slot,
+                        "forced_exits": forced_exits,
+                        "exit_gate": tcfg["backtest"]["exit_gate"],
                         "completed_picks": n, "pick_hit_rate": hr,
                         "month_hit_rate": month_hit_rate(picks, len(engine_months)),
                         "churn_per_month": ch, "twitchy": twitchy,
@@ -433,8 +451,9 @@ def main() -> int:
           f"{engine_months[-1]}")
     print(f"  fills {len(engine.fills)} (resized at fill {len(resized)}), non-fills "
           f"{len(engine.non_fills)} {sorted({n.reason for n in engine.non_fills})}, "
-          f"blocked sells re-owned {len(sell_nonfills)}, buys skipped (no slot after a "
-          f"blocked sell) {len(skipped_no_slot)}, "
+          f"exit_gate={tcfg['backtest']['exit_gate']['mode']}: blocked sells re-owned "
+          f"{len(sell_nonfills)}, forced exits {len(forced_exits)}, buys skipped (no slot "
+          f"after a blocked sell) {len(skipped_no_slot)}, "
           f"completed picks {n} (hit {hr:.0%}), churn {ch:.2f}/mo")
     for r in month_rows:
         print(f"  {r['month']}  eligible {r['eligible']:>5,}  picks {r['picks']:>3}  "

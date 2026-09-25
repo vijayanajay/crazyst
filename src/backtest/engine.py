@@ -9,7 +9,12 @@ that turns a per-month pick list + prices into a trade log and equity curve:
   20-session median daily turnover (ADV); otherwise it does NOT fill (logged as non-fill,
   cash stays). Filled orders pay `cost_per_side_pct` + linear impact:
   `impact_coef x notional/ADV`, capped at `impact_cap_pct` — all from config, no magic
-  numbers (working rule 1).
+  numbers (working rule 1). When the gate refuses a SELL, `backtest.exit_gate.mode` decides
+  (BRD-owner Decision 3, docs/brd_decisions_universe.md): `stuck` = refused, retried by the
+  caller; `force` = the exit fills, impact uncapped; `escalate` = force after
+  `escalate_after` consecutive refusals. A forced exit carries `Fill.forced=True` and
+  uncapped impact so it is reported separately; only ADV refusals count — circuit locks and
+  suspensions are physical and never escalate.
 - **Costs** (§9.2): per side, configurable; E006 set the Phase 6 default at 0.5%.
 - **Determinism (§9.5):** same inputs + same config -> identical trade logs to the rupee.
   No randomness anywhere in the engine; iteration order is always sorted.
@@ -22,9 +27,9 @@ cannot be marked) and get their dedicated synthetic tests in the self-check belo
 portfolio rules (§8, task 5.3) sit on top of this core in their own module.
 
 python -m src.backtest.engine runs the synthetic self-check: T+1 semantics, cost + impact
-math by hand, non-fill at the ADV gate, deterministic replay, suspension/delisting/circuit/
-missing-delivery behavior, and the trivial "buy momentum" equity curve the plan's Phase 5
-checkpoint asks for.
+math by hand, non-fill at the ADV gate, exit-gate semantics (stuck/force/escalate),
+deterministic replay, suspension/delisting/circuit/missing-delivery behavior, and the
+trivial "buy momentum" equity curve the plan's Phase 5 checkpoint asks for.
 """
 from __future__ import annotations
 
@@ -56,6 +61,7 @@ class Fill:
     cost_pct: float          # flat cost per side (fraction)
     impact_pct: float        # impact actually applied (fraction, after the cap)
     reason: str
+    forced: bool = False     # risk-management exit that overrode the ADV gate (exit_gate)
 
 
 @dataclass
@@ -110,6 +116,18 @@ class Engine:
         self.max_adv_frac = f["max_position_adv_frac"]
         self.impact_coef = f["impact_coef"]
         self.impact_cap = f["impact_cap_pct"] / 100.0
+        # Exit semantics when the ADV gate refuses a SELL (BRD-owner Decision 3,
+        # docs/brd_decisions_universe.md): stuck = refused, retried by the caller (the
+        # pre-Decision-3 default); force = risk-management exits always fill, impact
+        # uncapped; escalate = force after `escalate_after` consecutive refusals. Only
+        # non_fill_adv counts — circuit locks and suspensions are physical, not model vetoes.
+        gate = b.get("exit_gate", {}) or {}
+        self.exit_mode = gate.get("mode", "stuck")
+        assert self.exit_mode in ("stuck", "force", "escalate"), \
+            f"backtest.exit_gate.mode must be stuck|force|escalate, got {self.exit_mode!r}"
+        self.escalate_after = int(gate.get("escalate_after", 2))
+        assert self.escalate_after >= 1, "exit_gate.escalate_after must be >= 1"
+        self.exit_refusals: dict[str, int] = {}   # symbol -> consecutive gate-refused sells
         self.fills: list[Fill] = []
         self.non_fills: list[NonFill] = []
 
@@ -138,20 +156,38 @@ class Engine:
                 continue
             notional = abs(order.qty) * bar["open"]
             adv = self.mkt.adv_median.get(order.symbol, {}).get(fill_date)
+            buy = order.qty > 0
+            forced_exit = False
             if adv is not None:
-                cap = self.max_adv_frac * adv
-                if notional > cap:
-                    self.non_fills.append(NonFill(order.signal_date, order.symbol, order.qty,
-                                                  "non_fill_adv"))
-                    continue
-                impact = min(self.impact_coef * (notional / adv if adv > 0 else 0.0),
-                             self.impact_cap)
+                ratio = notional / adv if adv > 0 else 0.0
+                if notional > self.max_adv_frac * adv:
+                    if buy or self.exit_mode == "stuck":
+                        if not buy:
+                            self.exit_refusals[order.symbol] = \
+                                self.exit_refusals.get(order.symbol, 0) + 1
+                        self.non_fills.append(NonFill(order.signal_date, order.symbol,
+                                                      order.qty, "non_fill_adv"))
+                        continue
+                    # risk-management exit overrides the gate (backtest.exit_gate, Decision 3)
+                    count = self.exit_refusals.get(order.symbol, 0)
+                    if not (self.exit_mode == "force"
+                            or (self.exit_mode == "escalate"
+                                and count >= self.escalate_after)):
+                        self.exit_refusals[order.symbol] = count + 1
+                        self.non_fills.append(NonFill(order.signal_date, order.symbol,
+                                                      order.qty, "non_fill_adv"))
+                        continue
+                    forced_exit = True          # "refused at N attempts -> force next session"
+                impact = (min(self.impact_coef * ratio, 1.0) if forced_exit
+                          else min(self.impact_coef * ratio, self.impact_cap))
             else:
                 impact = 0.0            # no ADV history: the config gate is off for this name
-            buy = order.qty > 0
             exec_price = bar["open"] * (1 + impact) if buy else bar["open"] * (1 - impact)
+            if not buy:
+                self.exit_refusals.pop(order.symbol, None)   # a filled exit resets the count
             self.fills.append(Fill(order.signal_date, fill_date, order.symbol, order.qty,
-                                   exec_price, bar["open"], self.cost_pct, impact, order.reason))
+                                   exec_price, bar["open"], self.cost_pct, impact, order.reason,
+                                   forced_exit))
         return self.fills
 
     def price_on(self, symbol: str, date: str) -> float | None:
@@ -247,6 +283,45 @@ def _self_check() -> None:
     small = [f for f in eng.fills if f.symbol == "ILLIQ"]
     assert len(small) == 1 and small[0].impact_pct > 0, small
 
+    # exit_gate (Decision 3): a gate-refused SELL's semantics are config, three modes
+    def gate_cfg(mode):
+        c = _cfg()
+        c["backtest"]["exit_gate"] = {"mode": mode, "escalate_after": 2}
+        return c
+    # ILLIQ absorbs only 2,500 notional: a 100-share sell at 50 = 5,000 > cap -> refused
+    stuck = Engine(mkt, gate_cfg("stuck"))
+    stuck.submit([Order("2026-01-05", "ILLIQ", -100, "exit")])
+    assert len(stuck.non_fills) == 1 and stuck.non_fills[0].reason == "non_fill_adv"
+    assert stuck.exit_refusals["ILLIQ"] == 1 and not stuck.fills
+    # a sell that FITS the cap fills normally and resets the refusal count
+    stuck.submit([Order("2026-01-06", "ILLIQ", -40, "exit-small")])
+    assert stuck.fills and stuck.fills[-1].qty == -40 and not stuck.fills[-1].forced
+    assert "ILLIQ" not in stuck.exit_refusals
+    # force: the same refused sell fills on the FIRST attempt, uncapped impact, flagged
+    forced = Engine(mkt, gate_cfg("force"))
+    forced.submit([Order("2026-01-05", "ILLIQ", -100, "exit")])
+    assert len(forced.fills) == 1 and forced.fills[0].forced and not forced.non_fills
+    ratio = (100 * 50.0) / 50_000.0
+    assert abs(forced.fills[0].impact_pct - min(0.10 * ratio, 1.0)) < 1e-12, forced.fills[0]
+    # escalate: the first `escalate_after` attempts refuse, the NEXT one fills forced
+    esc = Engine(mkt, gate_cfg("escalate"))
+    esc.submit([Order("2026-01-05", "ILLIQ", -100, "exit-1")])
+    assert len(esc.non_fills) == 1 and esc.exit_refusals["ILLIQ"] == 1
+    esc.submit([Order("2026-01-06", "ILLIQ", -100, "exit-2")])
+    assert len(esc.non_fills) == 2 and esc.exit_refusals["ILLIQ"] == 2
+    esc.submit([Order("2026-01-07", "ILLIQ", -100, "exit-3")])
+    assert len(esc.fills) == 1 and esc.fills[0].forced, esc.fills
+    assert "ILLIQ" not in esc.exit_refusals          # a filled exit resets the count
+    # buys are NEVER gated by exit semantics: the same oversize buy still refuses in force mode
+    forced.submit([Order("2026-01-05", "ILLIQ", 100, "too-big-buy")])
+    assert any(n.reason == "non_fill_adv" and n.qty == 100 for n in forced.non_fills)
+    # an unknown mode is refused at construction, never silently treated as stuck
+    try:
+        Engine(mkt, gate_cfg("whim"))
+        raise SystemExit("bad exit_gate.mode must raise")
+    except AssertionError:
+        pass
+
     # circuit lock: the signal before the locked session does not fill
     eng.submit([Order("2026-01-07", "CIRCUIT", 10, "locked")])
     assert any(n.reason == "circuit_lock" for n in eng.non_fills), eng.non_fills
@@ -286,8 +361,9 @@ def _self_check() -> None:
     assert abs(curve[0]["equity"] - 100_000.0) > 1e-9 or True  # first mark is pre-fill cash+0
     assert abs(curve[-1]["equity"] - (curve[-1]["cash"] + 100 * 101.0)) < 1e-9, curve[-1]
 
-    print("PASS: engine (T+1 open fills, cost+impact math, ADV non-fill gate, circuit lock, "
-          "suspension marks, delisting, deterministic replay, equity curve)", flush=True)
+    print("PASS: engine (T+1 open fills, cost+impact math, ADV non-fill gate, exit gate "
+          "stuck/force/escalate, circuit lock, suspension marks, delisting, deterministic "
+          "replay, equity curve)", flush=True)
     sys.exit(0)
 
 

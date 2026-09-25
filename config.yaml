@@ -75,7 +75,18 @@ backtest:
     max_position_adv_frac: 0.05  # a position above this fraction of the trailing-20-session
                                  # median daily turnover does NOT fill (non-fill, logged)
     impact_coef: 0.10            # impact fraction = coef x position/ADV, linear, per side
-    impact_cap_pct: 0.01         # impact capped at 1% per side
+    impact_cap_pct: 1.0          # impact capped at 1% per side (the key is a percent; the
+                                 # old 0.01 capped at 0.01% — silently optimistic)
+  exit_gate:                   # Decision 3 (docs/brd_decisions_universe.md): what a refused
+                               # SELL does. stuck = refused, retried by the caller (the
+                               # pre-Decision-3 default, BRD-normative until decided);
+                               # force = risk-management exits always fill, impact uncapped;
+                               # escalate = force after escalate_after consecutive refusals.
+                               # Only non_fill_adv counts; circuit locks/suspensions never do.
+                               # A forced exit carries Fill.forced=True and uncapped impact,
+                               # reported separately in the run's cost breakdown.
+    mode: stuck
+    escalate_after: 2
   purge_months: 1              # 1-month purge gap between train end and test month (§10.2)
   random_seed: 42
 
