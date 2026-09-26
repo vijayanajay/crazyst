@@ -130,3 +130,8 @@ routine exits; a risk-management exit may exceed it, at reported uncapped cost.*
 you choose, the smoke's current (a) behaviour stays BRD-normative until you decide — the
 same pattern as Decision 2's floor. **Decision needed before Phase 6.4** (the walk-forward's
 drawdown, churn and turnover numbers all move with this choice).
+
+**Implemented (2026-09-26, commit `bfd0572`):** the recommendation ships behind
+`backtest.exit_gate` in `config.yaml` — modes `stuck` (default = the BRD-normative
+behaviour above) / `force` / `escalate` with `escalate_after: N`; engine and smoke honor
+it. The owner's choice of mode is still what blocks 6.4.
