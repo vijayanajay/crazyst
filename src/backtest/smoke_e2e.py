@@ -2,10 +2,12 @@
 real full-profile data. The Phase 5 -> Phase 6 bridge: prove the layers compose before
 the 6.1 walk-forward harness is built on them.
 
-Exit semantics follow `backtest.exit_gate.mode` (BRD-owner Decision 3): stuck (the default
-and today's committed behaviour), force, or escalate-after-N. Forced exits appear as fills
-with forced=True and uncapped impact, reported separately (`forced_exits` in the results).
-Set the mode here (or via config.yaml) and rerun to compare behaviours on the same tape.
+Exit semantics follow `backtest.exit_gate.mode` (BRD-owner Decision 3). Forced exits appear
+as fills with forced=True and uncapped impact, reported separately (`forced_exits` in the
+results). The engine pass runs EVERY mode in ENGINE_MODES on the same tape and writes them
+side by side under `engine_passes` (stuck = the shipped default), so the stuck-vs-escalate
+ledger comparison regenerates in one run; config.yaml's `backtest.exit_gate` stays the
+shipped default the engine itself honors.
 
 Two passes over the validation slice (P4.1's split: 145 months, boundary 2023-09-24):
 
@@ -13,15 +15,16 @@ Two passes over the validation slice (P4.1's split: 145 months, boundary 2023-09
    (importlib, so experiments cannot drift), take top-5% picks, and cross-check the
    aggregate against E006's committed results.json (same picks: 6,622 pick-months; mean
    gross = E006's mean_net at 0.2% + 2 x 0.2% cost, to the float).
-2. **Engine pass, the FIRST 12 slice months consecutively (2011-07 -> 2012-06):** per
-   month, build a real `Market` from daily bhav bars (open/high/low/close/turnover) with
-   a trailing-20-session ADV for the fill gate, build `Facts` (closes, 50-close DMA,
-   DMA-below streaks, month highs, within-eligible rank percentiles, composite_2f scores),
-   run Portfolio monthly review + Trigger B (monthly cadence only — mid-month Trigger A/B
-   checks and delivery-z exits are declared out of scope for the smoke), size equal-weight
-   orders on free slots, submit LAST month's orders against THIS month's market (T+1 =
-   the next session, so month-end signals fill inside the next month), apply fills with a
-   no-negative-cash resize cap, and mark the curve at the decision close.
+2. **Engine pass, the FIRST 12 slice months consecutively (2011-07 -> 2012-06), once per
+   exit-gate mode in ENGINE_MODES:** per month, build a real `Market` from daily bhav bars
+   (open/high/low/close/turnover) with a trailing-20-session ADV for the fill gate, build
+   `Facts` (closes, 50-close DMA, DMA-below streaks, month highs, within-eligible rank
+   percentiles, composite_2f scores), run Portfolio monthly review + Trigger B (monthly
+   cadence only — mid-month Trigger A/B checks and delivery-z exits are declared out of
+   scope for the smoke), size equal-weight orders on free slots, submit LAST month's orders
+   against THIS month's market (T+1 = the next session, so month-end signals fill inside
+   the next month), apply fills with a no-negative-cash resize cap, and mark the curve at
+   the decision close.
 
 Declared simplifications (the smoke tests plumbing, not results — 6.4 produces results):
 no mid-month trigger checks (Trigger A/C exercised by portfolio's unit tests, Trigger B's
@@ -56,6 +59,7 @@ P41B = importlib.import_module("experiments.004b_composite_2feat.run")
 
 SAMPLE_MONTHS = 12          # consecutive slice months through the engine
 ENGINE_MONTHS_LIMIT = 12
+ENGINE_MODES = (("stuck", 2), ("escalate", 2))   # compared side by side per run
 
 
 def _cfg_test() -> dict:
@@ -177,65 +181,13 @@ def _boundary_tie_months(by_month: dict) -> int:
     return n
 
 
-def main() -> int:
-    t0 = time.monotonic()
-    cfg = load("full")
+def _engine_pass(cfg, mode: str, after, sessions, by_month, months, picks_by_month,
+                 val) -> dict:
+    """One engine pass over the first 12 consecutive slice months at exit_gate
+    mode=`mode` (after = escalate_after). Verbatim body of the original inline pass; the
+    only mode-dependent wiring is `backtest.exit_gate` in the test config."""
     tcfg = _cfg_test()
-    con = duckdb.connect(cfg["paths"]["duckdb"], read_only=True)
-    try:
-        rows, cutoff = _fetch(con)
-        sessions = [str(r[0]) for r in con.execute(
-            "SELECT DISTINCT date FROM bhav ORDER BY date").fetchall()]
-    finally:
-        con.close()
-    assert rows, "no labeled rows — build the full-profile matrix first"
-    val, test, boundary = P41.split_slice(rows, cutoff)
-    by_month: dict[str, list] = {}
-    for r in val:
-        by_month.setdefault(str(r[0]), []).append(r)
-    months = sorted(by_month)
-    assert len(months) == 145, f"expected the 145-month validation slice, got {len(months)}"
-
-    # ---- light pass: every slice month's picks, cross-checked against E006 -----------
-    picks_by_month = {m: _picks(by_month[m]) for m in months}
-    all_picks = [p for m in months for p in picks_by_month[m]]
-    gross = [p["ret"] for p in all_picks]
-    mean_gross = sum(gross) / len(gross)
-    hit = sum(1 for g in gross if g - 0.004 > 0) / len(gross)   # E006's net = gross - 2x0.2%
-    e006_path = os.path.join(os.path.dirname(__file__), "..", "..",
-                             "experiments", "006_cost_sensitivity", "results.json")
-    with open(e006_path) as f:
-        e006 = json.load(f)
-    e_all = e006["results"]["by_rank_group"]["all"]["0.002"]
-    assert e_all["picks"] == len(all_picks), (e_all["picks"], len(all_picks))
-    # E006's pick SET is not stable across table rebuilds: 21/145 slice months have an
-    # exact composite_2f score tie crossing the top-5% boundary, and E006's sort breaks
-    # ties by physical row order (its scores were verified bit-stable: the slice's mean
-    # monthly IC reproduces P4.1b's frozen 0.0681243229 to 1e-12). The smoke therefore
-    # asserts the tie-stable statistics exactly (pick count, monthly IC) and E006's mean
-    # only within the tie-swap tolerance; Phase 6 tie-breaks picks by symbol.
-    mean_ic = _mean_monthly_ic(by_month)
-    p41b = json.load(open(os.path.join(os.path.dirname(__file__), "..", "..",
-                                       "experiments", "004b_composite_2feat",
-                                       "results.json")))
-    frozen_ic = p41b["mean_monthly_ic"]["composite_2f"]["ic"]
-    assert abs(mean_ic - frozen_ic) < 1e-9, (mean_ic, frozen_ic)
-    tie_tol, tie_months = 5e-4, _boundary_tie_months(by_month)
-    e006_delta = mean_gross - (e_all["mean_net"] + 0.004)
-    assert abs(e006_delta) < tie_tol, (e006_delta, tie_tol)
-    assert tie_months <= 30, tie_months
-
-    buckets_all: dict[str, dict] = {}
-    for b in ("top200", "201-600", "601-1500"):
-        bp = [p for p in all_picks if p["bucket"] == b]
-        buckets_all[b] = {
-            "picks": len(bp),
-            "hit_rate": sum(1 for p in bp if p["ret"] - 0.004 > 0) / len(bp) if bp else 0.0,
-            "mean_net": (sum(p["ret"] - 0.004 for p in bp) / len(bp)) if bp else 0.0,
-        }
-    assert sum(b["picks"] for b in buckets_all.values()) == len(all_picks)
-
-    # ---- engine pass: the first 12 consecutive slice months --------------------------
+    tcfg["backtest"]["exit_gate"] = {"mode": mode, "escalate_after": after}
     # mdate IS the month-end decision session; a decision month's market window runs from
     # the previous calendar month-end session to this month's mdate, so last month's
     # signal fills at this window's first session (T+1 across the boundary).
@@ -396,10 +348,95 @@ def main() -> int:
     assert curve[0]["equity"] <= curve[0]["cash"] + 1e-6   # nothing held before the first fills
     picks = completed_picks(events)
     hr, n = pick_hit_rate(picks)
+    sym_at = 2 + len(P41B.FEATURES) + 1
     attr = bucket_attribution(events, {(str(r[0])[:7], r[sym_at]): r[-1] for r in val},
                               months=len(engine_months))   # every eligible row's as-of bucket
     assert_consistent(attr)
     ch, twitchy = churn_per_month(events, len(engine_months))
+
+    return {
+        "months": engine_months, "fills": len(engine.fills),
+        "non_fills": len(engine.non_fills),
+        "non_fill_reasons": sorted({n.reason for n in engine.non_fills}),
+        "resized_buys": resized, "sell_nonfills": sell_nonfills,
+        "buys_skipped_no_slot": skipped_no_slot,
+        "forced_exits": forced_exits,
+        "exit_gate": tcfg["backtest"]["exit_gate"],
+        "completed_picks": n, "pick_hit_rate": hr,
+        "month_hit_rate": month_hit_rate(picks, len(engine_months)),
+        "churn_per_month": ch, "twitchy": twitchy,
+        "final_equity": curve[-1]["equity"],
+        "total_return": curve[-1]["equity"] / tcfg["portfolio"]["start_capital"] - 1,
+        "curve": curve, "month_rows": month_rows,
+        "decisions": decisions_log,
+        "buckets": attr,
+    }
+
+
+def main() -> int:
+    t0 = time.monotonic()
+    cfg = load("full")
+    con = duckdb.connect(cfg["paths"]["duckdb"], read_only=True)
+    try:
+        rows, cutoff = _fetch(con)
+        sessions = [str(r[0]) for r in con.execute(
+            "SELECT DISTINCT date FROM bhav ORDER BY date").fetchall()]
+    finally:
+        con.close()
+    assert rows, "no labeled rows — build the full-profile matrix first"
+    val, test, boundary = P41.split_slice(rows, cutoff)
+    by_month: dict[str, list] = {}
+    for r in val:
+        by_month.setdefault(str(r[0]), []).append(r)
+    months = sorted(by_month)
+    assert len(months) == 145, f"expected the 145-month validation slice, got {len(months)}"
+
+    # ---- light pass: every slice month's picks, cross-checked against E006 -----------
+    picks_by_month = {m: _picks(by_month[m]) for m in months}
+    all_picks = [p for m in months for p in picks_by_month[m]]
+    gross = [p["ret"] for p in all_picks]
+    mean_gross = sum(gross) / len(gross)
+    hit = sum(1 for g in gross if g - 0.004 > 0) / len(gross)   # E006's net = gross - 2x0.2%
+    e006_path = os.path.join(os.path.dirname(__file__), "..", "..",
+                             "experiments", "006_cost_sensitivity", "results.json")
+    with open(e006_path) as f:
+        e006 = json.load(f)
+    e_all = e006["results"]["by_rank_group"]["all"]["0.002"]
+    assert e_all["picks"] == len(all_picks), (e_all["picks"], len(all_picks))
+    # E006's pick SET is not stable across table rebuilds: 21/145 slice months have an
+    # exact composite_2f score tie crossing the top-5% boundary, and E006's sort breaks
+    # ties by physical row order (its scores were verified bit-stable: the slice's mean
+    # monthly IC reproduces P4.1b's frozen 0.0681243229 to 1e-12). The smoke therefore
+    # asserts the tie-stable statistics exactly (pick count, monthly IC) and E006's mean
+    # only within the tie-swap tolerance; Phase 6 tie-breaks picks by symbol.
+    mean_ic = _mean_monthly_ic(by_month)
+    p41b = json.load(open(os.path.join(os.path.dirname(__file__), "..", "..",
+                                       "experiments", "004b_composite_2feat",
+                                       "results.json")))
+    frozen_ic = p41b["mean_monthly_ic"]["composite_2f"]["ic"]
+    assert abs(mean_ic - frozen_ic) < 1e-9, (mean_ic, frozen_ic)
+    tie_tol, tie_months = 5e-4, _boundary_tie_months(by_month)
+    e006_delta = mean_gross - (e_all["mean_net"] + 0.004)
+    assert abs(e006_delta) < tie_tol, (e006_delta, tie_tol)
+    assert tie_months <= 30, tie_months
+
+    buckets_all: dict[str, dict] = {}
+    for b in ("top200", "201-600", "601-1500"):
+        bp = [p for p in all_picks if p["bucket"] == b]
+        buckets_all[b] = {
+            "picks": len(bp),
+            "hit_rate": sum(1 for p in bp if p["ret"] - 0.004 > 0) / len(bp) if bp else 0.0,
+            "mean_net": (sum(p["ret"] - 0.004 for p in bp) / len(bp)) if bp else 0.0,
+        }
+    assert sum(b["picks"] for b in buckets_all.values()) == len(all_picks)
+
+    # ---- engine pass: the first 12 consecutive slice months, per exit-gate mode ------
+    engine = {mode: _engine_pass(cfg, mode, after, sessions, by_month, months,
+                                 picks_by_month, val)
+              for mode, after in ENGINE_MODES}
+    eps = list(engine.values())
+    assert all(e["months"] == eps[0]["months"] for e in eps), \
+        "mode runs did not see the same tape"
 
     git = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True
                          ).stdout.strip()
@@ -415,21 +452,7 @@ def main() -> int:
                        "e006_cross_check": "picks count exact + IC bit-stable; mean within "
                                           "the documented tie-swap tolerance",
                        "by_bucket": buckets_all},
-        "engine_pass": {"months": engine_months, "fills": len(engine.fills),
-                        "non_fills": len(engine.non_fills),
-                        "non_fill_reasons": sorted({n.reason for n in engine.non_fills}),
-                        "resized_buys": resized, "sell_nonfills": sell_nonfills,
-                        "buys_skipped_no_slot": skipped_no_slot,
-                        "forced_exits": forced_exits,
-                        "exit_gate": tcfg["backtest"]["exit_gate"],
-                        "completed_picks": n, "pick_hit_rate": hr,
-                        "month_hit_rate": month_hit_rate(picks, len(engine_months)),
-                        "churn_per_month": ch, "twitchy": twitchy,
-                        "final_equity": curve[-1]["equity"],
-                        "total_return": curve[-1]["equity"] / tcfg["portfolio"]["start_capital"] - 1,
-                        "curve": curve, "month_rows": month_rows,
-                        "decisions": decisions_log,
-                        "buckets": attr},
+        "engine_passes": engine,
         "runtime_seconds": round(time.monotonic() - t0, 1),
     }
     out_dir = os.path.join(cfg["paths"]["runs"], "smoke_e2e")
@@ -447,21 +470,22 @@ def main() -> int:
     for b, v in buckets_all.items():
         print(f"  {b:<10} picks {v['picks']:>5,}  hit {v['hit_rate']:.1%}  "
               f"mean net {v['mean_net'] * 100:>6.2f}%")
-    print(f"\nengine pass: {len(engine_months)} consecutive months {engine_months[0]} -> "
-          f"{engine_months[-1]}")
-    print(f"  fills {len(engine.fills)} (resized at fill {len(resized)}), non-fills "
-          f"{len(engine.non_fills)} {sorted({n.reason for n in engine.non_fills})}, "
-          f"exit_gate={tcfg['backtest']['exit_gate']['mode']}: blocked sells re-owned "
-          f"{len(sell_nonfills)}, forced exits {len(forced_exits)}, buys skipped (no slot "
-          f"after a blocked sell) {len(skipped_no_slot)}, "
-          f"completed picks {n} (hit {hr:.0%}), churn {ch:.2f}/mo")
-    for r in month_rows:
+    for mode, ep in engine.items():
+        print(f"\nengine pass [{mode}] exit_gate={ep['exit_gate']}: {len(ep['months'])} "
+              f"consecutive months {ep['months'][0]} -> {ep['months'][-1]}")
+        print(f"  fills {ep['fills']} (resized at fill {len(ep['resized_buys'])}), "
+              f"non-fills {ep['non_fills']} {ep['non_fill_reasons']}: blocked sells "
+              f"re-owned {len(ep['sell_nonfills'])}, forced exits "
+              f"{len(ep['forced_exits'])}, buys skipped (no slot after a blocked sell) "
+              f"{len(ep['buys_skipped_no_slot'])}, completed picks {ep['completed_picks']} "
+              f"(hit {ep['pick_hit_rate']:.0%}), churn {ep['churn_per_month']:.2f}/mo")
+        print(f"  final equity {ep['final_equity']:,.0f} ({ep['total_return']:+.2%})")
+    ep = engine["stuck"]            # month table + attribution for the default mode
+    for r in ep["month_rows"]:
         print(f"  {r['month']}  eligible {r['eligible']:>5,}  picks {r['picks']:>3}  "
               f"held {','.join(r['held']) or '-':<28} cash {r['cash']:>11,.0f}")
-    print(f"  final equity {curve[-1]['equity']:,.0f} "
-          f"({out['engine_pass']['total_return']:+.2%})")
-    print("\nbucket attribution on the engine pass's own trades:")
-    for k, v in attr.items():
+    print("\nbucket attribution on the stuck run's own trades:")
+    for k, v in ep["buckets"].items():
         print(f"  {k:<10} picks {v['picks']}  hit {v['hit_rate']:.0%}  "
               f"mean {v['mean_return'] * 100:>6.2f}%  churn/mo {v['churn_per_month']:.2f}")
     print(f"\nwrote {path} ({out['runtime_seconds']}s)")

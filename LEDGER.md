@@ -1019,21 +1019,26 @@ BRD-normative until decided, per the Decision-2 pattern.
 The choice is now **implemented behind `backtest.exit_gate`** (commit `bfd0572`; Decision 3
 doc updated to match): `stuck` is the shipped default and the run above; `escalate`
 (N = 2) force-fills an exit refused at N consecutive reviews (`Fill.forced`, impact
-capped at `min(coef·ratio, 1.0)`, reported in `forced_exits`). Same 12-month tape, flag-only
-re-run (artifact still holds the stuck-mode results):
+capped at `min(coef·ratio, 1.0)`, reported in `forced_exits`). Same 12-month tape, one run
+per mode in a single smoke invocation — the artifact now carries both side by side
+(`engine_passes` in `runs/smoke_e2e/smoke_results.json`, gitignored; regenerate with
+`python -m src.backtest.smoke_e2e`, ~9s):
 
 | engine-pass metric | stuck (default) | escalate (N = 2) |
 |---|---|---|
 | non-fills | 10 | 4 |
 | sell non-fills / stuck sell-months | 8 / 8 (SOLARINDS re-refused 8 reviews) | 2 / 2 |
-| forced exits | 0 | 2 |
+| forced exits | 0 | 1 (SOLARINDS 2011-11, 1.42% reported impact) |
 | replacement buys skipped (no slot) | 8 | 2 |
 | completed picks | 16 | 20 |
 | final equity | 1,022,878 (+2.29%) | +3.92% |
 
-SOLARINDS exits ~7 months earlier and closes at +9.73% instead of the lucky +19.59% hold —
-the equity delta is plumbing, not alpha. `force` mode is unit-tested but not run on
-this tape. Neither run is a return claim (caveat 1); the owner still picks the mode for 6.4.
+SOLARINDS exits ~7 months earlier (refused Sep + Oct, force-filled at the Nov review's
+T+1) instead of riding the lucky +19.59% hold — the equity delta is plumbing, not alpha.
+(An earlier hand-run logged 2 forced exits; the persisted artifact — the regenerable
+evidence — shows 1, and the table above is corrected to it.) `force` mode is unit-tested
+but not run on this tape. Neither run is a return claim (caveat 1); the owner still picks
+the mode for 6.4.
 
 ### What the smoke itself caught (bugs the asserts fixed)
 
