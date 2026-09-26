@@ -1,0 +1,1602 @@
+{
+  "smoke": "composite_2f through engine + portfolio on real full-profile data",
+  "git_hash": "b0e88cdde6c0fcf8eacb746d41e467fd16047797",
+  "profile": "full",
+  "cutoff": "2026-09-24",
+  "slice_months": 145,
+  "boundary": "2023-09-24",
+  "light_pass": {
+    "pick_months_total": 6622,
+    "mean_gross": 0.03437525683147778,
+    "hit_at_0_2pct": 0.5279371790999698,
+    "mean_monthly_ic": 0.06812432294843898,
+    "frozen_ic_p41b": 0.06812432294843898,
+    "e006_mean_delta_tie_swap": -0.00010219171547386913,
+    "boundary_tie_months": 21,
+    "e006_cross_check": "picks count exact + IC bit-stable; mean within the documented tie-swap tolerance",
+    "by_bucket": {
+      "top200": {
+        "picks": 221,
+        "hit_rate": 0.5927601809954751,
+        "mean_net": 0.0259750308582705
+      },
+      "201-600": {
+        "picks": 1562,
+        "hit_rate": 0.5384122919334187,
+        "mean_net": 0.021765933774728678
+      },
+      "601-1500": {
+        "picks": 4839,
+        "hit_rate": 0.52159537094441,
+        "mean_net": 0.03335525529287909
+      }
+    }
+  },
+  "engine_passes": {
+    "stuck": {
+      "months": [
+        "2011-07-29",
+        "2011-08-30",
+        "2011-09-30",
+        "2011-10-31",
+        "2011-11-30",
+        "2011-12-30",
+        "2012-01-31",
+        "2012-02-29",
+        "2012-03-30",
+        "2012-04-30",
+        "2012-05-31",
+        "2012-06-29"
+      ],
+      "fills": 44,
+      "non_fills": 10,
+      "non_fill_reasons": [
+        "non_fill_adv"
+      ],
+      "resized_buys": [],
+      "sell_nonfills": [
+        {
+          "month": "2011-09-30",
+          "symbol": "SOLARINDS",
+          "reason": "non_fill_adv"
+        },
+        {
+          "month": "2011-10-31",
+          "symbol": "SOLARINDS",
+          "reason": "non_fill_adv"
+        },
+        {
+          "month": "2011-11-30",
+          "symbol": "SOLARINDS",
+          "reason": "non_fill_adv"
+        },
+        {
+          "month": "2011-12-30",
+          "symbol": "SOLARINDS",
+          "reason": "non_fill_adv"
+        },
+        {
+          "month": "2012-01-31",
+          "symbol": "SOLARINDS",
+          "reason": "non_fill_adv"
+        },
+        {
+          "month": "2012-02-29",
+          "symbol": "SOLARINDS",
+          "reason": "non_fill_adv"
+        },
+        {
+          "month": "2012-03-30",
+          "symbol": "SOLARINDS",
+          "reason": "non_fill_adv"
+        },
+        {
+          "month": "2012-04-30",
+          "symbol": "SOLARINDS",
+          "reason": "non_fill_adv"
+        }
+      ],
+      "buys_skipped_no_slot": [
+        {
+          "month": "2011-09-30",
+          "symbol": "SBIN",
+          "qty": 62
+        },
+        {
+          "month": "2011-10-31",
+          "symbol": "SBIN",
+          "qty": 59
+        },
+        {
+          "month": "2011-11-30",
+          "symbol": "SBIN",
+          "qty": 181
+        },
+        {
+          "month": "2011-12-30",
+          "symbol": "SBIN",
+          "qty": 48
+        },
+        {
+          "month": "2012-01-31",
+          "symbol": "SBIN",
+          "qty": 62
+        },
+        {
+          "month": "2012-02-29",
+          "symbol": "SBIN",
+          "qty": 160
+        },
+        {
+          "month": "2012-03-30",
+          "symbol": "SBIN",
+          "qty": 48
+        },
+        {
+          "month": "2012-04-30",
+          "symbol": "SBIN",
+          "qty": 57
+        }
+      ],
+      "forced_exits": [],
+      "exit_gate": {
+        "mode": "stuck",
+        "escalate_after": 2
+      },
+      "completed_picks": 16,
+      "pick_hit_rate": 0.25,
+      "month_hit_rate": [
+        0.25,
+        3
+      ],
+      "churn_per_month": 1.25,
+      "twitchy": false,
+      "final_equity": 1022877.7241121727,
+      "total_return": 0.022877724112172704,
+      "curve": [
+        {
+          "date": "2011-07-29",
+          "cash": 1000000.0,
+          "market_value": 0.0,
+          "equity": 1000000.0
+        },
+        {
+          "date": "2011-08-30",
+          "cash": 492423.2771845097,
+          "market_value": 502066.4,
+          "equity": 994489.6771845097
+        },
+        {
+          "date": "2011-09-30",
+          "cash": 341939.53920670645,
+          "market_value": 635364.5499999999,
+          "equity": 977304.0892067064
+        },
+        {
+          "date": "2011-10-31",
+          "cash": 345191.3904808685,
+          "market_value": 672855.8,
+          "equity": 1018047.1904808686
+        },
+        {
+          "date": "2011-11-30",
+          "cash": 345191.3904808685,
+          "market_value": 586178.3,
+          "equity": 931369.6904808686
+        },
+        {
+          "date": "2011-12-30",
+          "cash": 405180.94781089155,
+          "market_value": 509879.49999999994,
+          "equity": 915060.4478108916
+        },
+        {
+          "date": "2012-01-31",
+          "cash": 329952.7980509461,
+          "market_value": 645857.65,
+          "equity": 975810.4480509461
+        },
+        {
+          "date": "2012-02-29",
+          "cash": 329952.7980509461,
+          "market_value": 672873.7999999999,
+          "equity": 1002826.598050946
+        },
+        {
+          "date": "2012-03-30",
+          "cash": 363157.51141205477,
+          "market_value": 623701.0,
+          "equity": 986858.5114120548
+        },
+        {
+          "date": "2012-04-30",
+          "cash": 330493.1128210787,
+          "market_value": 642983.95,
+          "equity": 973477.0628210786
+        },
+        {
+          "date": "2012-05-31",
+          "cash": 404291.98917198944,
+          "market_value": 540422.65,
+          "equity": 944714.6391719894
+        },
+        {
+          "date": "2012-06-29",
+          "cash": 105582.47411217273,
+          "market_value": 917295.25,
+          "equity": 1022877.7241121727
+        }
+      ],
+      "month_rows": [
+        {
+          "month": "2011-07-29",
+          "eligible": 690,
+          "picks": 34,
+          "held": [],
+          "cash": 1000000.0
+        },
+        {
+          "month": "2011-08-30",
+          "eligible": 669,
+          "picks": 33,
+          "held": [],
+          "cash": 492423.2771845097
+        },
+        {
+          "month": "2011-09-30",
+          "eligible": 687,
+          "picks": 34,
+          "held": [
+            "ICICIBANK"
+          ],
+          "cash": 341939.53920670645
+        },
+        {
+          "month": "2011-10-31",
+          "eligible": 689,
+          "picks": 34,
+          "held": [
+            "ICICIBANK",
+            "LT",
+            "RELIANCE"
+          ],
+          "cash": 345191.3904808685
+        },
+        {
+          "month": "2011-11-30",
+          "eligible": 661,
+          "picks": 33,
+          "held": [],
+          "cash": 345191.3904808685
+        },
+        {
+          "month": "2011-12-30",
+          "eligible": 655,
+          "picks": 33,
+          "held": [],
+          "cash": 405180.94781089155
+        },
+        {
+          "month": "2012-01-31",
+          "eligible": 663,
+          "picks": 33,
+          "held": [
+            "ICICIBANK",
+            "INFY",
+            "RELIANCE"
+          ],
+          "cash": 329952.7980509461
+        },
+        {
+          "month": "2012-02-29",
+          "eligible": 679,
+          "picks": 34,
+          "held": [
+            "INFY"
+          ],
+          "cash": 329952.7980509461
+        },
+        {
+          "month": "2012-03-30",
+          "eligible": 671,
+          "picks": 34,
+          "held": [
+            "INFY"
+          ],
+          "cash": 363157.51141205477
+        },
+        {
+          "month": "2012-04-30",
+          "eligible": 669,
+          "picks": 33,
+          "held": [
+            "ICICIBANK",
+            "RELIANCE"
+          ],
+          "cash": 330493.1128210787
+        },
+        {
+          "month": "2012-05-31",
+          "eligible": 668,
+          "picks": 33,
+          "held": [
+            "INFY",
+            "SBIN",
+            "RELIANCE"
+          ],
+          "cash": 404291.98917198944
+        },
+        {
+          "month": "2012-06-29",
+          "eligible": 692,
+          "picks": 35,
+          "held": [
+            "INFY",
+            "ICICIBANK",
+            "SBIN",
+            "RELIANCE"
+          ],
+          "cash": 105582.47411217273
+        }
+      ],
+      "decisions": [
+        {
+          "month": "2011-07-29",
+          "action": "buy",
+          "symbol": "ASHOKA",
+          "trigger": "select",
+          "qty": 934,
+          "score_bought": 0.9753265602322206,
+          "note": ""
+        },
+        {
+          "month": "2011-07-29",
+          "action": "buy",
+          "symbol": "ECLERX",
+          "trigger": "select",
+          "qty": 308,
+          "score_bought": 0.9499274310595065,
+          "note": ""
+        },
+        {
+          "month": "2011-07-29",
+          "action": "buy",
+          "symbol": "SOLARINDS",
+          "trigger": "select",
+          "qty": 372,
+          "score_bought": 0.9368650217706822,
+          "note": ""
+        },
+        {
+          "month": "2011-07-29",
+          "action": "buy",
+          "symbol": "TAINWALCHM",
+          "trigger": "select",
+          "qty": 6702,
+          "score_bought": 0.9354136429608129,
+          "note": ""
+        },
+        {
+          "month": "2011-08-30",
+          "action": "sell",
+          "symbol": "ECLERX",
+          "trigger": "trigger_b_stop",
+          "qty": 308,
+          "score_sold": 0.8772455089820359,
+          "note": ""
+        },
+        {
+          "month": "2011-08-30",
+          "action": "sell",
+          "symbol": "SOLARINDS",
+          "trigger": "monthly_review",
+          "qty": 372,
+          "score_sold": 0.9416167664670658,
+          "note": "monthly_review: rank below sell threshold"
+        },
+        {
+          "month": "2011-08-30",
+          "action": "buy",
+          "symbol": "SBIN",
+          "trigger": "replace",
+          "qty": 62,
+          "score_bought": 0.2780688622754491,
+          "note": ""
+        },
+        {
+          "month": "2011-08-30",
+          "action": "buy",
+          "symbol": "RELIANCE",
+          "trigger": "replace",
+          "qty": 157,
+          "score_bought": 0.42290419161676646,
+          "note": ""
+        },
+        {
+          "month": "2011-08-30",
+          "action": "buy",
+          "symbol": "ICICIBANK",
+          "trigger": "replace",
+          "qty": 140,
+          "score_bought": 0.5351796407185628,
+          "note": ""
+        },
+        {
+          "month": "2011-08-30",
+          "action": "buy",
+          "symbol": "LT",
+          "trigger": "replace",
+          "qty": 76,
+          "score_bought": 0.3682634730538922,
+          "note": ""
+        },
+        {
+          "month": "2011-09-30",
+          "action": "sell",
+          "symbol": "LT",
+          "trigger": "trigger_b_stop",
+          "qty": 76,
+          "score_sold": 0.3877551020408163,
+          "note": ""
+        },
+        {
+          "month": "2011-09-30",
+          "action": "sell",
+          "symbol": "RELIANCE",
+          "trigger": "trigger_b_dma",
+          "qty": 157,
+          "score_sold": 0.40962099125364426,
+          "note": ""
+        },
+        {
+          "month": "2011-09-30",
+          "action": "sell",
+          "symbol": "SOLARINDS",
+          "trigger": "monthly_review",
+          "qty": 372,
+          "score_sold": 0.8272594752186588,
+          "note": "monthly_review: rank below sell threshold"
+        },
+        {
+          "month": "2011-09-30",
+          "action": "buy",
+          "symbol": "SBIN",
+          "trigger": "replace",
+          "qty": 59,
+          "score_bought": 0.21137026239067053,
+          "note": ""
+        },
+        {
+          "month": "2011-09-30",
+          "action": "buy",
+          "symbol": "RELIANCE",
+          "trigger": "replace",
+          "qty": 141,
+          "score_bought": 0.40962099125364426,
+          "note": ""
+        },
+        {
+          "month": "2011-09-30",
+          "action": "buy",
+          "symbol": "LT",
+          "trigger": "replace",
+          "qty": 83,
+          "score_bought": 0.3877551020408163,
+          "note": ""
+        },
+        {
+          "month": "2011-10-31",
+          "action": "sell",
+          "symbol": "SOLARINDS",
+          "trigger": "monthly_review",
+          "qty": 372,
+          "score_sold": 0.6867732558139534,
+          "note": "monthly_review: rank below sell threshold"
+        },
+        {
+          "month": "2011-10-31",
+          "action": "buy",
+          "symbol": "SBIN",
+          "trigger": "replace",
+          "qty": 181,
+          "score_bought": 0.23401162790697672,
+          "note": ""
+        },
+        {
+          "month": "2011-11-30",
+          "action": "sell",
+          "symbol": "SOLARINDS",
+          "trigger": "trigger_b_trail",
+          "qty": 372,
+          "score_sold": 0.875,
+          "note": ""
+        },
+        {
+          "month": "2011-11-30",
+          "action": "sell",
+          "symbol": "ICICIBANK",
+          "trigger": "trigger_b_stop",
+          "qty": 140,
+          "score_sold": 0.5325757575757576,
+          "note": ""
+        },
+        {
+          "month": "2011-11-30",
+          "action": "sell",
+          "symbol": "LT",
+          "trigger": "trigger_b_dma",
+          "qty": 83,
+          "score_sold": 0.29545454545454547,
+          "note": ""
+        },
+        {
+          "month": "2011-11-30",
+          "action": "sell",
+          "symbol": "RELIANCE",
+          "trigger": "trigger_b_trail",
+          "qty": 141,
+          "score_sold": 0.39545454545454545,
+          "note": ""
+        },
+        {
+          "month": "2011-11-30",
+          "action": "buy",
+          "symbol": "SBIN",
+          "trigger": "replace",
+          "qty": 48,
+          "score_bought": 0.3242424242424242,
+          "note": ""
+        },
+        {
+          "month": "2011-11-30",
+          "action": "buy",
+          "symbol": "RELIANCE",
+          "trigger": "replace",
+          "qty": 110,
+          "score_bought": 0.39545454545454545,
+          "note": ""
+        },
+        {
+          "month": "2011-11-30",
+          "action": "buy",
+          "symbol": "ICICIBANK",
+          "trigger": "replace",
+          "qty": 121,
+          "score_bought": 0.5325757575757576,
+          "note": ""
+        },
+        {
+          "month": "2011-11-30",
+          "action": "buy",
+          "symbol": "LT",
+          "trigger": "replace",
+          "qty": 67,
+          "score_bought": 0.29545454545454547,
+          "note": ""
+        },
+        {
+          "month": "2011-12-30",
+          "action": "sell",
+          "symbol": "ICICIBANK",
+          "trigger": "trigger_b_stop",
+          "qty": 121,
+          "score_sold": 0.20948012232415902,
+          "note": ""
+        },
+        {
+          "month": "2011-12-30",
+          "action": "sell",
+          "symbol": "LT",
+          "trigger": "trigger_b_stop",
+          "qty": 67,
+          "score_sold": 0.25382262996941896,
+          "note": ""
+        },
+        {
+          "month": "2011-12-30",
+          "action": "sell",
+          "symbol": "RELIANCE",
+          "trigger": "trigger_b_stop",
+          "qty": 110,
+          "score_sold": 0.3432721712538226,
+          "note": ""
+        },
+        {
+          "month": "2011-12-30",
+          "action": "sell",
+          "symbol": "SOLARINDS",
+          "trigger": "monthly_review",
+          "qty": 372,
+          "score_sold": 0.6724006116207951,
+          "note": "monthly_review: rank below sell threshold"
+        },
+        {
+          "month": "2011-12-30",
+          "action": "buy",
+          "symbol": "SBIN",
+          "trigger": "replace",
+          "qty": 62,
+          "score_bought": 0.19724770642201833,
+          "note": ""
+        },
+        {
+          "month": "2011-12-30",
+          "action": "buy",
+          "symbol": "ICICIBANK",
+          "trigger": "replace",
+          "qty": 147,
+          "score_bought": 0.20948012232415902,
+          "note": ""
+        },
+        {
+          "month": "2011-12-30",
+          "action": "buy",
+          "symbol": "RELIANCE",
+          "trigger": "replace",
+          "qty": 146,
+          "score_bought": 0.3432721712538226,
+          "note": ""
+        },
+        {
+          "month": "2011-12-30",
+          "action": "buy",
+          "symbol": "INFY",
+          "trigger": "replace",
+          "qty": 36,
+          "score_bought": 0.5053516819571865,
+          "note": ""
+        },
+        {
+          "month": "2012-01-31",
+          "action": "sell",
+          "symbol": "SOLARINDS",
+          "trigger": "monthly_review",
+          "qty": 372,
+          "score_sold": 0.7749244712990937,
+          "note": "monthly_review: rank below sell threshold"
+        },
+        {
+          "month": "2012-01-31",
+          "action": "buy",
+          "symbol": "SBIN",
+          "trigger": "replace",
+          "qty": 160,
+          "score_bought": 0.21601208459214502,
+          "note": ""
+        },
+        {
+          "month": "2012-02-29",
+          "action": "sell",
+          "symbol": "ICICIBANK",
+          "trigger": "trigger_b_dma",
+          "qty": 147,
+          "score_sold": 0.4004424778761062,
+          "note": ""
+        },
+        {
+          "month": "2012-02-29",
+          "action": "sell",
+          "symbol": "RELIANCE",
+          "trigger": "trigger_b_dma",
+          "qty": 146,
+          "score_sold": 0.3938053097345133,
+          "note": ""
+        },
+        {
+          "month": "2012-02-29",
+          "action": "sell",
+          "symbol": "SOLARINDS",
+          "trigger": "monthly_review",
+          "qty": 372,
+          "score_sold": 0.6364306784660767,
+          "note": "monthly_review: rank below sell threshold"
+        },
+        {
+          "month": "2012-02-29",
+          "action": "buy",
+          "symbol": "SBIN",
+          "trigger": "replace",
+          "qty": 48,
+          "score_bought": 0.16592920353982302,
+          "note": ""
+        },
+        {
+          "month": "2012-02-29",
+          "action": "buy",
+          "symbol": "ICICIBANK",
+          "trigger": "replace",
+          "qty": 121,
+          "score_bought": 0.4004424778761062,
+          "note": ""
+        },
+        {
+          "month": "2012-02-29",
+          "action": "buy",
+          "symbol": "RELIANCE",
+          "trigger": "replace",
+          "qty": 134,
+          "score_bought": 0.3938053097345133,
+          "note": ""
+        },
+        {
+          "month": "2012-03-30",
+          "action": "sell",
+          "symbol": "ICICIBANK",
+          "trigger": "trigger_b_dma",
+          "qty": 121,
+          "score_sold": 0.3768656716417911,
+          "note": ""
+        },
+        {
+          "month": "2012-03-30",
+          "action": "sell",
+          "symbol": "RELIANCE",
+          "trigger": "trigger_b_dma",
+          "qty": 134,
+          "score_sold": 0.29253731343283584,
+          "note": ""
+        },
+        {
+          "month": "2012-03-30",
+          "action": "sell",
+          "symbol": "SOLARINDS",
+          "trigger": "monthly_review",
+          "qty": 372,
+          "score_sold": 0.49850746268656715,
+          "note": "monthly_review: rank below sell threshold"
+        },
+        {
+          "month": "2012-03-30",
+          "action": "buy",
+          "symbol": "SBIN",
+          "trigger": "replace",
+          "qty": 57,
+          "score_bought": 0.2380597014925373,
+          "note": ""
+        },
+        {
+          "month": "2012-03-30",
+          "action": "buy",
+          "symbol": "ICICIBANK",
+          "trigger": "replace",
+          "qty": 135,
+          "score_bought": 0.3768656716417911,
+          "note": ""
+        },
+        {
+          "month": "2012-03-30",
+          "action": "buy",
+          "symbol": "RELIANCE",
+          "trigger": "replace",
+          "qty": 161,
+          "score_bought": 0.29253731343283584,
+          "note": ""
+        },
+        {
+          "month": "2012-04-30",
+          "action": "sell",
+          "symbol": "INFY",
+          "trigger": "trigger_b_stop",
+          "qty": 36,
+          "score_sold": 0.5995508982035929,
+          "note": ""
+        },
+        {
+          "month": "2012-04-30",
+          "action": "sell",
+          "symbol": "SOLARINDS",
+          "trigger": "monthly_review",
+          "qty": 372,
+          "score_sold": 0.5127245508982036,
+          "note": "monthly_review: rank below sell threshold"
+        },
+        {
+          "month": "2012-04-30",
+          "action": "buy",
+          "symbol": "SBIN",
+          "trigger": "replace",
+          "qty": 77,
+          "score_bought": 0.21407185628742514,
+          "note": ""
+        },
+        {
+          "month": "2012-04-30",
+          "action": "buy",
+          "symbol": "INFY",
+          "trigger": "replace",
+          "qty": 67,
+          "score_bought": 0.5995508982035929,
+          "note": ""
+        },
+        {
+          "month": "2012-05-31",
+          "action": "sell",
+          "symbol": "ICICIBANK",
+          "trigger": "trigger_b_stop",
+          "qty": 135,
+          "score_sold": 0.40179910044977507,
+          "note": ""
+        },
+        {
+          "month": "2012-05-31",
+          "action": "buy",
+          "symbol": "ICICIBANK",
+          "trigger": "replace",
+          "qty": 516,
+          "score_bought": 0.40179910044977507,
+          "note": ""
+        }
+      ],
+      "buckets": {
+        "201-600": {
+          "picks": 1,
+          "hit_rate": 0.0,
+          "mean_return": -0.1024825572831417,
+          "churn_per_month": 0.08333333333333333,
+          "churny": false
+        },
+        "601-1500": {
+          "picks": 1,
+          "hit_rate": 1.0,
+          "mean_return": 0.19587674968538415,
+          "churn_per_month": 0.0,
+          "churny": false
+        },
+        "top200": {
+          "picks": 14,
+          "hit_rate": 0.21428571428571427,
+          "mean_return": -0.0496072494677541,
+          "churn_per_month": 1.1666666666666667,
+          "churny": false
+        },
+        "blended": {
+          "picks": 16,
+          "hit_rate": 0.25,
+          "mean_return": -0.037569206259144686,
+          "churn_per_month": 1.25,
+          "churny": false
+        }
+      }
+    },
+    "escalate": {
+      "months": [
+        "2011-07-29",
+        "2011-08-30",
+        "2011-09-30",
+        "2011-10-31",
+        "2011-11-30",
+        "2011-12-30",
+        "2012-01-31",
+        "2012-02-29",
+        "2012-03-30",
+        "2012-04-30",
+        "2012-05-31",
+        "2012-06-29"
+      ],
+      "fills": 46,
+      "non_fills": 4,
+      "non_fill_reasons": [
+        "non_fill_adv"
+      ],
+      "resized_buys": [],
+      "sell_nonfills": [
+        {
+          "month": "2011-09-30",
+          "symbol": "SOLARINDS",
+          "reason": "non_fill_adv"
+        },
+        {
+          "month": "2011-10-31",
+          "symbol": "SOLARINDS",
+          "reason": "non_fill_adv"
+        }
+      ],
+      "buys_skipped_no_slot": [
+        {
+          "month": "2011-09-30",
+          "symbol": "SBIN",
+          "qty": 62
+        },
+        {
+          "month": "2011-10-31",
+          "symbol": "SBIN",
+          "qty": 59
+        }
+      ],
+      "forced_exits": [
+        {
+          "month": "2011-11-30",
+          "symbol": "SOLARINDS",
+          "qty": -372,
+          "impact_pct": 0.014201097991176576,
+          "fill_date": "2011-11-01"
+        }
+      ],
+      "exit_gate": {
+        "mode": "escalate",
+        "escalate_after": 2
+      },
+      "completed_picks": 20,
+      "pick_hit_rate": 0.3,
+      "month_hit_rate": [
+        0.4166666666666667,
+        5
+      ],
+      "churn_per_month": 1.5833333333333333,
+      "twitchy": true,
+      "final_equity": 1039153.8483922755,
+      "total_return": 0.039153848392275536,
+      "curve": [
+        {
+          "date": "2011-07-29",
+          "cash": 1000000.0,
+          "market_value": 0.0,
+          "equity": 1000000.0
+        },
+        {
+          "date": "2011-08-30",
+          "cash": 492423.2771845097,
+          "market_value": 502066.4,
+          "equity": 994489.6771845097
+        },
+        {
+          "date": "2011-09-30",
+          "cash": 341939.53920670645,
+          "market_value": 635364.5499999999,
+          "equity": 977304.0892067064
+        },
+        {
+          "date": "2011-10-31",
+          "cash": 345191.3904808685,
+          "market_value": 672855.8,
+          "equity": 1018047.1904808686
+        },
+        {
+          "date": "2011-11-30",
+          "cash": 299320.1576435161,
+          "market_value": 634068.15,
+          "equity": 933388.3076435161
+        },
+        {
+          "date": "2011-12-30",
+          "cash": 646735.304914225,
+          "market_value": 264101.25,
+          "equity": 910836.554914225
+        },
+        {
+          "date": "2012-01-31",
+          "cash": 266087.9416225512,
+          "market_value": 766658.1,
+          "equity": 1032746.0416225512
+        },
+        {
+          "date": "2012-02-29",
+          "cash": 266087.9416225512,
+          "market_value": 794869.1,
+          "equity": 1060957.0416225512
+        },
+        {
+          "date": "2012-03-30",
+          "cash": 404946.8133736354,
+          "market_value": 625350.4500000001,
+          "equity": 1030297.2633736355
+        },
+        {
+          "date": "2012-04-30",
+          "cash": 461263.7692366415,
+          "market_value": 546247.95,
+          "equity": 1007511.7192366414
+        },
+        {
+          "date": "2012-05-31",
+          "cash": 282749.05289760674,
+          "market_value": 690500.05,
+          "equity": 973249.1028976068
+        },
+        {
+          "date": "2012-06-29",
+          "cash": 118890.09839227551,
+          "market_value": 920263.75,
+          "equity": 1039153.8483922755
+        }
+      ],
+      "month_rows": [
+        {
+          "month": "2011-07-29",
+          "eligible": 690,
+          "picks": 34,
+          "held": [],
+          "cash": 1000000.0
+        },
+        {
+          "month": "2011-08-30",
+          "eligible": 669,
+          "picks": 33,
+          "held": [],
+          "cash": 492423.2771845097
+        },
+        {
+          "month": "2011-09-30",
+          "eligible": 687,
+          "picks": 34,
+          "held": [
+            "ICICIBANK"
+          ],
+          "cash": 341939.53920670645
+        },
+        {
+          "month": "2011-10-31",
+          "eligible": 689,
+          "picks": 34,
+          "held": [
+            "ICICIBANK",
+            "LT",
+            "RELIANCE"
+          ],
+          "cash": 345191.3904808685
+        },
+        {
+          "month": "2011-11-30",
+          "eligible": 661,
+          "picks": 33,
+          "held": [],
+          "cash": 299320.1576435161
+        },
+        {
+          "month": "2011-12-30",
+          "eligible": 655,
+          "picks": 33,
+          "held": [],
+          "cash": 646735.304914225
+        },
+        {
+          "month": "2012-01-31",
+          "eligible": 663,
+          "picks": 33,
+          "held": [
+            "ICICIBANK",
+            "INFY",
+            "RELIANCE",
+            "SBIN"
+          ],
+          "cash": 266087.9416225512
+        },
+        {
+          "month": "2012-02-29",
+          "eligible": 679,
+          "picks": 34,
+          "held": [
+            "INFY",
+            "SBIN"
+          ],
+          "cash": 266087.9416225512
+        },
+        {
+          "month": "2012-03-30",
+          "eligible": 671,
+          "picks": 34,
+          "held": [
+            "INFY"
+          ],
+          "cash": 404946.8133736354
+        },
+        {
+          "month": "2012-04-30",
+          "eligible": 669,
+          "picks": 33,
+          "held": [
+            "ICICIBANK",
+            "RELIANCE"
+          ],
+          "cash": 461263.7692366415
+        },
+        {
+          "month": "2012-05-31",
+          "eligible": 668,
+          "picks": 33,
+          "held": [
+            "INFY",
+            "RELIANCE",
+            "SBIN"
+          ],
+          "cash": 282749.05289760674
+        },
+        {
+          "month": "2012-06-29",
+          "eligible": 692,
+          "picks": 35,
+          "held": [
+            "ICICIBANK",
+            "INFY",
+            "RELIANCE",
+            "SBIN"
+          ],
+          "cash": 118890.09839227551
+        }
+      ],
+      "decisions": [
+        {
+          "month": "2011-07-29",
+          "action": "buy",
+          "symbol": "ASHOKA",
+          "trigger": "select",
+          "qty": 934,
+          "score_bought": 0.9753265602322206,
+          "note": ""
+        },
+        {
+          "month": "2011-07-29",
+          "action": "buy",
+          "symbol": "ECLERX",
+          "trigger": "select",
+          "qty": 308,
+          "score_bought": 0.9499274310595065,
+          "note": ""
+        },
+        {
+          "month": "2011-07-29",
+          "action": "buy",
+          "symbol": "SOLARINDS",
+          "trigger": "select",
+          "qty": 372,
+          "score_bought": 0.9368650217706822,
+          "note": ""
+        },
+        {
+          "month": "2011-07-29",
+          "action": "buy",
+          "symbol": "TAINWALCHM",
+          "trigger": "select",
+          "qty": 6702,
+          "score_bought": 0.9354136429608129,
+          "note": ""
+        },
+        {
+          "month": "2011-08-30",
+          "action": "sell",
+          "symbol": "ECLERX",
+          "trigger": "trigger_b_stop",
+          "qty": 308,
+          "score_sold": 0.8772455089820359,
+          "note": ""
+        },
+        {
+          "month": "2011-08-30",
+          "action": "sell",
+          "symbol": "SOLARINDS",
+          "trigger": "monthly_review",
+          "qty": 372,
+          "score_sold": 0.9416167664670658,
+          "note": "monthly_review: rank below sell threshold"
+        },
+        {
+          "month": "2011-08-30",
+          "action": "buy",
+          "symbol": "SBIN",
+          "trigger": "replace",
+          "qty": 62,
+          "score_bought": 0.2780688622754491,
+          "note": ""
+        },
+        {
+          "month": "2011-08-30",
+          "action": "buy",
+          "symbol": "RELIANCE",
+          "trigger": "replace",
+          "qty": 157,
+          "score_bought": 0.42290419161676646,
+          "note": ""
+        },
+        {
+          "month": "2011-08-30",
+          "action": "buy",
+          "symbol": "ICICIBANK",
+          "trigger": "replace",
+          "qty": 140,
+          "score_bought": 0.5351796407185628,
+          "note": ""
+        },
+        {
+          "month": "2011-08-30",
+          "action": "buy",
+          "symbol": "LT",
+          "trigger": "replace",
+          "qty": 76,
+          "score_bought": 0.3682634730538922,
+          "note": ""
+        },
+        {
+          "month": "2011-09-30",
+          "action": "sell",
+          "symbol": "LT",
+          "trigger": "trigger_b_stop",
+          "qty": 76,
+          "score_sold": 0.3877551020408163,
+          "note": ""
+        },
+        {
+          "month": "2011-09-30",
+          "action": "sell",
+          "symbol": "RELIANCE",
+          "trigger": "trigger_b_dma",
+          "qty": 157,
+          "score_sold": 0.40962099125364426,
+          "note": ""
+        },
+        {
+          "month": "2011-09-30",
+          "action": "sell",
+          "symbol": "SOLARINDS",
+          "trigger": "monthly_review",
+          "qty": 372,
+          "score_sold": 0.8272594752186588,
+          "note": "monthly_review: rank below sell threshold"
+        },
+        {
+          "month": "2011-09-30",
+          "action": "buy",
+          "symbol": "SBIN",
+          "trigger": "replace",
+          "qty": 59,
+          "score_bought": 0.21137026239067053,
+          "note": ""
+        },
+        {
+          "month": "2011-09-30",
+          "action": "buy",
+          "symbol": "RELIANCE",
+          "trigger": "replace",
+          "qty": 141,
+          "score_bought": 0.40962099125364426,
+          "note": ""
+        },
+        {
+          "month": "2011-09-30",
+          "action": "buy",
+          "symbol": "LT",
+          "trigger": "replace",
+          "qty": 83,
+          "score_bought": 0.3877551020408163,
+          "note": ""
+        },
+        {
+          "month": "2011-10-31",
+          "action": "sell",
+          "symbol": "SOLARINDS",
+          "trigger": "monthly_review",
+          "qty": 372,
+          "score_sold": 0.6867732558139534,
+          "note": "monthly_review: rank below sell threshold"
+        },
+        {
+          "month": "2011-10-31",
+          "action": "buy",
+          "symbol": "SBIN",
+          "trigger": "replace",
+          "qty": 181,
+          "score_bought": 0.23401162790697672,
+          "note": ""
+        },
+        {
+          "month": "2011-11-30",
+          "action": "sell",
+          "symbol": "SBIN",
+          "trigger": "trigger_b_trail",
+          "qty": 181,
+          "score_sold": 0.3242424242424242,
+          "note": ""
+        },
+        {
+          "month": "2011-11-30",
+          "action": "sell",
+          "symbol": "ICICIBANK",
+          "trigger": "trigger_b_stop",
+          "qty": 140,
+          "score_sold": 0.5325757575757576,
+          "note": ""
+        },
+        {
+          "month": "2011-11-30",
+          "action": "sell",
+          "symbol": "LT",
+          "trigger": "trigger_b_dma",
+          "qty": 83,
+          "score_sold": 0.29545454545454547,
+          "note": ""
+        },
+        {
+          "month": "2011-11-30",
+          "action": "sell",
+          "symbol": "RELIANCE",
+          "trigger": "trigger_b_trail",
+          "qty": 141,
+          "score_sold": 0.39545454545454545,
+          "note": ""
+        },
+        {
+          "month": "2011-11-30",
+          "action": "buy",
+          "symbol": "SBIN",
+          "trigger": "replace",
+          "qty": 42,
+          "score_bought": 0.3242424242424242,
+          "note": ""
+        },
+        {
+          "month": "2011-11-30",
+          "action": "buy",
+          "symbol": "RELIANCE",
+          "trigger": "replace",
+          "qty": 96,
+          "score_bought": 0.39545454545454545,
+          "note": ""
+        },
+        {
+          "month": "2011-11-30",
+          "action": "buy",
+          "symbol": "ICICIBANK",
+          "trigger": "replace",
+          "qty": 105,
+          "score_bought": 0.5325757575757576,
+          "note": ""
+        },
+        {
+          "month": "2011-11-30",
+          "action": "buy",
+          "symbol": "LT",
+          "trigger": "replace",
+          "qty": 58,
+          "score_bought": 0.29545454545454547,
+          "note": ""
+        },
+        {
+          "month": "2011-12-30",
+          "action": "sell",
+          "symbol": "ICICIBANK",
+          "trigger": "trigger_b_stop",
+          "qty": 105,
+          "score_sold": 0.20948012232415902,
+          "note": ""
+        },
+        {
+          "month": "2011-12-30",
+          "action": "sell",
+          "symbol": "LT",
+          "trigger": "trigger_b_stop",
+          "qty": 58,
+          "score_sold": 0.25382262996941896,
+          "note": ""
+        },
+        {
+          "month": "2011-12-30",
+          "action": "sell",
+          "symbol": "RELIANCE",
+          "trigger": "trigger_b_stop",
+          "qty": 96,
+          "score_sold": 0.3432721712538226,
+          "note": ""
+        },
+        {
+          "month": "2011-12-30",
+          "action": "sell",
+          "symbol": "SBIN",
+          "trigger": "trigger_b_stop",
+          "qty": 42,
+          "score_sold": 0.19724770642201833,
+          "note": ""
+        },
+        {
+          "month": "2011-12-30",
+          "action": "buy",
+          "symbol": "SBIN",
+          "trigger": "replace",
+          "qty": 99,
+          "score_bought": 0.19724770642201833,
+          "note": ""
+        },
+        {
+          "month": "2011-12-30",
+          "action": "buy",
+          "symbol": "ICICIBANK",
+          "trigger": "replace",
+          "qty": 236,
+          "score_bought": 0.20948012232415902,
+          "note": ""
+        },
+        {
+          "month": "2011-12-30",
+          "action": "buy",
+          "symbol": "RELIANCE",
+          "trigger": "replace",
+          "qty": 233,
+          "score_bought": 0.3432721712538226,
+          "note": ""
+        },
+        {
+          "month": "2011-12-30",
+          "action": "buy",
+          "symbol": "INFY",
+          "trigger": "replace",
+          "qty": 58,
+          "score_bought": 0.5053516819571865,
+          "note": ""
+        },
+        {
+          "month": "2012-02-29",
+          "action": "sell",
+          "symbol": "ICICIBANK",
+          "trigger": "trigger_b_dma",
+          "qty": 236,
+          "score_sold": 0.4004424778761062,
+          "note": ""
+        },
+        {
+          "month": "2012-02-29",
+          "action": "sell",
+          "symbol": "RELIANCE",
+          "trigger": "trigger_b_dma",
+          "qty": 233,
+          "score_sold": 0.3938053097345133,
+          "note": ""
+        },
+        {
+          "month": "2012-02-29",
+          "action": "buy",
+          "symbol": "ICICIBANK",
+          "trigger": "replace",
+          "qty": 146,
+          "score_bought": 0.4004424778761062,
+          "note": ""
+        },
+        {
+          "month": "2012-02-29",
+          "action": "buy",
+          "symbol": "RELIANCE",
+          "trigger": "replace",
+          "qty": 162,
+          "score_bought": 0.3938053097345133,
+          "note": ""
+        },
+        {
+          "month": "2012-03-30",
+          "action": "sell",
+          "symbol": "ICICIBANK",
+          "trigger": "trigger_b_dma",
+          "qty": 146,
+          "score_sold": 0.3768656716417911,
+          "note": ""
+        },
+        {
+          "month": "2012-03-30",
+          "action": "sell",
+          "symbol": "RELIANCE",
+          "trigger": "trigger_b_dma",
+          "qty": 162,
+          "score_sold": 0.29253731343283584,
+          "note": ""
+        },
+        {
+          "month": "2012-03-30",
+          "action": "sell",
+          "symbol": "SBIN",
+          "trigger": "trigger_b_dma",
+          "qty": 99,
+          "score_sold": 0.2380597014925373,
+          "note": ""
+        },
+        {
+          "month": "2012-03-30",
+          "action": "buy",
+          "symbol": "SBIN",
+          "trigger": "replace",
+          "qty": 64,
+          "score_bought": 0.2380597014925373,
+          "note": ""
+        },
+        {
+          "month": "2012-03-30",
+          "action": "buy",
+          "symbol": "ICICIBANK",
+          "trigger": "replace",
+          "qty": 151,
+          "score_bought": 0.3768656716417911,
+          "note": ""
+        },
+        {
+          "month": "2012-03-30",
+          "action": "buy",
+          "symbol": "RELIANCE",
+          "trigger": "replace",
+          "qty": 179,
+          "score_bought": 0.29253731343283584,
+          "note": ""
+        },
+        {
+          "month": "2012-04-30",
+          "action": "sell",
+          "symbol": "INFY",
+          "trigger": "trigger_b_stop",
+          "qty": 58,
+          "score_sold": 0.5995508982035929,
+          "note": ""
+        },
+        {
+          "month": "2012-04-30",
+          "action": "sell",
+          "symbol": "SBIN",
+          "trigger": "trigger_b_dma",
+          "qty": 64,
+          "score_sold": 0.21407185628742514,
+          "note": ""
+        },
+        {
+          "month": "2012-04-30",
+          "action": "buy",
+          "symbol": "SBIN",
+          "trigger": "replace",
+          "qty": 107,
+          "score_bought": 0.21407185628742514,
+          "note": ""
+        },
+        {
+          "month": "2012-04-30",
+          "action": "buy",
+          "symbol": "INFY",
+          "trigger": "replace",
+          "qty": 93,
+          "score_bought": 0.5995508982035929,
+          "note": ""
+        },
+        {
+          "month": "2012-05-31",
+          "action": "sell",
+          "symbol": "ICICIBANK",
+          "trigger": "trigger_b_stop",
+          "qty": 151,
+          "score_sold": 0.40179910044977507,
+          "note": ""
+        },
+        {
+          "month": "2012-05-31",
+          "action": "buy",
+          "symbol": "ICICIBANK",
+          "trigger": "replace",
+          "qty": 360,
+          "score_bought": 0.40179910044977507,
+          "note": ""
+        }
+      ],
+      "buckets": {
+        "201-600": {
+          "picks": 1,
+          "hit_rate": 0.0,
+          "mean_return": -0.1024825572831417,
+          "churn_per_month": 0.08333333333333333,
+          "churny": false
+        },
+        "601-1500": {
+          "picks": 1,
+          "hit_rate": 1.0,
+          "mean_return": 0.09725900804211429,
+          "churn_per_month": 0.0,
+          "churny": false
+        },
+        "top200": {
+          "picks": 18,
+          "hit_rate": 0.2777777777777778,
+          "mean_return": -0.03025652013821709,
+          "churn_per_month": 1.5,
+          "churny": false
+        },
+        "blended": {
+          "picks": 20,
+          "hit_rate": 0.3,
+          "mean_return": -0.027492045586446752,
+          "churn_per_month": 1.5833333333333333,
+          "churny": true
+        }
+      }
+    }
+  },
+  "runtime_seconds": 8.9
+}

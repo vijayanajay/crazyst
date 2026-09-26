@@ -1,11 +1,11 @@
 {
-  "months_audited": 145,
-  "picks_audited": 6622,
-  "first_month": "2011-07-29",
-  "last_month": "2023-07-31",
-  "boundary": "2023-09-24",
+  "months_audited": 11,
+  "picks_audited": 717,
+  "first_month": "2025-09-30",
+  "last_month": "2026-07-31",
+  "boundary": "2026-09-24",
   "cutoff": "2026-09-24",
   "future_tamper_drift_months": 0,
-  "runtime_seconds": 17.996,
-  "git_hash": "d07116402dc248cbcb671571d223dd74dae3ec51"
+  "runtime_seconds": 0.513,
+  "git_hash": "65a39255738a817f749c49450d76d61605093807"
 }
