@@ -1,0 +1,68 @@
+{
+  "experiment": "E020_joint_path_blend",
+  "git_hash": "b83dd9a88280c631c7e67ee332cd87c132301df4",
+  "profile": "full",
+  "window": {
+    "folds": 145,
+    "first": "2011-07-29",
+    "last": "2023-07-31",
+    "boundary": "2023-09-24",
+    "test_window": "untouched"
+  },
+  "guards": {
+    "G1_satellite_equals_E019_armA": true,
+    "G1_recomputed": {
+      "cagr": 0.2576823502440744,
+      "maxdd": -0.470202965689257
+    },
+    "G2_index_leg_equals_committed": true,
+    "G2_index_cagr": 0.13174664181300377,
+    "G2_index_maxdd": -0.2887358301241153,
+    "G3_post_hoc_combination": "the blend re-splits two monthly curves computed from marks dated <= t only",
+    "passed": true
+  },
+  "arms": {
+    "90/10": {
+      "w_satellite": 0.1,
+      "cagr": 0.15333891208333728,
+      "maxdd": -0.311314326997287,
+      "sharpe": 0.8862128227903374,
+      "worst_month": -0.2521625120168278,
+      "dd_2018_2020": -0.311314326997287,
+      "B1_cagr_ge_index_plus_2pp": true,
+      "B2_maxdd_le_index_plus_3pp": true
+    },
+    "80/20": {
+      "w_satellite": 0.2,
+      "cagr": 0.17123426885885729,
+      "maxdd": -0.33130687963928307,
+      "sharpe": 0.9410397680159837,
+      "worst_month": -0.2622174854468059,
+      "dd_2018_2020": -0.33130687963928307,
+      "B1_cagr_ge_index_plus_2pp": true,
+      "B2_maxdd_le_index_plus_3pp": false
+    },
+    "70/30": {
+      "w_satellite": 0.3,
+      "cagr": 0.1865506813488722,
+      "maxdd": -0.3584496384420901,
+      "sharpe": 0.9782616758098274,
+      "worst_month": -0.2708787416097468,
+      "dd_2018_2020": -0.3543361104402636,
+      "B1_cagr_ge_index_plus_2pp": true,
+      "B2_maxdd_le_index_plus_3pp": false
+    }
+  },
+  "reference": {
+    "pure_index_cagr": 0.13174664181300377,
+    "pure_index_maxdd": -0.2887358301241153
+  },
+  "bars": {
+    "CAGR_bar_pp": 2.0,
+    "DD_tol_pp": 3.0,
+    "bars_as_coded": "b1: cagr >= idx_cagr + 0.02; b2: maxdd >= dd_idx - 0.03 (negative fractions)",
+    "winner": "90/10"
+  },
+  "verdict": "PASS",
+  "runtime_seconds": 35.7
+}
