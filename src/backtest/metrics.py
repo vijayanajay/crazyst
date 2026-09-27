@@ -16,6 +16,10 @@ Metrics (BRD §11):
 - benchmark          — the same cagr/sharpe on a benchmark equity series passed in (Nifty 500
                        TR per §11; the caller supplies it — this module never fetches).
 - churn              — mid-month replacements per month, flagged above the §8.3 threshold.
+- max_drawdown       — worst peak-to-trough on the equity curve (§11); returned as a
+                       negative fraction, 0.0 on a flat/empty curve.
+- avg_holding_days   — days per completed position (§11): entry-to-exit of the FIFO lots,
+                       weighted by shares. Still-open picks are disclosed separately.
 
 No lookahead and no averaging: every statistic is computed from realized rows only.
 
@@ -28,6 +32,7 @@ from __future__ import annotations
 import math
 import sys
 from dataclasses import dataclass
+from datetime import date
 
 
 @dataclass(frozen=True)
@@ -156,6 +161,31 @@ def churn_per_month(events: list[TradeEvent], months: int) -> tuple[float, bool]
     return n / months, n / months > 1.5
 
 
+def max_drawdown(equity_curve: list[dict]) -> float:
+    """Worst peak-to-trough on equity, as a negative fraction (0.0 when never underwater)."""
+    peak, mdd = -math.inf, 0.0
+    for row in equity_curve:
+        eq = row["equity"]
+        if eq <= 0:
+            continue                      # undefined on a wiped-out book; do not divide by it
+        peak = max(peak, eq)
+        mdd = min(mdd, eq / peak - 1.0)
+    return mdd
+
+
+def avg_holding_days(picks: list[dict]) -> tuple[float, int]:
+    """Days per completed position (§11): entry-to-exit of the FIFO lots, weighted by
+    shares (a 100-day 50-share hold and a 10-day 150-share hold average 32.5 days).
+    Returns (mean_days, n_still_open)."""
+    done = [p for p in picks if p.get("sell_date")]
+    if not done:
+        return 0.0, len(picks)
+    total = sum((date.fromisoformat(p["sell_date"]) - date.fromisoformat(p["buy_date"])).days
+                * p["qty"] for p in done)
+    shares = sum(p["qty"] for p in done)
+    return total / shares, sum(1 for p in picks if not p.get("sell_date"))
+
+
 def benchmark_compare(eq: list[dict], bench_eq: list[dict], cash_earns: float = 0.0) -> dict:
     """Strategy vs benchmark on the same window: CAGR and Sharpe side by side."""
     return {
@@ -232,6 +262,28 @@ def _self_check() -> None:
         [TradeEvent("2026-02-15", "X", False, -10, 11.0, 0.5, True) for _ in range(5)], 3)
     assert twitchy2 and abs(c2 - 5 / 3) < 1e-12, (c2, twitchy2)
 
+    # Max drawdown: the toy dips -9.15% mid-window before recovering — assert the exact
+    # worst point (Jul 10), not the month-end marks
+    eq_dd = eq + [{"date": "2026-07-10", "cash": 7998.0, "market_value": 0.0,
+                   "equity": 7998.0},
+                  {"date": "2026-07-31", "cash": 9197.0, "market_value": 899.0,
+                   "equity": 9197.0 + 899.0}]
+    # Max drawdown: the toy dips -21.2% on the Jul 10 INTRA-month mark before recovering —
+    # month-end rows alone would hide it, which is why drawdown runs over every curve row
+    peak0 = eq_dd[0]["equity"]
+    worst = eq_dd[3]["equity"] / peak0 - 1.0
+    assert abs(max_drawdown(eq_dd) - worst) < 1e-12, (max_drawdown(eq_dd), worst)
+    assert max_drawdown([]) == 0.0
+
+    # Average holding period: WIN 34 days (Jan 5 -> Feb 8) on 100 shares, LOSS 15 days
+    # (Feb 20 -> Mar 7) on 50 -> (34x100 + 15x50) / 150 = 27.67; one pick still open
+    picks_h = [{"symbol": "WIN", "buy_date": "2026-01-05", "sell_date": "2026-02-08", "qty": 100},
+               {"symbol": "LOSS", "buy_date": "2026-02-20", "sell_date": "2026-03-07", "qty": 50},
+               {"symbol": "OPEN", "buy_date": "2026-03-10", "sell_date": None, "qty": 10}]
+    days, n_open = avg_holding_days(picks_h)
+    assert abs(days - (34 * 100 + 15 * 50) / 150) < 1e-12, days
+    assert n_open == 1, n_open
+
     # Benchmark comparison shape
     bench = [{"date": r["date"], "equity": 10_000.0 * (1.0 + i / 100.0)}
              for i, r in enumerate(eq)]
@@ -239,7 +291,8 @@ def _self_check() -> None:
     assert cmp_["strategy_cagr"] is not None and cmp_["benchmark_cagr"] is not None
 
     print("PASS: metrics (FIFO picks, hit rates, monthly returns, CAGR, Sharpe, churn flag, "
-          "benchmark compare — all against hand-computed values)", flush=True)
+          "max drawdown, average holding period, benchmark compare — all against "
+          "hand-computed values)", flush=True)
     sys.exit(0)
 
 

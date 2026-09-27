@@ -6,6 +6,6 @@
   "boundary": "2026-09-24",
   "cutoff": "2026-09-24",
   "future_tamper_drift_months": 0,
-  "runtime_seconds": 0.513,
-  "git_hash": "65a39255738a817f749c49450d76d61605093807"
+  "runtime_seconds": 0.485,
+  "git_hash": "a8cc624640dfeecf5e98a9f25177a7fed547c353"
 }
