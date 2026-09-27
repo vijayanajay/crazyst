@@ -1671,6 +1671,45 @@ from scratch.**
   path; no fill-gate refusals, no ADV impact cap, mid-hold trail/trigger exits not modeled —
   those are what E016 itself must test through the real engine.)
 
+## Experiment E016 - low-turnover engine: the monthly review was already inert; its sells were alpha (2026-09-27, profile `full`)
+
+- **Why:** the break-even block above. Pre-registered in
+  `experiments/016_low_turnover/hypothesis.md` before the run (BRD 12); the runner
+  reuses E014's machinery (harness convention, warm=20) plus a config-only arm.
+- **Arms:** A shipped config; B SELL_GATE (never sell on rank fade or the 50-DMA streak —
+  `sell_below_top_pct` 1.01, `ma_below_consecutive_closes` 999; Trigger B stops/trails,
+  GSM and universe exits unchanged); C MIN_HOLD_12 (new inert `_engine_pass` hook
+  `min_hold`: monthly_review sells dropped before the 12th held decision month; stops fire
+  even in month 1).
+- **Guards, all passed:** G1 arm A json-equal to E014's committed baseline (bit-for-bit);
+  G2 picks 5,605 >= 4,579, eligible 161,942, IC == repaired-tape pin to 1e-9; G3 the
+  mechanism engaged — monthly_review sells A **8** vs B **3** vs C **2** over 145 months;
+  G4 the hook is inert by default — the smoke's engine passes reproduce their committed
+  artifact bit-for-bit after the hook edit.
+- **Result: REJECTED, decisively.** B: 817,629 (CAGR -1.66%, **1.16pp WORSE than A**);
+  C: 689,387 (CAGR -3.05%, 2.55pp worse). Fills essentially unchanged (983 -> 981/979) —
+  suppressing review sells saved ~nothing on costs and gave up the alpha those 8 sells
+  earned. maxDDs identical (-65.6/-65.9%): the drawdowns were never the review's doing.
+  B1 failed for both arms; B2 passed trivially.
+- **The finding:** the shipped monthly review emitted **8 sell decisions in 145 months** —
+  it was already nearly inert by construction (rank threshold 0.25 vs a top-15% replace
+  pool), and its rare sells were, in aggregate, alpha. The real turnover (~980 fills,
+  ~0.85 round trips per position-month at 8 slots) lives in Trigger B stops/trails and the
+  T+1 fill path — risk-control exits this experiment deliberately did not touch. Any
+  future cost-drag attack must aim there (stop/exit design) or at the cost model, not at
+  the review. Index-equivalent: the slice's Nifty 500 TRI CAGR +13.17% — every arm, and
+  every arm of every prior experiment, loses to buy-and-hold by 12-17pp/yr. No config
+  change; `min_hold` stays as an inert, G4-proven hook.
+
+### Index-equivalent lines (2026-09-27) — no result may again read as success while losing to the index
+
+- Every experiment verdict now carries an **index-equivalent** quote block: what the same
+  capital earns in Nifty 500 TRI over that experiment's identical window, from the
+  `arms.*.benchmark_cagr` fields already stored in every `results.json` (E013 +12.46%,
+  E014/E015 +13.17% — every arm of every experiment loses to buy-and-hold by ~12-25pp/yr).
+- The harness report prints a standing `index-equivalent` line (engine CAGR vs the sourced
+  benchmark's CAGR over the same window, with the gap).
+
 ## Pipeline repair - adj_close session coverage: seven Yahoo-less sessions, derived from bhav (2026-09-27, uncommitted; working tree on `b38f0b3`)
 
 - **What was missing:** `adj_close` has no row at all for 7 sessions bhav (series EQ) traded -

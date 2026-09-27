@@ -240,7 +240,8 @@ def _engine_pass(cfg, mode: str, after, sessions, by_month, months, picks_by_mon
                  portfolio_overrides: dict | None = None,
                  regime_off: set[str] | None = None,
                  regime_liquidate: bool = False,
-                 size_scale: dict[str, dict[str, float]] | None = None) -> dict:
+                 size_scale: dict[str, dict[str, float]] | None = None,
+                 min_hold: int | None = None) -> dict:
     """One engine pass over the first 12 consecutive slice months at exit_gate
     mode=`mode` (after = escalate_after). Verbatim body of the original inline pass; the
     only mode-dependent wiring is `backtest.exit_gate` in the test config.
@@ -257,7 +258,13 @@ def _engine_pass(cfg, mode: str, after, sessions, by_month, months, picks_by_mon
     neither, so the shipped result cannot move): month -> symbol -> slot-notional multiplier
     (1.0 for any symbol/month absent from the map). A buy's order qty becomes
     `floor(per_slot * scale / px)`; the scale is the caller's (E015: clip(median sigma / own
-    sigma), normalized over the month's pool). No scale is applied to sells."""
+    sigma), normalized over the month's pool). No scale is applied to sells.
+
+    E016 test hook, INERT by default (`min_hold=None` — the shipped call passes none): a
+    decision-month sell with trigger `monthly_review` is DROPPED while the position has been
+    held fewer than `min_hold` decision months. Trigger B stops/trails, GSM forced exits and
+    universe-exit sells are NOT suppressed — a hard stop fires even in month 1. Held-month
+    counting is the caller's (E016: first-filled decision month -> entry age)."""
     tcfg = _cfg_test()
     tcfg["backtest"]["exit_gate"] = {"mode": mode, "escalate_after": after}
     # n_slots follows the SHIPPED config (E011 ADOPTed 8) - a hardcoded value would let the
@@ -290,6 +297,7 @@ def _engine_pass(cfg, mode: str, after, sessions, by_month, months, picks_by_mon
     skipped_no_slot: list[dict] = []
     forced_exits: list[dict] = []
     last_px: dict[str, float] = {}
+    held_since: dict[str, str] = {}    # E016 min_hold: symbol -> first decision month held
     month_rows = []
 
     for m in engine_months:
@@ -343,6 +351,7 @@ def _engine_pass(cfg, mode: str, after, sessions, by_month, months, picks_by_mon
                 cash -= q * f.price
                 positions[f.symbol] = q
                 entry_px[f.symbol] = f.price
+                held_since.setdefault(f.symbol, m)
                 pf.apply_fill(f.symbol, q, f.price)
             else:
                 held = positions.get(f.symbol, 0)
@@ -351,6 +360,7 @@ def _engine_pass(cfg, mode: str, after, sessions, by_month, months, picks_by_mon
                     positions[f.symbol] = 0
                     pf.apply_fill(f.symbol, f.qty, f.price)
                     last_px.pop(f.symbol, None)
+                    held_since.pop(f.symbol, None)
                 if f.forced:
                     forced_exits.append({"month": m, "symbol": f.symbol, "qty": f.qty,
                                          "impact_pct": f.impact_pct,
@@ -372,6 +382,16 @@ def _engine_pass(cfg, mode: str, after, sessions, by_month, months, picks_by_mon
         for d in sells:
             if d.symbol in seen or positions.get(d.symbol, 0) == 0:
                 continue
+            if (min_hold is not None and d.trigger == "monthly_review"
+                    and held_since.get(d.symbol) is not None):
+                first = held_since[d.symbol]
+                age = months.index(m) - months.index(first)
+                if age < min_hold:      # E016: the churn rule, not the stop, is suppressed
+                    decisions_log.append({"month": m, "action": "hold_min", "symbol": d.symbol,
+                                          "trigger": d.trigger, "qty": positions[d.symbol],
+                                          "score_sold": d.score_sold,
+                                          "note": f"min_hold {age}/{min_hold}: {d.note}"})
+                    continue
             seen.add(d.symbol)
             qty = positions[d.symbol]
             px = engine.price_on(d.symbol, m)
