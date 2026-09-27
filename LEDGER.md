@@ -18,6 +18,13 @@ experiment's `results.json`.
 | E003 | Bulk/block deal net buying overlay (Phase 7) | Net institutional buying in the prior month adds IC on top of E002 survivors | pending | — |
 | E004 | SAST/insider buying overlay (Phase 7) | Insider % acquisitions in the prior quarter add IC on top of E002 survivors | pending | — |
 | E005 | F&O OI overlay, optional (Phase 7) | OI build-up with price adds IC on top of E002 survivors | pending | — |
+| E007 | Universe cutoff: rolling top-1000 vs top-1500 (BRD-owner question from fixissues_phase36.md) | The cut must BUY cross-sectional signal to justify discarding evidence: B's mean monthly IC higher at paired t ≥ 2 AND engine-pass gate stress materially lower; otherwise keep 1500 | **rejected** — IC 0.0695 vs 0.0681, paired diff +0.0014, t = −0.57, p = 0.57 (noise); precision +1.0pp at −57,226 symbol-months (−26%) of evidence; the below-₹5cr share only falls 62.8% → 50.1% (half the top-1000 still trades under ₹5cr/day — illiquidity is the whole small/mid tail, not a 1001–1500 island); engine pass: −1 non-fill, 0 fewer forced exits, worse churn. **top-1500 stands.** See 2026-09-26 E007 block | 2026-09-26 |
+| E008a | Own-data market breadth (as-of top-200, 200-session adj DMA) predicts losing pick-months at monthly decision cadence; threshold family {30/40/50} consistent across adjacent thresholds; ρ ≥ 0.15 | **rejected** — ρ = +0.144 (below bar); NO consistent low-breadth penalty: <30 months are the BEST pick months (+10.70% vs +3.28%, hit 82% vs 54% — troughs mark rebound months); only 40–50 shows a penalty (−1.8pp) with a near-zero universe penalty, inverting at 40 and reversing at 30. Gauge itself validated (stress months read: 2018-09 30.7%, 2020-03 15.5%; a first-run aggregate bug was caught by the member-level sanity layer). **No monthly gate; table kept for §11 per-regime reporting; intra-month breadth is a separate pre-registration.** See 2026-09-26 E008a block | 2026-09-26 |
+| E008b | Intra-month breadth protection: daily/weekly breadth (E008a machinery, as-of daily membership) tightens the Trigger-B trail while breadth < {30/40/50}; evaluated on an interim per-session engine pass (3 fixed windows: 2017 calm, 2018 midcap stress, 2020 crash+rebound); PASS = lower max drawdown in both stress windows, equity >= baseline, no W0 fires | **failed** — max drawdown identical to baseline in BOTH stress windows; the only gate fire in the whole experiment (HDFCBANK, 2020-04-15, breadth 24%) lands in the REBOUND and its T+1 fill falls outside the window (equity identical to the rupee); W0 curves bit-identical (zero false fires, default-OFF contract holds). The baseline stop/DMA/review clauses already exit before breadth reads low - E008a's monthly-cadence mistiming reproduces intra-month. Gauge validated (member-level recompute to 1e-6; 2020-03 trough 4.1% on Mar 23 vs 15.5% month-end; 2018-09/10 avg 33.2% vs 2017 calm 78.9%). W1 was uncontrolled: the E006 fill gate refused 26/50 selection orders (top-4 scored names untradable at Rs250k/slot) so the book sat in cash through the crash. **No wiring; tighten stays null (OFF); breadth protection closed at monthly AND intra-month cadence.** See 2026-09-26 E008b block | 2026-09-26 |
+| E009 | Fill-gate reachability: the E006 ADV fill gate refuses a buy when notional > 5% of trailing-20 median turnover; at the shipped Rs250k/slot that excludes med20 < 0.5cr names. Measured how much of composite_2f's pick return is unenterable, and whether ADV-aware eligibility (universe.min_median_turnover_cr: 0.75, chosen by the gate's own arithmetic, not tuned) fixes it. ADOPT iff corrected mean improves AND paired-t >= -2 AND refusal drops to <= 1/3 | **adopted** - 38.8% of pick-months (3,413/8,802) and 50.5% of gross pick return mass were UNENTERABLE at Rs250k; the refused picks were the model's BEST (+4.05% vs +2.52% fillable) - illiquidity concentrates exactly where the composite concentrates. The 0.75cr floor (through the real chain) cuts refusal to 1.5%, corrected pick mean +2.52% -> +2.61%, IC 0.0675 vs 0.0681 (paired t = -0.12); zero-drift restore bit-identical (1.4e-17). Config floor 0.0 -> 0.75 with this row cited. Postscript: E008b's W1 refusal count was inflated by its evaluator's window-starved ADV (LIQUIDETF/SPLIL were enterable at decision time) - E008b's arm-vs-arm conclusion untouched. See 2026-09-26 E009 block | 2026-09-26 |
+| E010 | E006's cost sensitivity re-measured on the E009 floor universe (the only change): edge-halving point, absolute net at 0.2%, impact decomposition at the shipped slot. MOVE default to 0.2% iff net >= 2.0% AND >600 halving point relaxes AND floor-arm impact <= 80% of pre-floor AND gross >= 2.3% | **kept 0.5%/side** - backward guard reproduced E006 exactly (6,622 picks, means within tie-swap tol, half-edge None); floor arm nets 2.36% at 0.2% (a PASS), gross 2.76% (d PASS), modelled pick impact 0.565% -> 0.139%/side (c PASS, 4x). Criterion (b) FAILED conservatively: the >600 halving point TIGHTENS (E006's warning never bound pre-floor - it was masked by untradable gems; on the tradable book the >600 edge halves at 1.0%). Headline mechanism: E006's flat 0.5% default was almost exactly the mean modelled impact of a paper portfolio the engine refuses to build (0.565%); the honest cost stack on the tradable book is flat ~0.35% + impact 0.14% = ~0.5%. Default grounded, not hand-waved. See 2026-09-26 E010 block | 2026-09-26 |
+| E011 | Slot-count attribution on the Phase 6.1 walk-forward harness: arms A4 (shipped control, zero-drift guard vs the baseline run), A8, A12, B8 (8 slots + wider review percentiles, churn control). ADOPT a wider count iff equity >= A4 + Rs200k AND Sharpe higher AND maxDD no worse than A4 - 2pp AND pick hit >= A4 - 3pp; between passing arms the higher final equity wins; ties keep 4 | **adopted n_slots = 8** - A4 reproduced the shipped baseline bit-for-bit; 8 slots recovered Rs402,923 of the Rs510,297 loss (489,703 -> 892,626; -51.0% -> -10.7%; maxDD -65.2% -> -23.9%; Sharpe -0.38 -> -0.29) with the completed-pick hit rate unchanged (33% -> 32%): the realized loss was CONCENTRATION, not selection. A12 cleared the bars too but lost to A8 on final equity (731,870); B8 ruled the churn rise (1.66 -> 3.46/mo) a slot artifact, not ranking pressure (wider percentiles: -Rs10,159, churn 3.43). Buy-side slippage vs the decision mark FLIPPED +0.441% -> -0.099%/side at the halved per-slot notional - part execution gain, part diversification; the held-constant-notional decomposition arm is pre-declared as the follow-up. Config n_slots 4 -> 8 with this row cited. See 2026-09-26 E011 block | 2026-09-26 |
+| E012 | The E009 floor re-measured at the E011 8-slot notional (S=Rs125k, gate boundary 0.25cr): arms floor 0.375 / 0.5 / 0.75 through the real chain, baseline 0.0 guarded bit-identical to E009's R1 rows + restore IC = P4.1b frozen + the 0.75 arm = E009's R2 verbatim. ADOPT the LOOSEST floor clearing: corrected mean >= 0.75's - 5bp, paired t >= -2 vs baseline, refusal <= 1/3 of un-floored, floor >= gate boundary | **adopted 0.375** (boundary x E009's own 1.5x headroom - derived, not tuned): refusal 1.14%, corrected mean +2.692% vs +2.632% at 0.75, IC 0.0717 vs 0.0675, modelled impact 0.092%/side vs the 0.5% cost stack. Answer: the floor MUST move with slot size - it is derived from the gate boundary, which scales with per-slot notional. Disclosure: the runner initially reported 0.5 (candidate order inverted the pre-registered 'loosest wins'); caught pre-adoption, fixed, re-run - every measured number identical. Config 0.75 -> 0.375; smoke re-pinned (4,579 picks, IC = E012 arm); harness reference re-run bit-identical equity 892,626.09 (one trigger label moved: HARDWYN 2023-09 rank exit -> DMA). See 2026-09-26 E012 block | 2026-09-26 |
 
 ---
 
@@ -1062,3 +1069,572 @@ the mode for 6.4.
 3. E006's frozen artifacts are point-in-time row-order evidence for its pick-level means
    (Finding 1); its verdict direction rests on the rank-group pattern, which the smoke
    reproduces at every cost level's sign and ordering.
+
+---
+
+## Fix pass — Phase 3-6 review items implemented / dispositions recorded (2026-09-26, uncommitted; working tree on `a8cc624`)
+
+Not an experiment - the engineering pass over `fixissues_phase36.md` (the Kailash Nadh
+review). Fixes that were code landed in code; fixes that need a BRD-owner decision, data
+the repo does not have, or a pre-registered run are recorded as constraints here and in
+BRD.md rather than half-implemented. What moved:
+
+| Review item | Disposition | Where |
+|---|---|---|
+| 4.1 `Portfolio._replace` emits a buy for every top-15% candidate (loop never mutated `self.slots`) | **FIXED** - bounded by free slots + sells already emitted in the decision batch (the doc's own fix, `count(None)`, was the mirror bug: it would emit ZERO buys for the standard fully-invested sell-then-replace flow, since sells fill at T+1) | `src/backtest/portfolio.py` + 2 new self-check cases |
+| 4.2 circuit locks never marked from real data | **FIXED** - marked in the smoke's `_market`: fully frozen OHLC bar, or a gap-open >= 4.9% (either direction: locked-down bars block sells too) with turnover < 10% of trailing-20-session ADV. 2,537 locked bars across 4 stress windows (COVID month: 1,346). ponytail: NSE bands vary per stock (5/10/20%); the ADV collapse is the real signal | `src/backtest/smoke_e2e.py` |
+| 4.3 exit gate `escalate` as default | **ADOPTED** - the Decision-3 recommendation, already implemented behind `backtest.exit_gate`; the config default flips stuck -> escalate | `config.yaml` |
+| 4.6 cost default 0.20% | **ADOPTED** - E006 already set the Phase 6 default at 0.5%/side; config.yaml just never caught up. `dp_charge_per_exit` (Rs 15.93) NOT added: ~0.002% of a 10% slot, noise - folded into the 0.5% | `config.yaml` + new config invariant (default cost must be one of E006's sensitivity levels) |
+| 3.1 model lives in `experiments/` behind importlib | **FIXED** - extracted to `src/model/composite.py`, with a self-check proving the scores are BIT-IDENTICAL to the frozen P4.1b implementation (the experiments stay frozen - editing them would orphan every committed `results.json`, BRD 12/13); smoke_e2e and audit now import the model, not the experiment; the 22-feature column map comes from `src.features.panel._FEATURES` (production-owned), with an assert pinning panel order == experiment order | `src/model/composite.py`, `smoke_e2e.py`, `audit.py` |
+| 1 Rolling top-1000 universe (config-only, per the review) | **CONSTRAINT - NOT APPLIED** - the review calls it a one-line change; it is not. Every experiment's evidence (E000, E002b, P4.1, P4.1b, P4.2, E006) is measured on top-1500; silently re-cutting the universe invalidates all of them (E002b's strongest ICs live in the 601-1500 bucket, exactly the ranks 1001-1500 being cut). Needs: the config change + `src/config.py`'s BRD invariant (`top_n == 1500`) + `size_buckets` labels + a full experiment re-run + a ledger row. Correctly a pre-registered experiment (E007), and correctly the BRD owner's call - it trades measured edge for a liquidity thesis | BRD.md 4 amendment note |
+| 2.2 market regime filter (Nifty 200 vs 200-DMA + VIX) | **CONSTRAINT - NOT IMPLEMENTED** - three blockers: (a) no index or VIX series in the repo (BRD 5's free-data list has none; D4 exists for E000's overlap reference only); (b) P4.1 ALREADY pre-registered and tested a regime overlay and REJECTED it (diluted the composite, p = 0.0033) - the burden is on a better classifier, which means a new pre-registration, not a config flip; (c) point-in-time index membership has no clean free source (E000's caveat: today's list applied as-of is survivorship-biased). The regime QUESTION stays open via the per-regime reporting BRD already mandates (11). (2026-09-27: blocker (a) is dead for the index leg - daily NIFTY 200 TRI is now in-repo and E013 measured the filter itself on the realized window: it improves the window on all three pre-registered bars but is NOT adopted - test-window burn + small-sample attribution; see the E013 block.) | BRD.md 15 risks + LEDGER P4.1 row |
+| 3.2 sector cap (max 2 per sector) | **CONSTRAINT - NOT IMPLEMENTED** - no sector/industry metadata exists in the repo for any year; point-in-time classifications (today's index/industry lists applied as-of) are survivorship-biased for a 15-year backtest, and BRD 5 lists no such source. Add the feed first (or pre-register a correlation-cluster cap as the proxy), then the rule is a ~10-line portfolio change | BRD.md 15 risks |
+| 4.4 ATR-based stops replacing the 8% stop | **CONSTRAINT - NOT IMPLEMENTED** - a cross-sectional risk model change: it changes every drawdown, churn and turnover number the walk-forward will report, and BRD 8's preamble makes defaults pre-walk-forward re-tuning on pre-test-window data ONLY. Bundling it with the slot expansion (4.5) would make the two changes unattributable. Sequenced behind the 6.1 harness as pre-registered arms | BRD.md 8 note |
+| 4.5 8-10 slots + volatility-inverse sizing | **CONSTRAINT - NOT IMPLEMENTED** - same class as 4.4 (BRD 2/7 fixes 4 slots in the design; changing it is a strategy redefinition, not a parameter tweak), plus a real cost: 8-10 names in the 601-1500 bucket against a 0.05 ADV gate means materially more non-fills and resize events - the very mechanism E006 showed dominates. To be tested as its own pre-registered arm, not adopted silently | BRD.md 8 note |
+| 5.2 TRI benchmarks (Nifty 500 TRI / Smallcap 250 TRI) | **CONSTRAINT - PARTIALLY BLOCKED** - no TRI series in the repo and none freely downloadable; yfinance adjusted closes ARE dividend-adjusted, so a liquidity-weighted universe TRI can be built from `adj_close` for free (honest caveat: it inherits adj_close's own coverage caveats - M2.2's 26% delisted-symbol hole). Nifty 50/200 price or TRI can be added as reference series when needed | BRD.md 11 amendment note |
+| 5.1 walk-forward harness | **NOT STARTED (by design)** - 6.1 is Phase 6's own task; the review's purge/rolling-window spec matches BRD 10 exactly. The smoke's monthly loop is the harness's 80% and gets promoted, not rewritten, when 6.1 starts | - |
+
+**Equivalence evidence.** The model extraction is behavior-preserving by construction and
+by measurement: the smoke's light pass still reproduces E006's 6,622 pick-months and the
+frozen P4.1b IC (0.0681243229) bit-for-bit, and the stuck/escalate engine-pass table
+regenerates the LEDGER's committed numbers exactly (stuck 44 fills / +2.29% / 16 picks;
+escalate 1 forced exit / +3.92% / 20 picks). The `_replace` fix DOES change downstream
+numbers in principle (it changes which orders exist); on this smoke tape the difference
+is invisible because a fully-invested month whose sell fills lands its replacement in the
+same batch - the new bound admits the buys the old loop already (wrongly) admitted; the
+regression cases added to portfolio's self-check pin the corrected behavior directly.
+
+---
+
+---
+
+## Experiment E007 - universe cutoff: rolling top-1000 vs top-1500 (2026-09-26, profile `full`)
+
+- **Why:** `fixissues_phase36.md` (the Kailash Nadh review) recommends cutting the as-of
+  universe from 1500 to a rolling 1000 to remove an "illiquidity graveyard" (ranks
+  1001-1500). The BRD amendment of the same day made this the required pre-registered
+  experiment before any re-cut. Hypothesis written before the run; the decision rule is
+  the cut's burden of proof: B's mean monthly IC higher at paired t >= 2 AND materially
+  less engine-pass gate stress, else keep 1500.
+- **Run:** `experiments/007_universe_cutoff/run.py --profile full` - both arms rebuild
+  the real derived chain (rank -> eligibility -> winners -> feature_panel -> feature_matrix)
+  with ONLY `universe.top_n` overridden in memory; scored with the shipped
+  `src.model.composite`; engine pass through smoke_e2e's own machinery at the shipped
+  defaults (escalate N=2, 0.5%/side). Arm order A(1500) -> B(1000) -> A-again(restore);
+  the restore reproduced arm A bit-for-bit (IC 0.068124..., 6,622 picks, identical shape)
+  - zero drift, the database is left BRD-normative at top-1500.
+- **Verdict: REJECTED - keep top-1500** (details in the ledger row and `verdict.md`):
+  - IC: 0.0695 (B) vs 0.0681 (A), paired diff +0.0014, **t = -0.57, p = 0.57** over 145
+    shared months - indistinguishable from noise, nowhere near the pre-registered bar.
+  - precision 54.6% -> 55.6% (+1.0pp) bought with **-57,226 eligible symbol-months
+    (-26%) of labeled evidence** - the 601-1500 bucket E002b measured its strongest ICs in.
+  - the graveyard claim, tested: rank-1000 boundary turns over Rs 4.12cr/day vs Rs 1.36cr
+    at rank-1500, yet the below-Rs-5cr/day share of eligible symbol-months falls only
+    **62.8% -> 50.1%** - half the top-1000 STILL trades under Rs 5cr/day. Illiquidity is
+    the whole small/mid tail, not a 1001-1500 island; the cut does not buy tradability.
+  - engine pass (12 slice months, escalate): non-fills 4 -> 3, forced exits 1 -> 1,
+    churn 1.58 -> 1.75/mo, tape return +3.92% -> +2.38% - marginal to worse.
+- **Honest caveats:** (1) the below-5cr share here is pooled over the full history
+  (183 decision months) - do not reconcile it with Phase 2's 30.8% quick-profile figure;
+  early-year rupee turnover was much smaller, which is exactly why the share is higher
+  pooled, and why a nominal turnover floor is era-dependent. (2) The engine pass is the
+  smoke's 12-month plumbing scale - a direction check on gate stress, not a return claim;
+  the pick-level mean return uses month-end close fills (the light-pass convention).
+  (3) The paired test's power is monthly (145 obs), not pick-level (5,047-6,622); a
+  sub-0.02 IC difference per month cannot be resolved at this sample size - the verdict
+  rests on the burden of proof being unmet, not on proven equivalence.
+- **Consequence for the plan:** `universe.top_n: 1500` stands with measured negative
+  evidence attached; the config invariant stays; any future re-cut starts from this row,
+  not from the review's thesis.
+
+---
+
+---
+
+## Experiment E008a - own-data market breadth as a regime gauge: the premise test (2026-09-26, profile `full`)
+
+- **Why:** the fixissues_phase36 follow-up proposed replacing the blocked external
+  index/VIX regime filter with market breadth computed from the repo's own data (share of
+  the as-of top-200 above their 200-day DMA; go to cash below 40%). The regime overlay
+  itself was already rejected once (P4.1); this experiment pre-tests the PREMISE - low
+  breadth must predict losing pick-months - before any portfolio rule is wired.
+- **Construction (pre-registered):** `market_breadth` table, one row per decision date:
+  as-of membership from universe_rank (top-200 and 201-1000 tiers, E000's no-static-list
+  rule), 200-TRADING-PRINT adjusted-close DMA per symbol (dense calendar; raw prices
+  would break at splits), symbols with <200 prints not counted (denominator shrinks,
+  never votes "below"). 179 breadth months from 2011-10; 141 joined with the validation
+  slice. A first run reported 141/141 months "below 30%": the member-level sanity layer
+  caught an aggregate bug (tier FILTER on the count but not the avg - each tier's share
+  was diluted by the other tier's rows, 74.7% real reported as 15.2%). Fixed, re-verified
+  member-by-member, and the sanity layer is the reason the premise test is trustworthy.
+- **Gauge validation:** blue chips above DMA through the 2017 bull, below in the 2020
+  crash; the known stress months read correctly at the top-200 tier - 2018-09 30.7%,
+  2018-10 28.8%, 2020-03 15.5%. The mid tier (201-1000) is nearly redundant (rho 0.939;
+  19/141 month disagreements at the 30 line).
+- **Verdict: REJECTED - the premise fails, and the failure is informative** (details in
+  the ledger row and `verdict.md`):
+  - rho(breadth, next-month pick return) = +0.144 - below the pre-registered 0.15 bar.
+  - The deep-trough months (<30: Dec-2011, Feb-2016, Mar-2020, Jun-2022, Feb-2025) are
+    the BEST pick months in the sample: +10.70% vs +3.28%, hit 82% vs 54%. Breadth
+    troughs mark bottoms; the following month rebounds. A cash gate on those states sits
+    out the best re-entry months of the entire 15-year sample.
+  - The only supportive window is 40-50 (-1.8pp pick penalty, near-zero universe
+    penalty), inverting at 40 and reversing at 30 - a regime correlation, not a gate.
+  - Whipsaw was never the issue (1.0-2.3 flips/yr); the timing is. A monthly decision-date
+    gate evaluates breadth AFTER the crash prints and is paid the rebound: structurally
+    mistimed for crash avoidance at this cadence.
+- **Consequence for the plan:** NO monthly breadth gate anywhere in the portfolio rules
+  or the walk-forward; `market_breadth` is kept as a derived table for BRD 11's
+  per-regime reporting (which previously had no classifier to split on) - the gate
+  question is closed with evidence, not lore. If the regime idea lives on, it lives
+  INTRA-MONTH (weekly/daily breadth against the Trigger-B layer, where protection is
+  actually timed) as a separate pre-registration.
+
+---
+
+## Experiment E008b - intra-month breadth protection on the Trigger-B layer (2026-09-26, profile `full`)
+
+- **Why:** E008a rejected the monthly breadth gate because a decision-date cadence is
+  structurally mistimed (it reads breadth after the crash prints and is paid the rebound)
+  and left intra-month sampling as the one legitimate use. This experiment pre-tested that
+  BEFORE any wiring: does a breadth-tightened mid-month trail cut drawdown in stress
+  windows without giving back return?
+- **Evaluation plan (decided pre-registration, the harness gap):** the Phase 6.1
+  walk-forward harness does not exist yet, so E008b used an INTERIM evaluator - the
+  smoke's proven engine layers extended to per-session Trigger-B checks and daily equity
+  marks over fixed pre-named windows (W0 calm 2017-06..08, W1 midcap stress 2018-09..11,
+  W2 crash+rebound 2020-02..04) - with the harness named as final judge. Even a full PASS
+  would not have flipped the default.
+- **Construction:** `market_breadth_daily` (3,675 sessions from 2011-10-20): as-of
+  membership from the LATEST universe_rank snapshot <= D (session-by-snapshot join, not a
+  static list), 200-trading-print adjusted-close DMA over a dense calendar, <200 prints =
+  not counted, member join only (E008a's FILTER lesson). Sanity layer caught nothing this
+  time because it was built in from the start: member-level Python recompute agreed to
+  1e-6 at all three probe dates; the 2020-03 trough is visible intra-month (4.1% on Mar 23
+  vs 15.5% at month-end - the information a monthly gate throws away); stress reads low
+  (2018-09/10 avg 33.2% vs 2017 calm 78.9%).
+- **Gate mechanics:** config-gated OFF (`trigger_b_breadth_trail_tighten: null`); when
+  armed, the trail GIVEBACK shrinks by the tighten pp (12% -> 8%) - the pre-registration's
+  "added to the trail" wording was corrected before any run (adding would LOOSEN the
+  trail and worsen drawdown). Facts.breadth_pct None = gate inert, so checkpoint/smoke
+  stay bit-identical; four new self-check cases (armed/inert/at-threshold/off).
+- **Verdict: FAILED on the pre-registered rule** - criterion (a) (strictly lower max
+  drawdown in both stress windows) unmet: maxDD identical to baseline in BOTH (W1 0.03%,
+  W2 20.41%). The only gate fire of the experiment (HDFCBANK 2020-04-15, breadth 24%,
+  threshold 40) is in the rebound, 16 days after the trough, and its T+1 fill lands
+  outside the window - in-window equity identical to the rupee. The baseline stop/DMA/
+  review clauses exit the crash names before breadth reads low; the tightened trail had
+  nothing left to protect earlier. W0 curves bit-identical (no false fires).
+- **Honest caveats:** (1) W1 degenerated into a cash book - the E006 fill model refused
+  26/50 selection orders as non_fill_adv (the model's four TOP-SCORED names were
+  untradable at Rs250k/slot), so the "stress window" tested nothing; the conclusion rests
+  on W2 alone. (2) Fixed windows from an all-cash start, no delivery-z clause, monthly
+  re-selection only - the interim evaluator produces a direction, not results; the 6.1
+  harness remains the final judge. (3) One threshold family {30/40/50} at one tighten
+  step (4pp), pre-registered, not swept - a FAIL at 4pp kills the idea rather than
+  inviting a tuning hunt.
+- **Consequence for the plan:** NO breadth gate at any cadence. The tighten key stays
+  `null` in config.yaml (the wiring stays, default-inert and self-checked);
+  `market_breadth_daily` joins `market_breadth` as a BRD 11 per-regime reporting table;
+  the regime question (P4.1 overlay, E008a monthly gate, E008b intra-month gate) is now
+  closed at all three decision layers with evidence. Any future attempt starts from this
+  row, not from the thesis.
+
+---
+
+
+## Experiment E009 - fill-gate reachability: the paper edge was half unreachable (2026-09-26, profile `full`)
+
+- **Why:** E008b's W1 window degenerated into a cash book - the E006 fill model refused
+  26/50 selection orders as non_fill_adv because a Rs250k slot cannot enter a stock that
+  trades under ~Rs0.5cr/day (notional > 5% x trailing-20 median turnover). The question:
+  how much of the strategy's MEASURED pick return belongs to names that could not have
+  been bought, and does ADV-aware eligibility fix it?
+- **Construction:** `liq_daily20` (301,659 symbol-months): the median of each symbol's
+  last 20 sessions ENDING at the market's last session strictly before D - a decision-date
+  predictor cannot borrow the fill month's bars, so <20-print listings are conservatively
+  unenterable at D. Sanity: frozen 2020-02 sample (1,136 eligible rows) committed beside
+  results.json and re-verified row-for-row every run; member-level recompute clean over 6
+  sampled dates (9,186 rows) after the comparator was fixed twice (anchor-session
+  semantics; the full-window requirement the table had and the scan lacked - ADLABS,
+  n20=17, listed Mar 2015).
+- **R1 (measurement):** at Rs250k/pick: 38.8% of pick-months refused (3,413/8,802), 50.5%
+  of gross return mass, top-decile-score refusal 46.6%. Refused picks returned +4.05% vs
+  +2.52% fillable: the model's BEST picks are its most illiquid. Sensitivity: 29.4%/39.4%
+  of mass at Rs125k; 49.6%/57.0% at Rs500k; 61.2%/68.0% at Rs1M. The reachability-
+  corrected paper mean is +2.52% (-0.59pp), and the correction compounds with E006: what
+  the gate protects is the expensive-to-exit tail.
+- **R2 (the fix):** `universe.min_median_turnover_cr: 0.75` (the 0.5cr boundary x the
+  measured med20/med3 shrinkage - declared by arithmetic, not fitted), through the REAL
+  chain (E007._build_chain): eligible symbol-months 218,648 -> 144,059 (-34%); refusal at
+  250k 38.8% -> 1.5%; corrected pick mean +2.52% -> +2.61%; IC 0.0675 vs 0.0681 (paired
+  t = -0.12, nowhere near the -2 bar). All three pre-registered criteria met -> ADOPT.
+  Zero-drift restore: IC bit-identical (delta 1.4e-17), R1 reproduced exactly.
+- **W1 postscript (E008b caveat corrected):** at decision time 2018-09-28, LIQUIDETF
+  (med20 Rs0.90cr) and SPLIL (Rs0.62cr) were ENTERABLE - only INFRABEES and GKWLIMITED
+  were under the 0.5cr line. E008b's W1 refusal count was inflated by its evaluator: the
+  smoke's month-window Market starves the trailing-20 ADV at a window's first bars (the
+  first bar's 20-session median IS that bar). E008b's arm-vs-arm conclusion stands (both
+  arms shared the tape); the episode goes in the ledger as a harness-design lesson: an
+  ADV gate needs a warm window, and any per-window market must carry history into its
+  first session.
+- **Consequence:** config floor 0.0 -> 0.75 (this row cited); BRD S4 note records the
+  closed question (the "subsumed by the top-1500 rank" premise is measured-false twice
+  over: rank 1500 still trades Rs1.94cr/day AND illiquidity concentrates where the picks
+  do). The engine's fill gate stays as the last-resort reality check. Caveat: the +2.5-2.6%
+  numbers are pick-level, costless, equal-notional headlines - engine-level results remain
+  the 6.1 harness's job. Re-open needs a named microstructure regime change, not tuning.
+
+---
+
+
+## Experiment E010 - E006's cost sensitivity on the post-E009 floor universe (2026-09-26, profile `full`)
+
+- **Why:** E009 proved the pre-floor universe's paper picks were 38.8% unenterable at the
+  shipped slot size - and the refused tail is where per-side costs are worst. E006's
+  0.5%/side default was therefore calibrated on a portfolio the engine itself would not
+  have built. E010 re-runs E006's protocol (imported module-to-module, no drift) with the
+  universe as the ONLY change, and decomposes where the cost actually comes from.
+- **Method:** two arms through the real chain (floor 0.75 = shipped; pre-floor 0.0 =
+  rebuilt) + a zero-drift BACKWARD guard: the pre-floor arm must reproduce E006's
+  committed results.json exactly (6,622 picks, means/hit-rates within the tie-swap
+  tolerance, edge-halving None) before any comparison - the discipline E007/E009 applied
+  to forward restores, pointed at a frozen prior experiment. Sanity: E009's synthetic
+  fixture, its frozen-sample layer re-run on E010's own sample (the floor universe's
+  2020-02 eligible set, 616 rows - distinct from E009's pre-floor 1,136 by design), and
+  the member recompute (9,186 rows).
+- **Findings:** floor arm (3,902 picks): all nets 2.36/1.76/0.76% at 0.2/0.5/1.0%; >600
+  nets 2.49/1.89/0.89%. Impact decomposition at Rs250k/slot (min(1%, 0.10 x S/med20)):
+  pre-floor picks average 0.565%/side modelled impact - almost exactly E006's flat 0.5%
+  default; the floor-arm picks average 0.139% (median pick med20 Rs2.63cr; bands: <1cr
+  0.376%, 1-5cr 0.130%, 5-20cr 0.030%, >=20cr 0.006%). The default was the impact of a
+  paper portfolio the fill gate refuses to build; the tradable book's honest stack is
+  flat real costs (~0.2-0.35%) + 0.14% impact = ~0.5%.
+- **Verdict: KEEP 0.5%/side** (pre-registered rule: a PASS, b FAIL, c PASS, d PASS). The
+  one failure is conservative and diagnostic: the >600 edge-halving point TIGHTENS on the
+  tradable universe (pre-floor it survived 1.0% at 52.1% of base - padded by untradable
+  gems; floor arm halves at 1.0%, 0.89% = 35.7% of 2.49%). E006's BRD 9.7 warning was
+  never actually binding via edge-halving - it was masked; now it binds where it should,
+  on names actually held. The deep-cost stress level matters MORE post-floor, not less.
+- **Consequence:** no config change (`backtest.cost_per_side_pct: 0.50` stands; 0.2% is
+  the optimistic bound, 1.0% the stress bound, both reported per BRD 9.7). The pick-level
+  tradable edge after the default cost: 1.76% net at 51% hit. Re-open conditions
+  pre-declared: a real fill-model upgrade (per-name spreads, or the 6.1 harness's
+  realized slippage) or a microstructure regime change - not re-tuning.
+
+---
+
+
+## Phase 6.1 — the walk-forward harness (2026-09-26, profile `full`)
+
+**Not an experiment - the §10 evaluator itself.** A milestone block (like the Phase 5
+checkpoint and the 5->6 smoke): E008b/E009/E010 all name this harness the final judge, and
+E009/E010's re-open conditions point at its realized slippage. No prediction is registered;
+everything below was decided BEFORE the first full-profile run and is recorded in every
+`results.json` (`protocol` block). Repo: `src/walkforward/harness.py`, registered in the
+suite as `walkforward.harness` (suite now 25 checks, all PASS). The smoke's engine loop was
+PROMOTED, not rewritten (the 5.1 review note's prediction held): `_engine_pass` gained
+`market_warm=` (20-session pad before the decision window - the E008b starved-ADV lesson),
+`engine_months_limit=`, a `_facts(d_from=)` window filter, and dict-shaped
+`events`/`fill_log` return keys; the light-pass pins were untouched and re-verified
+(3,902 picks, IC bit-identical to E009's floor arm).
+
+**Protocol (decided pre-run):**
+- **Window:** the split's test slice (boundary 2023-09-24 at this cutoff), recomputed from
+  the DB cutoff every run - the exact months every validation-slice experiment excluded.
+- **Refit semantics:** composite_2f is parameter-free (two cross-sectional percentile
+  ranks; no selection, no weights, no thresholds, only decision-date data). The monthly
+  "fit" is the frozen decision function; the harness asserts it per fold: the function is
+  the shipped two-feature composite and the refit month (2023-07-31) re-scores
+  BIT-IDENTICALLY around the fold's own scoring (P4.2's freeze protocol, harness level - a
+  stateful or refitted function trips it). A fitted-model refit variant is deliberately
+  NOT invented here; if one ever ships, this assert is the first thing that breaks.
+- **No-peek gate (the actionplan's "assert in code"):** per fold month - fold strictly
+  after the refit month; every scored matrix symbol inside the decision-date `eligible`
+  snapshot (a stale matrix would silently score names not eligible at D); frozen-decision
+  check above. Self-check raises on stale matrix, empty snapshot, and a stateful scorer.
+- **Trade M with the frozen decision:** the promoted pass over ALL 35 fold months
+  consecutively, shipped exit_gate (escalate), shipped costs (0.50%/side + capped impact
+  on real ADV), warm ADV per month.
+- **Realized slippage (the one unmeasured cost component):** per fill, T+1 open
+  (pre-impact) vs the decision-close mark the paper experiments measured against,
+  side-signed so positive = worse than paper; means over all fills AND over the realized
+  book (completed round trips).
+- **Benchmark:** equal-weight total-return index of the eligible universe (adj closes are
+  dividend-adjusted), monthly marks, as-of membership - the BRD 11 constraint's
+  construction; a sourced Nifty 500 TRI replaces it when one exists.
+- **Determinism:** one full-profile pass verified against a second pass (§9.5).
+
+**First run (full profile, cutoff 2026-09-24, 35 fold months 2023-08-31 -> 2026-06-30,
+refit month 2023-07-31):**
+- Paper top-5% picks (the §11 label): 2,196 picks, 56.6% hits vs the 5% baseline,
+  binomial p ~ 0 (CI95 [0.545, 0.586]); mean gross +2.32%/pick, net-of-flat-cost +1.32%.
+- Engine (the §8 portfolio at 4 slots): 130 fills (1 non-fill, a circuit lock), 63
+  completed picks, pick hit 33%, month hit 40%, churn 1.66/mo, avg hold 45d.
+- **Equity 489,703 from 1,000,000 (-51.0%), CAGR -22.3% vs benchmark +8.5%, Sharpe -0.38
+  vs +0.50, max drawdown -65.2%.** Per-regime mean net: down +3.17% (8 months), flat
+  -1.06% (13), up +2.51% (14) - the paper edge is not surviving the portfolio layer.
+- **Realized slippage: +0.441%/side on buys, -0.420%/side on sells vs the decision-close
+  mark** (130 fills measured); realized book +0.176%/side. Fills land ~0.44% ADVERSE to
+  the paper mark per side - E010's modelled ~0.14% impact was real but small; the
+  overnight gap from decision close to next open is the larger, previously unmeasured
+  component, and it lands almost entirely on the portfolio's first trading day.
+
+**Reading (this is the report, not a verdict):** the harness works; the first full-profile
+numbers are NEGATIVE for the shipped strategy. Paper selection edge (56.6% hit, +2.32%
+gross) does not survive the §8 portfolio at 4 slots + real fills + real costs over the
+test window: the engine realizes -51% while the same picks average +1.32% net on paper.
+Candidate mechanisms (not conclusions): concentration (4 slots vs ~63-paper-pick breadth
+per fold month), the adverse T+1 open (+0.44%/side on buys), and 1.66 replacements/month
+churning flat-cost into the book. The per-fold and regime tables in
+`runs/walkforward/harness_results.json` are where any proposed fix must show its delta -
+per §10.3, any rule change after this report archives this run and re-runs from scratch.
+
+## Experiment E011 - slot-count attribution: the -51% was concentration, not selection (2026-09-26, profile `full`)
+
+- **Pre-registration:** `experiments/011_slot_count/hypothesis.md`, written and frozen
+  BEFORE the first arm ran. Four arms through the UNMODIFIED harness - one lever
+  (`portfolio.n_slots`), everything else shipped (costs 0.5%/side + impact, exit_gate
+  escalate, floor 0.75, the frozen composite_2f, warm-ADV markets, the same 35 fold
+  months, same cutoff 2026-09-24). Every arm run twice (verify_determinism; serialized
+  evaluations identical). A4 is the zero-drift guard: bit-identical to the committed
+  Phase 6.1 baseline on final_equity, completed picks, hit rates, churn, avg hold,
+  maxDD, total return - and paper picks asserted identical ACROSS arms (slots never
+  touch scoring).
+- **Arms:** A4 = shipped 4 slots (control); A8 = 8; A12 = 12; B8 = 8 slots + wider
+  monthly-review percentiles (sell_below 0.25->0.15, replace_above 0.15->0.10) as the
+  churn control. Equal weight across FREE slots (the SS8 rule, unchanged), so per-slot
+  notional halves at 8 - the fill gate sees SMALLER orders (non-fills: 1 circuit lock at
+  A4, ZERO everywhere else).
+- **Findings:** A4 489,703 (-51.03%, maxDD -65.2%, Sharpe -0.38, 63 picks, hit 33%,
+  churn 1.66/mo). A8 892,626 (-10.74%, maxDD -23.9%, Sharpe -0.29, 125 picks, hit 32%,
+  churn 3.46/mo, month-hit 63%). A12 731,870 (-26.81%, maxDD -42.1%, 182 picks, hit 34%,
+  churn 5.03/mo). B8 882,467 (-11.75%, churn 3.43/mo). Paper picks arm-invariant: 2,196,
+  56.6% hit, +1.32% net.
+- **Verdict: ADOPT n_slots = 8** (the pre-registered rule fired mechanically: both A8 and
+  A12 cleared all four bars - equity >= A4 + Rs200k, higher Sharpe, maxDD within 2pp,
+  hit within 3pp - and A8 won on final equity). **The answer: concentration.** Widening
+  4 -> 8 recovered Rs402,923 of the Rs510,297 loss (+38.6pp) while the pick hit rate
+  barely moved - the idiosyncratic variance of a 4-name book, not the model's picks,
+  was the dominant loss mechanism. Selection failure is what remains: A8 still loses
+  10.7% vs the +8.5% benchmark, at a 32% completed-pick hit vs the paper 56.6%.
+- **Secondary findings (disclosed, not load-bearing):** (1) Buy-side slippage vs the
+  decision mark flipped +0.441% -> -0.099%/side at the halved per-slot notional
+  (realized book -0.130%/side): part of A8's recovery is execution quality (smaller
+  orders, less modelled impact, a wider entry spread across months), entangled with
+  diversification by design - the held-constant-notional arm is the declared follow-up
+  pre-registration. (2) Churn rises with slots (1.66 -> 3.46 -> 5.03/mo) - a slot
+  artifact, NOT ranking pressure: B8's wider percentiles moved churn by 0.03 while
+  giving up Rs10,159; widening review bands is not the knob. (3) A12 is worse than A8
+  on every equity metric despite more breadth - the 9th-12th slots buy worse names
+  deeper in the list and churn harder. (4) month_hit 40% -> 63%: the wider book's
+  monthly outcomes track the paper distribution instead of 4 coin flips.
+- **Consequence:** `portfolio.n_slots: 4 -> 8` in config.yaml with this block cited.
+  The shipped Phase 6.1 baseline (git a8cc624) stands archived per BRD 10.3; A8's own
+  determinism-verified pass is the re-run-from-scratch reference at the new default.
+  Residual loss attribution, in order of evidence: residual concentration at 8, entry
+  timing (the adverse open), exit-rule quality.
+
+---
+
+## Diagnostic - trigger-level P&L decomposition of the 8-slot walk-forward (2026-09-26, profile `full`)
+
+**Not an experiment - an autopsy of the committed run** (BRD 12 pre-registration governs
+rule changes; this changes none). Question: which SS 8 exit rule destroyed the most value
+in the adopted 8-slot reference run (git a8cc624, 35 folds, 125 completed picks, equity
+892,626)? Raw per-trigger mean returns cannot answer it - a stop firing at -8% before a
+-15% slide CREATED value. The module (`src/walkforward/diag_trigger_pnl.py`, in the suite
+as `walkforward.trigger_pnl`, 26 checks PASS) FIFO-closes the run's fills exactly like
+`metrics.completed_picks`, tags each lot with the CLOSING fill's trigger, and scores a
+timing counterfactual per lot: `delta_rs = qty x (close at the exit month's decision date
+- exec price)`. POSITIVE = the rule sold cheaper than the month-end review it skipped
+(destroyed); NEGATIVE = it beat the month-end (saved). Flat per-side costs cancel; the
+counterfactual is the month-end cadence, not "sell never"; marks missing (delisted) are
+excluded and counted. Runner: `src/walkforward/run_trigger_pnl.py` ->
+`runs/walkforward/trigger_pnl_results.json`.
+
+**The ranking (rupees destroyed vs the month-end review, most damaging first):**
+
+| trigger | lots | hit | mean ret | total delta | mean/lot |
+|---|---|---|---|---|---|
+| trigger_b_dma | 87 | 43% | +1.71% | **+97,832** | +1,125 |
+| trigger_b_stop | 22 | 0% | -17.44% | +28,643 | +1,302 |
+| monthly_review | 4 | 25% | -3.48% | +1,298 | +324 |
+| trigger_b_trail | 12 | 17% | -0.60% | **-11,655** | -971 |
+| TOTAL | 125 | | | +116,117 | |
+
+**Concentration finding: one name is +87,396 of the +116,117 - BSE**, whipsawed by every
+rule (2025-03 stop +38,052, 2025-10 trail +27,153, 2026-04 DMA +24,900 - sold, and it kept
+rebounding). Excluding BSE the ranking REORDERS: trigger_b_dma **+74,310** (still the
+destroyer, now broad: INFY, SBIN, BHARTIARTL, RELIANCE, AXISBANK), monthly_review +1,298,
+trigger_b_stop **-7,814** (net value-CREATING), trigger_b_trail **-39,073** (the best rule
+by timing).
+
+**Reading (groundwork for the next pre-registration, not a verdict):**
+1. **The 2-consecutive-closes-below-50-DMA exit is the value destroyer** - 87 fires
+   (2.5/month), cutting winners early (mean realized +1.71% on the highest-IC model's
+   picks), +97.8k rupees of timing damage that is BROAD, not one name's artifact.
+2. The stop and trail rules are EARNINGS their keep: net savers once BSE's whipsaw is
+   excluded (stops save 7.8k, trails 39.1k). The -17.4% mean stop return is what stops
+   are FOR; their timing, not their outcomes, is the metric that cleared them.
+3. Rank-band monthly exits are a non-factor in exit P&L (4 fires, +1.3k) - E011's churn
+   worry lives in the buy side's turnover, not the rank exits' losses.
+4. Caveat: deltas measure the one-month mark only; a name that crashed after its
+   month-end mark flatters neither the rule nor the wait. The ranking is consistent
+   across lots, which is what a rank needs.
+
+Still open at the final mark (8 lots, +7,281 unrealized net): the tail of the book sits
+in large-cap banks; INFY -20,238 is the biggest open loser.
+
+**No config change. Per SS 10.3, any rule motivated by this table (e.g. a DMA-exit
+relaxation arm) archives the reference run, pre-registers, and re-runs the walk-forward
+from scratch.**
+
+---
+
+## Experiment E012 - the E009 floor at the 8-slot notional: derived, not tuned (2026-09-26, profile `full`)
+
+- **Pre-registration:** `experiments/012_floor_at_8slots/hypothesis.md`, written and
+  frozen BEFORE any arm ran. Question: E009 set `min_median_turnover_cr: 0.75` from the
+  gate's arithmetic at the 4-slot Rs250k notional (boundary med20 >= 20 x S = 0.5cr, x
+  the measured med20/med3 shrinkage ~1.5x); E011 halved the per-slot notional to Rs125k,
+  moving the boundary to 0.25cr - the floor's arithmetic moved underneath it. Re-measure
+  reachability at S125k and decide whether the floor moves.
+- **Machinery:** E009's, imported module-to-module (baseline chain at floor 0.0,
+  liq_daily20 built once - chain-independent, the frozen 2020-02 sample re-verified
+  row-for-row, the member recompute, top-5% composite_2f pick sets over ALL labeled
+  months, reachability = refused iff med20 < 20 x S). Guards first: baseline R1 rows
+  BIT-IDENTICAL to E009's committed table at all four slot sizes; restore IC = P4.1b's
+  frozen 0.0681243229 (1e-9); the 0.75 arm reproduces E009's committed R2 row exactly +
+  its IC.
+- **Arms (S125k reachability, 145-month validation-slice ICs):** baseline 0.0: 29.36%
+  refused, corrected mean +2.669%. **0.375: 1.14% refused, +2.692%, IC 0.071718** (161,942
+  eligible rows). 0.5: 0.46%, +2.730%, IC 0.070110. 0.75: 0.21%, +2.632%, IC 0.067450.
+  Modelled impact at S125k: 0.092% (0.375) / 0.074% (0.5) / 0.056% (0.75) - all an order
+  of magnitude under the 0.5%/side cost stack. All four pre-registered bars passed for
+  both moving arms; the LOOSEST (smallest) floor wins -> **ADOPT 0.375**.
+- **The principle this experiment fixes: the floor is DERIVED, not fitted.** It must move
+  with the gate boundary, which scales with per-slot notional (med20 >= 20 x S). The
+  answer to "should the floor move with slot size" is yes, by construction - E009's own
+  1.5x headroom arithmetic at the new notional lands on 0.375, and the measurement
+  confirms it is safe (refusal 1.14% <= 1/3 bar, corrected mean and IC both better than
+  the 0.75 floor's). Re-derive on any future notional change; it is not a tuning knob.
+- **Disclosure (pre-adoption bug, caught):** the first runner execution reported ADOPT
+  0.5 - the candidate order in the decision code inverted hypothesis.md's "ADOPT the
+  LOOSEST floor clearing all bars" (loosest = SMALLEST floor; a higher minimum excludes
+  more names). Caught by re-reading the run against the pre-registration BEFORE any
+  adoption; fixed (one tuple order + comment); the experiment re-run; every measured
+  number identical, only the decision field moved (0.5 -> 0.375). No number ever moved
+  to fit a conclusion.
+- **Consequences executed:** config 0.75 -> 0.375 with the citation; chain rebuilt at
+  the shipped floor (161,942 rows / 183 months); smoke re-pinned to the E012 0.375 arm
+  (eligibles asserted from its results.json, IC bit-identical, light-pass picks 4,579 -
+  the E009-era 3,902 pin retired to E012 with the E006-to-E009 precedent); harness
+  reference re-run at 0.375 + 8 slots, determinism-verified, final equity
+  892,626.0949598341 BIT-IDENTICAL to E011's A8 arm - the single fill-level difference
+  is HARDWYN's 2023-09-29 exit trigger label (monthly_review -> trigger_b_dma: the wider
+  eligible universe moved the rank percentile under the rank-band rule; same fill, same
+  quantity, same rupees, churn 3.457 -> 3.486/mo). Paper picks 2,196 -> 2,212 (hit
+  56.6%). E012's runner made re-runnable post-ADOPT (shipped-floor assert accepts 0.75
+  or 0.375; arms pass floors explicitly - the E009/E011 pattern). BRD SS4 amended inline
+  (the derivation principle). Suite 26/26 PASS. Nothing committed.
+
+---
+
+## Experiment E013 — the shelved index regime filter (Nifty 200 vs 200-session DMA) on the harness window (2026-09-27, profile `full`)
+
+- **Why:** the BRD 15 risk row kept "market regime filter (Nifty 200 vs 200-DMA + VIX)" at
+  CONSTRAINT - NOT IMPLEMENTED behind three blockers. Blocker (a) died when the sourced
+  daily NIFTY 200 TRI landed in `index_tri` (2011 -> cutoff) earlier today; blocker (b)
+  described P4.1's score-level atr overlay, not this filter; blocker (c) is about index
+  MEMBERSHIP, which this signal does not use. The review's substitutes (E008a/E008b
+  breadth gates) were rejected on premise and intra-month; the index leg itself had never
+  been measured. E013 pre-registers it (BRD 12) and runs it on the harness's realized
+  window - the result of record - not on the validation slice; the burn is declared in
+  hypothesis.md up front.
+- **Signal & arms (pre-registered before the run):** daily NIFTY 200 TRI vs its own
+  200-session DMA at each decision month-end (prints <= M only; every fold's DMA
+  recomputed in Python, max diff 2.2e-11). Risk-off in 9/35 months (2024-12-31..2025-04-30,
+  2026-03-30..2026-06-30). Arms through the harness's own engine pass at the shipped
+  config: BASELINE (gate inert; MUST reproduce harness_results.json's engine block
+  bit-for-bit - it does), CASH (risk-off month: liquidate at that month-end, block all new
+  buys), NO_BUYS (block new buys only). No sweep: fixed 200-session DMA, strict on-close
+  comparison, monthly cadence.
+- **Result (PASS on all three pre-registered bars, primary arm CASH):** equity 835,694.98
+  -> 883,269.82 (-16.43% -> -11.67%); CAGR -6.14% -> -4.29%; Sharpe -0.427 -> -0.244;
+  maxDD -22.99% -> -19.55% severity. NO_BUYS is Rs 2,925 BETTER than CASH (886,195.37,
+  CAGR -4.18%): in this window the liquidation leg added nothing - the review's own exits
+  had already emptied the book whenever the gate fired (the gate's only extra sells were
+  2 `regime` names at 2026-03-30) - the value is in NOT ENTERING. Post-hoc fragility probe
+  (not pre-registered, disclosure only): forcing the hair-trigger month 2024-12-31 (ratio
+  0.9990, 10bp below its DMA) risk-ON still clears all bars (+1.46pp CAGR, -2.5pp drawdown).
+- **Disclosure (sign-convention slip, caught in the runner):** hypothesis.md wrote the
+  drawdown bar as `maxdd_cash < maxdd_baseline`, but `metrics.max_drawdown` returns a
+  NEGATIVE fraction, so the literal inequality asks for a DEEPER drawdown - the opposite
+  of the hypothesis's words "strictly smaller drawdown". The words govern (E012's
+  runner-bug precedent); the runner tests the magnitude and records the literal signed
+  reading (REJECTED) beside it in results.json. Corrected after seeing the numbers,
+  disclosed; no bar or threshold moved, and the arms clear the magnitude bar by 3.4pp.
+- **Why a PASS is not an edge (attribution, correctly aligned):** the 8 gated intervals
+  were BETTER than average in the baseline (mean -0.19% vs -0.54% over the 26 ungated
+  ones). The +4.8pp total-return gain is ~+2.7pp from the gated intervals themselves
+  (Jan/Feb-25 losses avoided at ~0% cash, partly offset by the Mar/Apr-25 rebounds missed)
+  and ~+2.1pp from the post-gate re-entry path, which includes a -7.2pp interval (Aug-25:
+  CASH -10.30% vs baseline -3.08%) and a +6.5pp pair (Jun/Jul-25). Paper per-pick means in
+  the risk-off months are +0.76% - the gain is a realized-path effect, not pick quality.
+  Eight gated intervals, one window, one re-entry lottery.
+- **Consequences:** NO config / harness / portfolio change. The test window is BURNED for
+  this rule family (10.3): a PASS here is opt-in-regret evidence, not validation - any
+  adoption needs a fresh pre-registered out-of-sample plus the standard bookkeeping. The
+  BRD 15 risk row is amended (blocker (a) dead for the index leg; measured, not adopted).
+  Reusable machinery: inert-by-default `regime_off` / `regime_liquidate` hooks on
+  `smoke_e2e._engine_pass` (the signal stays the caller's). Nothing committed.
+
+---
+
+## Experiment E014 — the risk-off buy-block on the validation slice: the premise fails (2026-09-27, profile `full`)
+
+- **Why:** E013's test-window PASS (+1.9pp CAGR from 8 gated intervals) could not separate
+  signal from path. E014 pre-registers the premise test on the frozen validation slice
+  (145 months 2011-07-29 -> 2023-07-31; test window untouched) across six pre-named
+  episodes: 2011 euro crisis, 2013 taper, 2015-16 China/oil, 2018 IL&FS, 2020 COVID,
+  2022 rates.
+- **Signal & arms:** the same construction (NIFTY 200 TRI vs its own 200-session DMA at
+  each decision month-end, prints <= M); folds before the DMA warms (2011-10-31) are
+  risk-on by construction; 35 of 145 folds risk-off. Arms through the harness's engine
+  pass: BASELINE (gate inert), BUY_BLOCK (no new buys in risk-off folds - E013's core),
+  CASH (also liquidates; diagnostic, 31 regime sells).
+- **Guards:** the smoke's own convention (labeled-only rows, warm=0) over 12 months
+  reproduces runs/smoke_e2e's escalate arm BIT-FOR-BIT; eligible rows 161,942 == E012's
+  chain pin; IC 0.0717179780 == E012's 0.375-arm IC (1e-9); arm-convention picks 5,605 >=
+  the labeled-only 4,579; every warmed fold's DMA recomputed in Python (max diff 1.1e-11
+  over 142 folds).
+- **Verdict: REJECTED, both sign readings.** B1 (gate helps = the baseline is worse in the
+  gated intervals): mean d = +0.542% - the WRONG direction; p(gate helps) = 0.654. The
+  decisive fact: the baseline's monthly engine return in the gate's own 35 intervals was
+  +0.754% (sd 8.26%) vs -0.026% (sd 5.50%) in the 109 it left alone - risk-off marks
+  VOLATILE months, not losing ones. B2: 3 of 5 counted episodes favor the gate, 4
+  required (favored 2013_taper, 2020_covid, 2022_rates; against 2011_euro - the arm lost
+  7.2% while the baseline gained 12.0% over that episode's gated intervals - and
+  2015_16_china; 2018_ilfs has 2 gated intervals, not counted, also against).
+  Disclosure: hypothesis.md's parenthetical sign claim ("positive = the baseline did
+  worse") is inverted for d = base - arm; both readings were evaluated and give the same
+  verdict; results.json records bars, bars_as_coded and the disclosure.
+- **Why the equity column looks positive anyway (the finding):** BUY_BLOCK 1,108,821
+  (+10.88%) vs baseline 942,030 (-5.80%), maxDD -46.5% vs -65.6% - but the arm's advantage
+  comes from the UNGATED intervals (placebo d = -0.212%/mo over 109: after every gated
+  episode it carries a different, later, thinner book) and from exposure arithmetic: the
+  baseline's monthly mean is +0.164% with 6.29% sd, so variance drag (~0.198%) exceeds the
+  mean and its geometric return is -0.041%/mo (the arm's sd is 4.83%). On a tape where the
+  engine's own drag dominates, ANY exposure reduction improves the geometric path - signal
+  or not. This retro-explains E013's test-window PASS as the same exposure/path artifact,
+  not timing alpha - consistent with P4.1/E008a/E008b and with E008a's "troughs mark
+  rebounds".
+- **Consequences:** the index leg is CLOSED (hypothesis.md's own rule: REJECTED is
+  terminal); BRD 15 risk row extended; no config/harness change; no further out-of-sample
+  spend on this rule family. Machinery stays inert and reusable (`regime_off` /
+  `regime_liquidate`); E014's signal sampler documents the two special-session folds
+  (2015-02-28, 2016-10-30) where the sourced index's own month-end marks disagree with the
+  equity calendar. Nothing committed.
+
+---

@@ -135,3 +135,29 @@ drawdown, churn and turnover numbers all move with this choice).
 `backtest.exit_gate` in `config.yaml` — modes `stuck` (default = the BRD-normative
 behaviour above) / `force` / `escalate` with `escalate_after: N`; engine and smoke honor
 it. The owner's choice of mode is still what blocks 6.4.
+
+## UPDATE to Decision 2 (2026-09-26, E009): the floor is now measured and enforced at 0.75
+
+The question above is closed by experiment E009 (pre-registered in
+`experiments/009_fill_gate_reach/hypothesis.md`, never edited after the run; see the
+2026-09-26 E009 ledger block). What the measurement adds to option (c)'s premise:
+
+- The E006 fill gate refuses a buy when notional > 5% of trailing-20 median turnover —
+  at the shipped Rs10L x 4 (Rs250k/slot) that excludes every name with med20 < Rs0.5cr.
+  At that boundary, 38.8% of composite_2f pick-months (3,413/8,802) and 50.5% of gross
+  pick return mass were UNENTERABLE, and the refused picks were the model's BEST: +4.05%
+  vs +2.52% for fillable names. The "small illiquid tail" is not a tail of the universe;
+  it is the center of gravity of the model's picks.
+- `universe.min_median_turnover_cr: 0.75` (the gate's 0.5cr boundary scaled by the
+  measured med20/med3 shrinkage — chosen by arithmetic, not fitted) was run through the
+  real chain: refusal at 250k falls to 1.5%, the corrected pick mean improves
+  (+2.52% -> +2.61%), and the IC is unchanged (0.0675 vs 0.0681, paired t = -0.12 on 145
+  months). The pick-level evidence base drops 34% (218,648 -> 144,059 eligible
+  symbol-months) — the price E007's discipline already taught us to name.
+- **Shipped:** `min_median_turnover_cr: 0.75` in config.yaml (this update cites E009).
+  The engine's fill gate stays as the last-resort reality check; eligibility now does the
+  work upstream, where it also keeps the fill model's impact estimates in their valid
+  range. Caveat recorded in the ledger: the +2.5-2.6% figures are pick-level, costless,
+  equal-notional headlines — engine-level results remain the 6.1 harness's job. Re-open
+  needs a named microstructure regime change (tick size, lot size, exchange structure),
+  not a tuning hunt.
