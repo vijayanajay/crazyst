@@ -1,0 +1,326 @@
+{
+  "diagnostic": "trigger-level P&L decomposition (timing counterfactual)",
+  "source_run": "runs\\walkforward\\harness_results.json",
+  "source_git_hash": "a8cc624640dfeecf5e98a9f25177a7fed547c353",
+  "n_slots": 8,
+  "folds": [
+    "2023-08-31",
+    "2023-09-29",
+    "2023-10-31",
+    "2023-11-30",
+    "2023-12-29",
+    "2024-01-31",
+    "2024-02-29",
+    "2024-03-28",
+    "2024-04-30",
+    "2024-05-31",
+    "2024-06-28",
+    "2024-07-31",
+    "2024-08-30",
+    "2024-09-30",
+    "2024-10-31",
+    "2024-11-29",
+    "2024-12-31",
+    "2025-01-31",
+    "2025-02-28",
+    "2025-03-28",
+    "2025-04-30",
+    "2025-05-30",
+    "2025-06-30",
+    "2025-07-31",
+    "2025-08-29",
+    "2025-09-30",
+    "2025-10-31",
+    "2025-11-28",
+    "2025-12-31",
+    "2026-01-30",
+    "2026-02-27",
+    "2026-03-30",
+    "2026-04-30",
+    "2026-05-29",
+    "2026-06-30"
+  ],
+  "conventions": {
+    "delta_rs": "qty x (close_at_exit_month_decision_date - exec_px); POSITIVE = the rule sold cheaper than the month-end it skipped (destroyed)",
+    "counterfactual": "the month-end review cadence, not 'sell never'; costs cancel, impact differences second-order",
+    "excluded": "no month-end mark (delisted/suspended) -> no_cf, outside the ranking; still-open lots reported separately"
+  },
+  "trigger_ranking": [
+    {
+      "trigger": "trigger_b_dma",
+      "lots": 87,
+      "hit_rate": 0.42528735632183906,
+      "mean_return": 0.017122599943181847,
+      "total_delta_rs": 97831.54720450692,
+      "mean_delta_rs": 1124.5005425805393,
+      "no_cf": 0
+    },
+    {
+      "trigger": "trigger_b_stop",
+      "lots": 22,
+      "hit_rate": 0.0,
+      "mean_return": -0.174439844036013,
+      "total_delta_rs": 28642.881231667514,
+      "mean_delta_rs": 1301.949146893978,
+      "no_cf": 0
+    },
+    {
+      "trigger": "monthly_review",
+      "lots": 4,
+      "hit_rate": 0.25,
+      "mean_return": -0.03477648122487395,
+      "total_delta_rs": 1297.540206361682,
+      "mean_delta_rs": 324.3850515904205,
+      "no_cf": 0
+    },
+    {
+      "trigger": "trigger_b_trail",
+      "lots": 12,
+      "hit_rate": 0.16666666666666666,
+      "mean_return": -0.006024683569255136,
+      "total_delta_rs": -11654.576236254085,
+      "mean_delta_rs": -971.2146863545071,
+      "no_cf": 0
+    }
+  ],
+  "total_timing_delta_rs": 116117.39240628203,
+  "symbol_concentration": {
+    "top_syms_rs": [
+      [
+        "BSE",
+        87395.84787976588
+      ],
+      [
+        "RELIANCE",
+        32013.24278001614
+      ],
+      [
+        "SBIN",
+        23998.50769524534
+      ],
+      [
+        "VESUVIUS",
+        15461.42510680672
+      ],
+      [
+        "BHARTIARTL",
+        13426.674574756371
+      ]
+    ],
+    "trigger_ranking_excluding": "BSE",
+    "trigger_ranking_excluding_deltas": {
+      "trigger_b_dma": 74310.27025766905,
+      "monthly_review": 1297.540206361682,
+      "trigger_b_stop": -7813.5603297814605,
+      "trigger_b_trail": -39072.70560773315
+    }
+  },
+  "completed_picks": 125,
+  "picks_no_cf": 0,
+  "still_open": [
+    {
+      "symbol": "BHARTIARTL",
+      "qty": 43,
+      "buy_date": "2026-03-02",
+      "basis_px": 1850.100977644568,
+      "mark": 1852.0,
+      "unrealized_rs": 81.65796128357397
+    },
+    {
+      "symbol": "ETERNAL",
+      "qty": 204,
+      "buy_date": "2026-04-01",
+      "basis_px": 233.2200897989665,
+      "mark": 264.6,
+      "unrealized_rs": 6401.501681010836
+    },
+    {
+      "symbol": "HDFCBANK",
+      "qty": 84,
+      "buy_date": "2026-06-01",
+      "basis_px": 749.0001635694271,
+      "mark": 797.95,
+      "unrealized_rs": 4111.786260168131
+    },
+    {
+      "symbol": "ICICIBANK",
+      "qty": 97,
+      "buy_date": "2026-05-04",
+      "basis_px": 1264.3006268200759,
+      "mark": 1375.2,
+      "unrealized_rs": 10757.239198452644
+    },
+    {
+      "symbol": "INFY",
+      "qty": 104,
+      "buy_date": "2026-05-04",
+      "basis_px": 1195.00091653314,
+      "mark": 1000.4,
+      "unrealized_rs": -20238.49531944657
+    },
+    {
+      "symbol": "RELIANCE",
+      "qty": 47,
+      "buy_date": "2026-06-01",
+      "basis_px": 1332.5003978507095,
+      "mark": 1293.9,
+      "unrealized_rs": -1814.2186989833438
+    },
+    {
+      "symbol": "SBIN",
+      "qty": 65,
+      "buy_date": "2026-06-01",
+      "basis_px": 966.2503871521375,
+      "mark": 1026.9,
+      "unrealized_rs": 3942.2248351110698
+    },
+    {
+      "symbol": "SILVERBEES",
+      "qty": 543,
+      "buy_date": "2026-05-04",
+      "basis_px": 233.0204721504142,
+      "mark": 212.82,
+      "unrealized_rs": -10968.856377674918
+    }
+  ],
+  "worst_timing_lots": [
+    {
+      "symbol": "BSE",
+      "buy_date": "2025-02-03",
+      "sell_date": "2025-03-03",
+      "qty": 44,
+      "return": -0.14235613184636486,
+      "trigger": "trigger_b_stop",
+      "exec_px": 4614.992274875427,
+      "basis_px": 5331.015543701709,
+      "sell_month": "2025-03",
+      "cf_px": 5479.8,
+      "delta_rs": 38051.539905481215
+    },
+    {
+      "symbol": "BSE",
+      "buy_date": "2025-09-01",
+      "sell_date": "2025-10-01",
+      "qty": 63,
+      "return": -0.04788796743770651,
+      "trigger": "trigger_b_trail",
+      "exec_px": 2047.9969230760032,
+      "basis_px": 2130.0027937936206,
+      "sell_month": "2025-10",
+      "cf_px": 2479.0,
+      "delta_rs": 27153.193846211798
+    },
+    {
+      "symbol": "BSE",
+      "buy_date": "2026-03-02",
+      "sell_date": "2026-04-01",
+      "qty": 30,
+      "return": 0.07582160025615359,
+      "trigger": "trigger_b_dma",
+      "exec_px": 2810.498009831247,
+      "basis_px": 2585.301684680924,
+      "sell_month": "2026-04",
+      "cf_px": 3640.5,
+      "delta_rs": 24900.059705062587
+    },
+    {
+      "symbol": "INFY",
+      "buy_date": "2024-05-02",
+      "sell_date": "2024-06-03",
+      "qty": 157,
+      "return": 0.008862857059635854,
+      "trigger": "trigger_b_dma",
+      "exec_px": 1439.996560624545,
+      "basis_px": 1413.002598762388,
+      "sell_month": "2024-06",
+      "cf_px": 1566.75,
+      "delta_rs": 19900.289981946426
+    },
+    {
+      "symbol": "SBIN",
+      "buy_date": "2023-12-01",
+      "sell_date": "2024-04-01",
+      "qty": 237,
+      "return": 0.3231538156297049,
+      "trigger": "trigger_b_dma",
+      "exec_px": 759.049002986201,
+      "basis_px": 567.0011516340431,
+      "sell_month": "2024-04",
+      "cf_px": 826.25,
+      "delta_rs": 15926.636292270363
+    },
+    {
+      "symbol": "VESUVIUS",
+      "buy_date": "2023-09-01",
+      "sell_date": "2023-10-03",
+      "qty": 36,
+      "return": -0.09112039024756002,
+      "trigger": "trigger_b_stop",
+      "exec_px": 3133.165969255369,
+      "basis_px": 3411.6712900284983,
+      "sell_month": "2023-10",
+      "cf_px": 3562.65,
+      "delta_rs": 15461.42510680672
+    },
+    {
+      "symbol": "SBIN",
+      "buy_date": "2023-11-01",
+      "sell_date": "2023-12-01",
+      "qty": 187,
+      "return": -0.008651793213292236,
+      "trigger": "trigger_b_dma",
+      "exec_px": 566.9990913267254,
+      "basis_px": 566.2508953288157,
+      "sell_month": "2023-12",
+      "cf_px": 642.05,
+      "delta_rs": 14034.519921902338
+    },
+    {
+      "symbol": "BHARTIARTL",
+      "buy_date": "2025-09-01",
+      "sell_date": "2025-10-01",
+      "qty": 70,
+      "return": -0.02090811036828577,
+      "trigger": "trigger_b_dma",
+      "exec_px": 1867.9972439081523,
+      "basis_px": 1889.0025447924625,
+      "sell_month": "2025-10",
+      "cf_px": 2054.5,
+      "delta_rs": 13055.192926429338
+    },
+    {
+      "symbol": "RELIANCE",
+      "buy_date": "2024-05-02",
+      "sell_date": "2024-06-03",
+      "qty": 76,
+      "return": -0.002594874084657084,
+      "trigger": "trigger_b_dma",
+      "exec_px": 2965.9955000391355,
+      "basis_px": 2944.0043142771506,
+      "sell_month": "2024-06",
+      "cf_px": 3130.8,
+      "delta_rs": 12525.141997025712
+    },
+    {
+      "symbol": "AXISBANK",
+      "buy_date": "2024-02-01",
+      "sell_date": "2024-04-01",
+      "qty": 108,
+      "return": -0.02859981270167189,
+      "trigger": "trigger_b_dma",
+      "exec_px": 1052.3488357458532,
+      "basis_px": 1072.651147512587,
+      "sell_month": "2024-04",
+      "cf_px": 1165.9,
+      "delta_rs": 12263.525739447865
+    }
+  ],
+  "fill_reason_counts": {
+    "monthly_review": 4,
+    "replace": 125,
+    "select": 8,
+    "trigger_b_dma": 87,
+    "trigger_b_stop": 22,
+    "trigger_b_trail": 12
+  }
+}

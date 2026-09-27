@@ -1,0 +1,573 @@
+{
+  "report": "Phase 6 consolidated BRD section-11 report",
+  "generated_by": "experiments/phase6_section11_report/run.py",
+  "git_hash": "a8cc624640dfeecf5e98a9f25177a7fed547c353",
+  "source_results": {
+    "path": "runs\\walkforward\\harness_results.json",
+    "git_hash": "a8cc624640dfeecf5e98a9f25177a7fed547c353",
+    "runtime_seconds": 20.4
+  },
+  "window": {
+    "cutoff": "2026-09-24",
+    "boundary": "2023-09-24",
+    "refit_month": "2023-07-31",
+    "test_months": [
+      "2023-08-31",
+      "2023-09-29",
+      "2023-10-31",
+      "2023-11-30",
+      "2023-12-29",
+      "2024-01-31",
+      "2024-02-29",
+      "2024-03-28",
+      "2024-04-30",
+      "2024-05-31",
+      "2024-06-28",
+      "2024-07-31",
+      "2024-08-30",
+      "2024-09-30",
+      "2024-10-31",
+      "2024-11-29",
+      "2024-12-31",
+      "2025-01-31",
+      "2025-02-28",
+      "2025-03-28",
+      "2025-04-30",
+      "2025-05-30",
+      "2025-06-30",
+      "2025-07-31",
+      "2025-08-29",
+      "2025-09-30",
+      "2025-10-31",
+      "2025-11-28",
+      "2025-12-31",
+      "2026-01-30",
+      "2026-02-27",
+      "2026-03-30",
+      "2026-04-30",
+      "2026-05-29",
+      "2026-06-30"
+    ],
+    "n_folds": 35,
+    "eligible_rows_full_chain": 161942,
+    "test_window_matrix_rows": 45864
+  },
+  "config": {
+    "profile": "full",
+    "n_slots": 8,
+    "floor_cr": 0.375,
+    "cost_per_side_pct": 0.5,
+    "exit_gate": {
+      "mode": "escalate",
+      "escalate_after": 2
+    },
+    "start_capital": 1000000.0,
+    "walkforward_months": 36
+  },
+  "protocol": {
+    "window": "P41.split_slice test slice, recomputed from the DB cutoff every run",
+    "refit_semantics": "composite_2f is parameter-free: the monthly fit is the frozen decision function; per fold the harness asserts the function is the shipped two-feature composite and re-scores the refit month bit-identically around the fold's own scoring",
+    "no_peeking": "per fold: fold strictly after refit month; scored symbols inside the decision-date eligible snapshot; frozen decision function",
+    "slippage": "T+1 open (pre-impact) vs decision-close mark, per side, positive = worse than paper; means over completed-round-trip fills too",
+    "warm_adv": "each month's Market carries a 20-session pad before the decision window (E008b lesson); facts stay scoped to the window",
+    "benchmark": "Nifty 500 TRI (sourced: niftyindices.com total-return index, month-end marks) when index_tri holds data, else the interim monthly-rebalanced equal-weight adjusted-close proxy with as-of eligible membership; missing marks earn 0%. The active source is recorded in benchmark_source, and the Nifty 200 TRI (BRD \u00a711's large-cap reference) is reported alongside in benchmark_nifty200 when sourced. Benchmark CAGR/Sharpe are rebased to the strategy's test-month marks",
+    "benchmark_source": "Nifty 500 TRI (sourced, niftyindices.com; month-end marks)",
+    "engine_pass_mode": {
+      "mode": "escalate",
+      "escalate_after": 2
+    },
+    "costs": "engine costs at backtest.cost_per_side_pct + capped impact on real ADV"
+  },
+  "statistical_check": {
+    "selected": 2293,
+    "labeled": 1880,
+    "unlabeled": 413,
+    "top5_hits": 125,
+    "top5_hit_rate": 0.06648936170212766,
+    "baseline_p": 0.05,
+    "binomial_p_one_sided": 0.0009789931348827827,
+    "binomial_p_two_sided": 0.0017524891855407955,
+    "wilson95": [
+      0.05608844721796995,
+      0.07865827344269631
+    ],
+    "secondary_labels": {
+      "top_decile": {
+        "n": 1880,
+        "selected": 2293,
+        "hits": 219,
+        "hit_rate": 0.11648936170212766,
+        "wilson95": [
+          0.10276342666355241,
+          0.13177937774913515
+        ],
+        "baseline_p": 0.1,
+        "binomial_test": {
+          "one_sided_greater": 0.010668321143608038,
+          "two_sided_probability_ordered": 0.018982096367838826
+        }
+      },
+      "top20": {
+        "n": 1880,
+        "selected": 2293,
+        "hits": 39,
+        "hit_rate": 0.02074468085106383,
+        "wilson95": [
+          0.015212020747971948,
+          0.028231899884249297
+        ],
+        "note": "fixed top-20 label; null probability varies with the monthly scored universe, so no constant-p binomial test is claimed"
+      }
+    },
+    "positive_return_rate": 0.5648936170212766,
+    "mean_gross": 0.021263385406092062,
+    "mean_net_after_flat_cost": 0.011263385406092062
+  },
+  "engine": {
+    "fills": 260,
+    "non_fills": 3,
+    "non_fill_reasons": [
+      "suspended"
+    ],
+    "completed_picks": 125,
+    "pick_hit_rate": 0.28,
+    "month_hit_rate": 0.5428571428571428,
+    "cagr": -0.061435391495316294,
+    "sharpe_monthly": -0.42727113857821347,
+    "max_drawdown": -0.22991904945800834,
+    "benchmark_cagr": 0.12457495616414915,
+    "benchmark_sharpe": 0.8276581602325113,
+    "churn_per_month": 3.5428571428571427,
+    "twitchy": true,
+    "avg_holding_days": 58.891328619278006,
+    "picks_still_open": 0,
+    "final_equity": 835694.9754619987,
+    "total_return": -0.16430502453800133,
+    "slippage": {
+      "fills_measured": 260,
+      "mean_buy_slip_vs_mark_pct": 0.19512921631003372,
+      "mean_sell_slip_vs_mark_pct": -0.33413083492000595,
+      "realized_sides": 250,
+      "mean_realized_slip_vs_mark_pct": 0.12544280106192354
+    }
+  },
+  "benchmark_source": "Nifty 500 TRI (sourced, niftyindices.com; month-end marks)",
+  "benchmark_nifty200": {
+    "cagr": 0.12030931151219515,
+    "sharpe": 0.820612089262952,
+    "note": "BRD \u00a711's large-cap reference, reported alongside the Nifty 500 TRI benchmark; same construction, same window, not compared to the strategy's own curve"
+  },
+  "regime_table": {
+    "down": {
+      "months": 7,
+      "mean_net": 0.02211187032610241,
+      "mean_ic": 0.07787210589477633
+    },
+    "flat": {
+      "months": 15,
+      "mean_net": 0.0006298801790335091,
+      "mean_ic": 0.09050480221947158
+    },
+    "up": {
+      "months": 13,
+      "mean_net": 0.01679154413905881,
+      "mean_ic": 0.06878222958174117
+    }
+  },
+  "regime_table_nifty200": {
+    "down": {
+      "months": 7,
+      "mean_net": 0.02211187032610241,
+      "mean_ic": 0.07787210589477633
+    },
+    "flat": {
+      "months": 15,
+      "mean_net": 0.0006298801790335091,
+      "mean_ic": 0.09050480221947158
+    },
+    "up": {
+      "months": 13,
+      "mean_net": 0.01679154413905881,
+      "mean_ic": 0.06878222958174117
+    }
+  },
+  "buckets": {
+    "rows": [
+      {
+        "bucket": "601-1500",
+        "picks": 7,
+        "hit_rate": 0.2857142857142857,
+        "mean_return": -0.15131270645778616,
+        "churn_per_month": 0.17142857142857143
+      },
+      {
+        "bucket": "blended",
+        "picks": 125,
+        "hit_rate": 0.28,
+        "mean_return": -0.030104960677025887,
+        "churn_per_month": 3.5428571428571427
+      },
+      {
+        "bucket": "top200",
+        "picks": 118,
+        "hit_rate": 0.2796610169491525,
+        "mean_return": -0.022914670673082498,
+        "churn_per_month": 3.3714285714285714
+      }
+    ],
+    "blended": {
+      "picks": 125,
+      "hit_rate": 0.28,
+      "mean_return": -0.030104960677025887,
+      "churn_per_month": 3.5428571428571427,
+      "churny": true
+    },
+    "note": "Engine-pass bucket attribution (as-of decision-month buckets), assert_consistent() held inside the pass. Reconstructing buckets from the persisted fill_log alone overcounts (131 FIFO lots vs 125): the fill log is an event-ordering artifact of rebuild-from-log, not the engine's book \u2014 do not use it.",
+    "fill_reason_counts": {
+      "select": 7,
+      "replace": 128,
+      "trigger_b_stop": 26,
+      "monthly_review": 1,
+      "trigger_b_dma": 85,
+      "trigger_b_trail": 13
+    },
+    "buys_skipped_no_slot": [
+      {
+        "month": "2025-05-30",
+        "symbol": "BHARTIARTL",
+        "qty": 105
+      },
+      {
+        "month": "2025-06-30",
+        "symbol": "RELIANCE",
+        "qty": 46
+      }
+    ]
+  },
+  "per_feature_ic": {
+    "statistic": "Spearman IC vs next-month return over the test window only; monthly per labeled decision month + pooled over all test-window labeled rows (pooled != mean monthly \u2014 disclosed, no new multiple-testing claims)",
+    "composite_features": {
+      "mom_12m_1m": {
+        "mean_monthly_ic": 0.04430715730675353,
+        "pooled_ic": 0.038923413509978716,
+        "n": 42393
+      },
+      "delivery_pct": {
+        "mean_monthly_ic": 0.06816801368196637,
+        "pooled_ic": 0.08240144537986253,
+        "n": 44304
+      }
+    },
+    "all_features": [
+      {
+        "feature": "mom_1m",
+        "n": 44289,
+        "mean_monthly_ic": -0.013907875581991648,
+        "months_with_ic": 35,
+        "pooled_ic": -0.013739082167452187
+      },
+      {
+        "feature": "mom_3m",
+        "n": 44254,
+        "mean_monthly_ic": -0.0126844457675717,
+        "months_with_ic": 35,
+        "pooled_ic": -0.013118312294227752
+      },
+      {
+        "feature": "mom_6m",
+        "n": 44217,
+        "mean_monthly_ic": 0.006245960892784417,
+        "months_with_ic": 35,
+        "pooled_ic": -0.006866932650680676
+      },
+      {
+        "feature": "mom_12m_1m",
+        "n": 42393,
+        "mean_monthly_ic": 0.04430715730675353,
+        "months_with_ic": 35,
+        "pooled_ic": 0.038923413509978716
+      },
+      {
+        "feature": "volume_zscore",
+        "n": 43772,
+        "mean_monthly_ic": 0.01851112012079612,
+        "months_with_ic": 35,
+        "pooled_ic": 0.07285586466475699
+      },
+      {
+        "feature": "up_volume_20d",
+        "n": 43595,
+        "mean_monthly_ic": 0.009301745338251372,
+        "months_with_ic": 35,
+        "pooled_ic": 0.010118687202846963
+      },
+      {
+        "feature": "down_volume_20d",
+        "n": 43595,
+        "mean_monthly_ic": 0.019247205510845463,
+        "months_with_ic": 35,
+        "pooled_ic": 0.023098582679751154
+      },
+      {
+        "feature": "up_down_volume_ratio",
+        "n": 43442,
+        "mean_monthly_ic": -0.023682963392723733,
+        "months_with_ic": 35,
+        "pooled_ic": -0.028418907903906235
+      },
+      {
+        "feature": "breakout_volume_confirmed",
+        "n": 43584,
+        "mean_monthly_ic": 0.000494782691936646,
+        "months_with_ic": 35,
+        "pooled_ic": 0.002084026543388363
+      },
+      {
+        "feature": "delivery_pct",
+        "n": 44304,
+        "mean_monthly_ic": 0.06816801368196637,
+        "months_with_ic": 35,
+        "pooled_ic": 0.08240144537986253
+      },
+      {
+        "feature": "delivery_pct_zscore",
+        "n": 43772,
+        "mean_monthly_ic": 0.033088502444998426,
+        "months_with_ic": 35,
+        "pooled_ic": 0.0501921240934661
+      },
+      {
+        "feature": "delivery_pct_trend",
+        "n": 43801,
+        "mean_monthly_ic": 0.03478454833341563,
+        "months_with_ic": 35,
+        "pooled_ic": 0.04816924612902546
+      },
+      {
+        "feature": "delivery_spike_while_flat",
+        "n": 43709,
+        "mean_monthly_ic": 0.0074080515518761955,
+        "months_with_ic": 35,
+        "pooled_ic": 0.0050478185020369675
+      },
+      {
+        "feature": "atr_ratio",
+        "n": 43761,
+        "mean_monthly_ic": -0.051612006965015784,
+        "months_with_ic": 35,
+        "pooled_ic": 0.04336069024846452
+      },
+      {
+        "feature": "nr7",
+        "n": 43967,
+        "mean_monthly_ic": -0.016792159422435872,
+        "months_with_ic": 35,
+        "pooled_ic": -0.030355290609699506
+      },
+      {
+        "feature": "squeeze_days_20d",
+        "n": 43595,
+        "mean_monthly_ic": -0.01724409792487937,
+        "months_with_ic": 35,
+        "pooled_ic": -0.037272923390463085
+      },
+      {
+        "feature": "range_compression_20d",
+        "n": 43309,
+        "mean_monthly_ic": -0.0581519932686982,
+        "months_with_ic": 35,
+        "pooled_ic": 0.034751086812278766
+      },
+      {
+        "feature": "close_in_range",
+        "n": 44258,
+        "mean_monthly_ic": -0.03639385404769196,
+        "months_with_ic": 35,
+        "pooled_ic": -0.1341469954512744
+      },
+      {
+        "feature": "upper_wick_ratio",
+        "n": 44258,
+        "mean_monthly_ic": -0.0007144638117607869,
+        "months_with_ic": 35,
+        "pooled_ic": 0.009871749317946283
+      },
+      {
+        "feature": "lower_wick_ratio",
+        "n": 44258,
+        "mean_monthly_ic": -0.013604804378643963,
+        "months_with_ic": 35,
+        "pooled_ic": -0.028487067249364586
+      },
+      {
+        "feature": "consec_higher_lows",
+        "n": 44245,
+        "mean_monthly_ic": -0.02184361904202662,
+        "months_with_ic": 35,
+        "pooled_ic": -0.06126174156113812
+      },
+      {
+        "feature": "big_body_day_in_trend",
+        "n": 43584,
+        "mean_monthly_ic": -0.0023054064647964776,
+        "months_with_ic": 35,
+        "pooled_ic": 0.027734662823681894
+      }
+    ]
+  },
+  "baseline_comparison": {
+    "baseline": {
+      "label": "E011 arm A8 (4 months before the selection/benchmark corrections; floor 0.75, 8 slots)",
+      "final_equity": 892626.0949598341,
+      "total_return": -0.10737390504016586,
+      "cagr": -0.03932933422550311,
+      "sharpe_monthly": -0.28905295748630266,
+      "max_drawdown": -0.23917323976536975,
+      "benchmark_cagr": 0.0848129150949104,
+      "benchmark_sharpe": 0.4958280901773682,
+      "completed_picks": 125,
+      "pick_hit_rate": 0.32,
+      "month_hit_rate": 0.6285714285714286,
+      "churn_per_month": 3.4571428571428573,
+      "avg_holding_days": 53.4747282393081,
+      "fills": 258,
+      "non_fills": 0,
+      "slippage": {
+        "fills_measured": 258,
+        "mean_buy_slip_vs_mark_pct": -0.09901801431565384,
+        "mean_sell_slip_vs_mark_pct": -0.3057865481271637,
+        "realized_sides": 250,
+        "mean_realized_slip_vs_mark_pct": -0.1301366950283452
+      },
+      "paper": {
+        "picks": 2196,
+        "positive_return_rate": 0.5656,
+        "mean_gross": 0.023237,
+        "mean_net_after_flat_cost": 0.013237
+      }
+    },
+    "current": {
+      "final_equity": 835694.9754619987,
+      "total_return": -0.16430502453800133,
+      "cagr": -0.061435391495316294,
+      "sharpe_monthly": -0.42727113857821347,
+      "max_drawdown": -0.22991904945800834,
+      "benchmark_cagr": 0.12457495616414915,
+      "completed_picks": 125,
+      "pick_hit_rate": 0.28,
+      "month_hit_rate": 0.5428571428571428,
+      "churn_per_month": 3.5428571428571427,
+      "avg_holding_days": 58.891328619278006,
+      "fills": 260,
+      "non_fills": 3,
+      "slippage": {
+        "fills_measured": 260,
+        "mean_buy_slip_vs_mark_pct": 0.19512921631003372,
+        "mean_sell_slip_vs_mark_pct": -0.33413083492000595,
+        "realized_sides": 250,
+        "mean_realized_slip_vs_mark_pct": 0.12544280106192354
+      }
+    },
+    "deltas": {
+      "equity_rs": -56931.1194978354,
+      "total_return_pp": -5.693111949783547,
+      "cagr_pp": -2.2106057269813184,
+      "sharpe": -0.1382181810919108,
+      "max_drawdown_pp": 0.925419030736141
+    },
+    "not_apples_to_apples": "The E011 A8 baseline ran the OLD harness methodology: selection from the label-available subset only (pre-correction), a raw-close benchmark proxy (pre-correction), and the 0.75 floor. The current run is the corrected harness at the shipped 0.375 floor, and its benchmark is now the SOURCED Nifty 500 TRI (was the EW adj-close proxy in both the baseline and the first corrected report) \u2014 so even benchmark_cagr is not comparable to the baseline's +8.48%. Three things moved at once, so the delta is NOT causally attributable to the floor change: E012 documented that under the OLD methodology a 0.375-floor re-run matched A8 bit-identically (equity 892,626.095, 2,212 paper picks; only HARDWYN's trigger label changed monthly_review -> trigger_b_dma, churn 3.457 -> 3.486). Read the delta as the combined corrected-methodology + shipped-config effect on one shared window, not as the floor's effect.",
+    "e012_old_methodology_equivalence": {
+      "floor_0375_vs_075_at_old_methodology": "bit-identical equity 892,626.095; 2,212 paper picks; churn 3.457 -> 3.486 (HARDWYN trigger label)"
+    }
+  },
+  "trigger_timing_diagnostic": {
+    "source": "runs\\walkforward\\harness_results.json",
+    "conventions": {
+      "delta_rs": "qty x (close_at_exit_month_decision_date - exec_px); POSITIVE = the rule sold cheaper than the month-end it skipped (destroyed)",
+      "counterfactual": "the month-end review cadence, not 'sell never'; costs cancel, impact differences second-order",
+      "excluded": "no month-end mark (delisted/suspended) -> no_cf, outside the ranking; still-open lots reported separately"
+    },
+    "trigger_ranking": [
+      {
+        "trigger": "trigger_b_dma",
+        "lots": 87,
+        "hit_rate": 0.42528735632183906,
+        "mean_return": 0.017122599943181847,
+        "total_delta_rs": 97831.54720450692,
+        "mean_delta_rs": 1124.5005425805393,
+        "no_cf": 0
+      },
+      {
+        "trigger": "trigger_b_stop",
+        "lots": 22,
+        "hit_rate": 0.0,
+        "mean_return": -0.174439844036013,
+        "total_delta_rs": 28642.881231667514,
+        "mean_delta_rs": 1301.949146893978,
+        "no_cf": 0
+      },
+      {
+        "trigger": "monthly_review",
+        "lots": 4,
+        "hit_rate": 0.25,
+        "mean_return": -0.03477648122487395,
+        "total_delta_rs": 1297.540206361682,
+        "mean_delta_rs": 324.3850515904205,
+        "no_cf": 0
+      },
+      {
+        "trigger": "trigger_b_trail",
+        "lots": 12,
+        "hit_rate": 0.16666666666666666,
+        "mean_return": -0.006024683569255136,
+        "total_delta_rs": -11654.576236254085,
+        "mean_delta_rs": -971.2146863545071,
+        "no_cf": 0
+      }
+    ],
+    "total_timing_delta_rs": 116117.39240628203,
+    "symbol_concentration": {
+      "top_syms_rs": [
+        [
+          "BSE",
+          87395.84787976588
+        ],
+        [
+          "RELIANCE",
+          32013.24278001614
+        ],
+        [
+          "SBIN",
+          23998.50769524534
+        ],
+        [
+          "VESUVIUS",
+          15461.42510680672
+        ],
+        [
+          "BHARTIARTL",
+          13426.674574756371
+        ]
+      ],
+      "trigger_ranking_excluding": "BSE",
+      "trigger_ranking_excluding_deltas": {
+        "trigger_b_dma": 74310.27025766905,
+        "monthly_review": 1297.540206361682,
+        "trigger_b_stop": -7813.5603297814605,
+        "trigger_b_trail": -39072.70560773315
+      }
+    },
+    "note": "\u00a711-reporting-spirit diagnostic on THIS run: how much P&L each sell trigger's timing destroyed or saved vs holding to the month-end review counterfactual. Positive delta = the rule sold cheaper than the month-end it skipped (destroyed)."
+  },
+  "artifacts": {
+    "equity_csv": "phase6_section11_equity.csv",
+    "equity_png": "phase6_section11_equity.png",
+    "monthly_csv": "phase6_section11_monthly.csv",
+    "ic_csv": "phase6_section11_ic.csv",
+    "buckets_csv": "phase6_section11_buckets.csv",
+    "monthly_rows": 35,
+    "ic_rows": 22,
+    "bucket_rows": 2
+  },
+  "runtime_seconds": 30.7
+}
