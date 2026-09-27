@@ -1640,6 +1640,37 @@ from scratch.**
   (2015-02-28, 2016-10-30) where the sourced index's own month-end marks disagree with the
   equity calendar. Nothing committed.
 
+## Break-even arithmetic - pick edge vs holding horizon: the edge is not a 1-month artifact (2026-09-27, decision basis for E016)
+
+- **Why:** every engine configuration ever measured loses to the index while the raw picks
+  carry ~+2.8%/month gross. Before spending another experiment inside the monthly-rebalance
+  architecture, one number decides whether the architecture (churn x costs) is the binding
+  constraint: does the pick edge survive longer holding periods? Computed by
+  `experiments/016_low_turnover/breakeven.py` (assert-checked, re-runnable).
+- **Method:** the 145-month validation slice, the smoke's labeled picks (4,579 == the E012
+  pin, exact), overlap-free h-month books (enter at month i's picks, hold h, next entry at
+  i+h). Three estimators: LABEL chains `next_month_ret` but must drop legs whose symbol
+  loses its label mid-hold (12.6% of h=3 legs — optimistic, they are disproportionately
+  delistings); DEAD books every missing mid-hold label as a -100% leg (pessimistic bound);
+  PRICE uses actual `adj_close` month-end marks — entry at the entry month's own mark, exit
+  at the symbol's last traded mark on or before the exit month (sell-at-last-trade delisting
+  proxy), no leg dropped. Costs follow E006: 0.4% per round trip; h>1 pays one round trip
+  per hold. Guards: h=1 label gross reproduces the smoke's committed `mean_gross` to 0.0e+00
+  and legs == 4,579; net identity exact; LABEL >= PRICE at every horizon.
+- **Result (net per month, PRICE estimator):** 1m **2.35%**, 3m 2.27%, 6m 2.15%, 12m
+  **2.04%**. Bounds: LABEL 2.41/2.39/2.46/2.26; DEAD 2.41/**-2.13/-1.40/-0.48** — the
+  dead-leg worst case flips the sign, which is precisely the survivorship trap, and is why
+  the price-path estimator is the decision basis. The decay from 1m to 12m is ~0.31pp/month
+  of holding — while round trips fall from 12 per year to 1.
+- **Reading:** the pick edge is NOT concentrated in the first month; a 12-month hold keeps
+  ~87% of the monthly edge while paying ~8% of the monthly-rebalance cost load. The engine's
+  architecture — monthly churn x 0.5%/side x impact caps (E010) — is the difference between
+  a +2%+/month raw edge and a -6% CAGR engine. This is the decision basis for E016: the
+  low-turnover variant is the highest-expected-value experiment left inside this signal.
+  (Caveats, deliberate: equal-weight mean of leg returns, not the portfolio's slot-weighted
+  path; no fill-gate refusals, no ADV impact cap, mid-hold trail/trigger exits not modeled —
+  those are what E016 itself must test through the real engine.)
+
 ## Pipeline repair - adj_close session coverage: seven Yahoo-less sessions, derived from bhav (2026-09-27, uncommitted; working tree on `b38f0b3`)
 
 - **What was missing:** `adj_close` has no row at all for 7 sessions bhav (series EQ) traded -
