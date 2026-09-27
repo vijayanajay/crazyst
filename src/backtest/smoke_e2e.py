@@ -226,7 +226,8 @@ def _engine_pass(cfg, mode: str, after, sessions, by_month, months, picks_by_mon
                  val, market_warm=0, engine_months_limit=ENGINE_MONTHS_LIMIT,
                  portfolio_overrides: dict | None = None,
                  regime_off: set[str] | None = None,
-                 regime_liquidate: bool = False) -> dict:
+                 regime_liquidate: bool = False,
+                 size_scale: dict[str, dict[str, float]] | None = None) -> dict:
     """One engine pass over the first 12 consecutive slice months at exit_gate
     mode=`mode` (after = escalate_after). Verbatim body of the original inline pass; the
     only mode-dependent wiring is `backtest.exit_gate` in the test config.
@@ -237,7 +238,13 @@ def _engine_pass(cfg, mode: str, after, sessions, by_month, months, picks_by_mon
     position at those month-ends (trigger `regime`). Either way no new buys are submitted
     in a risk-off month. The signal itself is the caller's (E013: Nifty 200 TRI vs its
     200-session DMA, known at that month's close — fills still follow the normal T+1
-    path)."""
+    path).
+
+    E015 test hook, INERT by default (`size_scale=None` — the harness's shipped call passes
+    neither, so the shipped result cannot move): month -> symbol -> slot-notional multiplier
+    (1.0 for any symbol/month absent from the map). A buy's order qty becomes
+    `floor(per_slot * scale / px)`; the scale is the caller's (E015: clip(median sigma / own
+    sigma), normalized over the month's pool). No scale is applied to sells."""
     tcfg = _cfg_test()
     tcfg["backtest"]["exit_gate"] = {"mode": mode, "escalate_after": after}
     # n_slots follows the SHIPPED config (E011 ADOPTed 8) - a hardcoded value would let the
@@ -374,7 +381,8 @@ def _engine_pass(cfg, mode: str, after, sessions, by_month, months, picks_by_mon
             per_slot = cash / free_slots
             for d in buys[:free_slots]:
                 px = engine.price_on(d.symbol, m)
-                qty = math.floor(per_slot / px) if px else 0
+                scale = 1.0 if size_scale is None else size_scale.get(m, {}).get(d.symbol, 1.0)
+                qty = math.floor(per_slot * scale / px) if px else 0
                 if qty <= 0:
                     continue
                 decisions_log.append({"month": m, "action": "buy", "symbol": d.symbol,

@@ -25,6 +25,9 @@ experiment's `results.json`.
 | E010 | E006's cost sensitivity re-measured on the E009 floor universe (the only change): edge-halving point, absolute net at 0.2%, impact decomposition at the shipped slot. MOVE default to 0.2% iff net >= 2.0% AND >600 halving point relaxes AND floor-arm impact <= 80% of pre-floor AND gross >= 2.3% | **kept 0.5%/side** - backward guard reproduced E006 exactly (6,622 picks, means within tie-swap tol, half-edge None); floor arm nets 2.36% at 0.2% (a PASS), gross 2.76% (d PASS), modelled pick impact 0.565% -> 0.139%/side (c PASS, 4x). Criterion (b) FAILED conservatively: the >600 halving point TIGHTENS (E006's warning never bound pre-floor - it was masked by untradable gems; on the tradable book the >600 edge halves at 1.0%). Headline mechanism: E006's flat 0.5% default was almost exactly the mean modelled impact of a paper portfolio the engine refuses to build (0.565%); the honest cost stack on the tradable book is flat ~0.35% + impact 0.14% = ~0.5%. Default grounded, not hand-waved. See 2026-09-26 E010 block | 2026-09-26 |
 | E011 | Slot-count attribution on the Phase 6.1 walk-forward harness: arms A4 (shipped control, zero-drift guard vs the baseline run), A8, A12, B8 (8 slots + wider review percentiles, churn control). ADOPT a wider count iff equity >= A4 + Rs200k AND Sharpe higher AND maxDD no worse than A4 - 2pp AND pick hit >= A4 - 3pp; between passing arms the higher final equity wins; ties keep 4 | **adopted n_slots = 8** - A4 reproduced the shipped baseline bit-for-bit; 8 slots recovered Rs402,923 of the Rs510,297 loss (489,703 -> 892,626; -51.0% -> -10.7%; maxDD -65.2% -> -23.9%; Sharpe -0.38 -> -0.29) with the completed-pick hit rate unchanged (33% -> 32%): the realized loss was CONCENTRATION, not selection. A12 cleared the bars too but lost to A8 on final equity (731,870); B8 ruled the churn rise (1.66 -> 3.46/mo) a slot artifact, not ranking pressure (wider percentiles: -Rs10,159, churn 3.43). Buy-side slippage vs the decision mark FLIPPED +0.441% -> -0.099%/side at the halved per-slot notional - part execution gain, part diversification; the held-constant-notional decomposition arm is pre-declared as the follow-up. Config n_slots 4 -> 8 with this row cited. See 2026-09-26 E011 block | 2026-09-26 |
 | E012 | The E009 floor re-measured at the E011 8-slot notional (S=Rs125k, gate boundary 0.25cr): arms floor 0.375 / 0.5 / 0.75 through the real chain, baseline 0.0 guarded bit-identical to E009's R1 rows + restore IC = P4.1b frozen + the 0.75 arm = E009's R2 verbatim. ADOPT the LOOSEST floor clearing: corrected mean >= 0.75's - 5bp, paired t >= -2 vs baseline, refusal <= 1/3 of un-floored, floor >= gate boundary | **adopted 0.375** (boundary x E009's own 1.5x headroom - derived, not tuned): refusal 1.14%, corrected mean +2.692% vs +2.632% at 0.75, IC 0.0717 vs 0.0675, modelled impact 0.092%/side vs the 0.5% cost stack. Answer: the floor MUST move with slot size - it is derived from the gate boundary, which scales with per-slot notional. Disclosure: the runner initially reported 0.5 (candidate order inverted the pre-registered 'loosest wins'); caught pre-adoption, fixed, re-run - every measured number identical. Config 0.75 -> 0.375; smoke re-pinned (4,579 picks, IC = E012 arm); harness reference re-run bit-identical equity 892,626.09 (one trigger label moved: HARDWYN 2023-09 rank exit -> DMA). See 2026-09-26 E012 block | 2026-09-26 |
+| E013 | The shelved index regime filter (BRD §15: Nifty 200 TRI vs its 200-session DMA), measured on the realized 35-month harness window: arms BUY_BLOCK / CASH (diagnostic) at risk-off fold month-ends. PASS = all three pre-registered bars (CAGR, drawdown severity, Sharpe) vs the shipped baseline, with a hair-trigger probe (2024-12-31, ratio 0.9990, forced risk-ON) | **passed, NOT adopted** — baseline 835,695 / −6.14% CAGR / −0.427 Sharpe / −22.99% maxDD; CASH 883,270 / −4.29% / −0.244 / −19.55%; NO_BUYS 886,195 / −4.18% / −0.235 (better than CASH — the liquidation leg adds nothing); forced-risk-on probe 873,170 / −4.68% / −0.273 / −20.47%, the gain survives. NOT adopted: the test window is burned for this rule family, the gate's 8 intervals were the baseline's *better* ones in aggregate (attribution), and VIX still has no data path. Disclosed sign slip in the hypothesis (maxDD is a negative fraction; the prose governs, the literal signed reading is recorded as REJECTED). E014 later rejected the premise on the validation slice. See 2026-09-27 E013 block | 2026-09-27 |
+| E014 | The risk-off buy-block re-run on the 145-month validation slice (test window untouched) across 6 pre-named episodes: B1 the baseline is worse inside gated intervals (mean d < 0 at one-sided p < 0.05, n ≥ 10); B2 ≥ ceil(2/3) counted episodes gate-favored | **rejected** — mean d = +0.542%, p(gate helps) = 0.654; the baseline's engine return was +0.754%/mo (sd 8.26%) in the gate's 35 intervals vs −0.026% (sd 5.50%) in the other 109 — risk-off marks VOLATILE months, not losing ones; 3/5 counted episodes gate-favored, 4 needed. The arm's whole-slice equity advantage (1,108,821 vs 942,030; maxDD −46.5% vs −65.6%) traces to exposure / variance drag, not timing. Index leg closed; no config change. See 2026-09-27 E014 block | 2026-09-27 |
+| E015 | Signal-free slot sizing by own-name volatility on the same slice: A baseline, B EQUAL_RISK_MEAN1 = clip(σ_med/σ, 0.5, 2.0) normalized so the month's pool mean scale is exactly 1.0 (unchanged average exposure), C DERISK_CAP = clip(…, 1.0) unnormalized (diagnostic). PASS iff B's maxDD severity gain ≥ R/3 (R = E014's committed relief 19.07pp) AND CAGR ≥ A − 1.00pp AND better DD in ≥ 3 of 6 episodes AND B's mean invested share within ±2.00pp of A's | **failed** — all guards passed (hook inert, A == E014 baseline, picks 5,605, IC pin, σ PIT 1.4e-17, exposure −0.49pp): B's drawdown gain **−1.93pp** (−10% of R) at CAGR −2.13% vs −0.50%, maxDD WORSE (−67.51% vs −65.58%). B's arithmetic mean fell 0.149pp/mo (sd 6.31% → 6.17%): equal-risk weighting is a bet against the composite's own alpha concentration. C captured 17.8% of R (3.40pp) with CAGR +0.21pp better — directional confirmation of E014's variance-drag mechanism, ~1/5 of the relief, and C removed 1.5pp of mean invested share to do it: the relief scales with exposure ACTUALLY removed. No config change; sizing family closed on the slice. See 2026-09-27 E015 block | 2026-09-27 |
 
 ---
 
@@ -1636,5 +1639,52 @@ from scratch.**
   `regime_liquidate`); E014's signal sampler documents the two special-session folds
   (2015-02-28, 2016-10-30) where the sourced index's own month-end marks disagree with the
   equity calendar. Nothing committed.
+
+## Experiment E015 - volatility-scaled slot sizing at unchanged average exposure: the relief is not reachable by sizing (2026-09-27, profile `full`)
+
+- **Why:** E014 rejected the index regime filter as timing and traced its whole-slice edge
+  to exposure / variance drag (baseline arithmetic +0.164%/mo at 6.29% sd, geometric
+  −0.041%/mo, so ANY exposure reduction improves the geometric path signal-free). If
+  exposure is the mechanism, a signal-free sizing rule should buy part of the relief back.
+  Pre-registered in `experiments/015_exposure_sizing/hypothesis.md` before the run (BRD 12).
+- **Design:** 145-month validation slice, test window untouched. σ = trailing 60 sessions
+  of adj-close log returns ending at the fold's decision date (≥ 40 required, else no view
+  and scale 1.0), σ_med over the month's pool = eligible with rank_pct ≤ 0.15 (the engine's
+  own replace pool). Arms: A baseline (hook absent), B EQUAL_RISK_MEAN1 (normalized so the
+  pool mean scale is exactly 1.0 — unchanged average exposure), C DERISK_CAP (diagnostic).
+- **Guards, all passed:** G1a the hook is inert — the 12-month smoke escalate prefix is
+  bit-equal; G1b arm A == E014's committed `arms.baseline` exactly; G2 picks 5,605 == pin,
+  IC 0.0717179780 == E012; G3 σ point-in-time — every 40th (month, symbol) pair (364)
+  recomputed from a fresh per-pair query, max abs diff 1.4e-17; G4 B's mean invested share
+  67.4% vs A's 67.9% (−0.49pp, tol ±2.00) — B is mean-1 in fact, not just by construction;
+  G5 pool mean scale exactly 1.0 for all 144 σ-bearing months, C max scale 1.000.
+- **Verdict: FAILED** (B1 fails, B2 passes trivially 3/6 episodes). B: equity 772,093
+  (−22.79%), CAGR −2.13%, Sharpe 0.009, maxDD −67.51%, invested 67.4%, mean buy scale
+  1.040 — drawdown gain −1.93pp (−10% of E014's 19.07pp relief) and CAGR 1.63pp worse. C:
+  965,412 (−3.46%), CAGR −0.29%, maxDD −62.19% — gain +3.40pp (17.8% of R) with CAGR
+  0.21pp BETTER, at 66.4% mean invested share.
+- **Mechanism:** B's tilt moves weight out of the volatile names into the calm ones; the
+  realized book keeps its return in the volatile names, so the arithmetic mean fell
+  0.149pp/mo (sd 6.31% → 6.17%) and the geometric path got worse (−0.179% vs −0.041%/mo).
+  Equal-risk weighting is a bet against the composite's own alpha concentration. C keeps
+  the arithmetic edge (+0.165%) and cuts the sd to 6.09% (geometric −0.024%) — the E014
+  variance-drag channel — but it removed only 1.5pp of mean invested share and captured
+  ~18% of the relief: the relief scales with exposure ACTUALLY REMOVED, and a mean-1 rule
+  removes none. B's episode DDs were better in all three crises (2018_ilfs, 2020_covid,
+  2022_rates) and worse in the other three; resized buys 12 vs A's 3 (upscaled buys
+  hitting the cash constraint, disclosed in the hypothesis).
+- **Disclosures:** the 0.375 floor is derived at the equal-weight notional (E012) and is
+  NOT re-derived per arm, so no refusal rate is compared to the shipped 1.14%; 13.2% of
+  pool symbol-months carry no σ (scale 1.0); `adj_close` has zero rows for the 2019-03-29
+  session (bhav has it — one vendor gap in the adjusted-close feed), so that fold has no σ
+  view and behaves as baseline (pipeline observation for the refresh/backfill task;
+  month-end marks fall back a day there); weights drift after entry (the engine never
+  rebalances), so B equalizes entry-notional risk only — volatility-scaled slot sizing,
+  not risk parity.
+- **Consequences:** no config change, nothing promoted; BRD §7 amended (the sizing half is
+  now tested and rejected); the sizing family is closed on the validation slice — a re-open
+  needs a different mechanism (an explicit exposure target) with a fresh pre-registration
+  and E012's floor re-derivation per arm. The inert `size_scale` hook stays in
+  `smoke_e2e._engine_pass` (default `None` = bit-identical, re-proved by G1a on every run).
 
 ---
