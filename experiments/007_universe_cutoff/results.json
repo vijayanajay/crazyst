@@ -1,0 +1,124 @@
+{
+  "experiment": "E007_universe_cutoff",
+  "profile": "full",
+  "git_hash": "a8cc624640dfeecf5e98a9f25177a7fed547c353",
+  "hypothesis": "D:\\Code\\crazyst\\experiments\\007_universe_cutoff\\hypothesis.md",
+  "data_cutoff": "2026-09-24",
+  "validation_boundary": "2023-09-24",
+  "arms": {
+    "top_1500": {
+      "chain_seconds": 58.84399999999732,
+      "shape": {
+        "decision_months": 183,
+        "matrix_rows": 218648,
+        "labeled_rows": 178171,
+        "eligible_symbol_months": 218648,
+        "eligible_in_1000": 161422,
+        "eligible_1001_1500": 57226,
+        "median_turnover_cr_rank1000": 4.12436778125,
+        "median_turnover_cr_rank1500": 1.360564849,
+        "share_eligible_below_5cr": 0.6281328893929969
+      },
+      "mean_monthly_ic": 0.068124322948439,
+      "ic_months": 145,
+      "pick_count": 6622,
+      "pick_hit_rate": 0.546360616128058,
+      "mean_pick_ret": 0.03437525683147779,
+      "boundary": "2023-09-24",
+      "cutoff": "2026-09-24",
+      "engine_pass": {
+        "fills": 46,
+        "non_fills": 4,
+        "non_fill_reasons": [
+          "non_fill_adv"
+        ],
+        "forced_exits": [
+          {
+            "month": "2011-11-30",
+            "symbol": "SOLARINDS",
+            "qty": -372,
+            "impact_pct": 0.014201097991176576,
+            "fill_date": "2011-11-01"
+          }
+        ],
+        "completed_picks": 20,
+        "pick_hit_rate": 0.25,
+        "churn_per_month": 1.5833333333333333,
+        "final_equity": 1039153.8483922755,
+        "total_return": 0.039153848392275536,
+        "exit_gate": {
+          "mode": "escalate",
+          "escalate_after": 2
+        }
+      }
+    },
+    "top_1000": {
+      "chain_seconds": 54.39100000000326,
+      "shape": {
+        "decision_months": 183,
+        "matrix_rows": 161422,
+        "labeled_rows": 132325,
+        "eligible_symbol_months": 161422,
+        "eligible_in_1000": 161422,
+        "eligible_1001_1500": 0,
+        "median_turnover_cr_rank1000": 4.12436778125,
+        "median_turnover_cr_rank1500": 1.360564849,
+        "share_eligible_below_5cr": 0.50122040366245
+      },
+      "mean_monthly_ic": 0.06954030795853709,
+      "ic_months": 145,
+      "pick_count": 5047,
+      "pick_hit_rate": 0.5555775708341589,
+      "mean_pick_ret": 0.02814704663442294,
+      "boundary": "2023-09-24",
+      "cutoff": "2026-09-24",
+      "engine_pass": {
+        "fills": 48,
+        "non_fills": 3,
+        "non_fill_reasons": [
+          "non_fill_adv"
+        ],
+        "forced_exits": [
+          {
+            "month": "2011-11-30",
+            "symbol": "NAUKRI",
+            "qty": -333,
+            "impact_pct": 0.04019728281273563,
+            "fill_date": "2011-11-01"
+          }
+        ],
+        "completed_picks": 21,
+        "pick_hit_rate": 0.23809523809523808,
+        "churn_per_month": 1.75,
+        "final_equity": 1023771.3826146026,
+        "total_return": 0.023771382614602654,
+        "exit_gate": {
+          "mode": "escalate",
+          "escalate_after": 2
+        }
+      }
+    },
+    "restore_check": {
+      "mean_monthly_ic": 0.068124322948439,
+      "pick_count": 6622,
+      "shape": {
+        "decision_months": 183,
+        "matrix_rows": 218648,
+        "labeled_rows": 178171,
+        "eligible_symbol_months": 218648,
+        "eligible_in_1000": 161422,
+        "eligible_1001_1500": 57226,
+        "median_turnover_cr_rank1000": 4.12436778125,
+        "median_turnover_cr_rank1500": 1.360564849,
+        "share_eligible_below_5cr": 0.6281328893929969
+      }
+    }
+  },
+  "paired_ic_comparison": {
+    "n_months": 145,
+    "mean_diff": -0.001415985010098097,
+    "t": -0.5726898228159459,
+    "p": 0.5677478393610168
+  },
+  "runtime_seconds": 217.2
+}

@@ -1,0 +1,2405 @@
+{
+  "experiment": "E008b_breadth_intra_month",
+  "profile": "full",
+  "git_hash": "a8cc624640dfeecf5e98a9f25177a7fed547c353",
+  "data_cutoff": "2026-09-24",
+  "validation_boundary": "2023-09-24",
+  "breadth_days": 3675,
+  "first_breadth_day": "2011-10-20",
+  "tighten_pp": 4.0,
+  "thresholds": [
+    30.0,
+    40.0,
+    50.0
+  ],
+  "sanity_member_recompute": [
+    {
+      "date": "2017-06-30",
+      "breadth_200": 74.67532467532467,
+      "n_top200": 154,
+      "python_share": 74.67532467532467,
+      "python_n": 154
+    },
+    {
+      "date": "2018-10-25",
+      "breadth_200": 22.699386503067483,
+      "n_top200": 163,
+      "python_share": 22.699386503067483,
+      "python_n": 163
+    },
+    {
+      "date": "2020-03-23",
+      "breadth_200": 4.142011834319527,
+      "n_top200": 169,
+      "python_share": 4.1420118343195265,
+      "python_n": 169
+    }
+  ],
+  "trough_2020_03": {
+    "min_date": "2020-03-23",
+    "min_breadth": 4.142011834319527,
+    "month_end": 15.476190476190476,
+    "trough_at_or_below_month_end": true
+  },
+  "stress_visibility": {
+    "avg_2018_09_10": 33.20807042688432,
+    "avg_2017_06_08": 78.94163134620486
+  },
+  "windows": {
+    "W0_calm_2017": {
+      "off": {
+        "window": "W0_calm_2017",
+        "arm": "off",
+        "threshold": null,
+        "cadence": null,
+        "final_equity": 968343.4747211454,
+        "total_return": -0.03165652527885465,
+        "max_drawdown": 0.057885170690704646,
+        "gate_fires": [],
+        "n_gate_fires": 0,
+        "trail_exits": 0,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "PODDARMENT",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "BEARDSELL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "ENDURANCE",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "VHL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-07-06",
+            "action": "sell",
+            "symbol": "ENDURANCE",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "SBIN",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "AXISBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "AXISBANK",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "ICICIBANK",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "SBIN",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-07",
+            "action": "sell",
+            "symbol": "RELIANCE",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-31",
+            "action": "buy",
+            "symbol": "YESBANK",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "daily_30": {
+        "window": "W0_calm_2017",
+        "arm": "daily_30",
+        "threshold": 30.0,
+        "cadence": "daily",
+        "final_equity": 968343.4747211454,
+        "total_return": -0.03165652527885465,
+        "max_drawdown": 0.057885170690704646,
+        "gate_fires": [],
+        "n_gate_fires": 0,
+        "trail_exits": 0,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "PODDARMENT",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "BEARDSELL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "ENDURANCE",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "VHL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-07-06",
+            "action": "sell",
+            "symbol": "ENDURANCE",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "SBIN",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "AXISBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "AXISBANK",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "ICICIBANK",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "SBIN",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-07",
+            "action": "sell",
+            "symbol": "RELIANCE",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-31",
+            "action": "buy",
+            "symbol": "YESBANK",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "weekly_30": {
+        "window": "W0_calm_2017",
+        "arm": "weekly_30",
+        "threshold": 30.0,
+        "cadence": "weekly",
+        "final_equity": 968343.4747211454,
+        "total_return": -0.03165652527885465,
+        "max_drawdown": 0.057885170690704646,
+        "gate_fires": [],
+        "n_gate_fires": 0,
+        "trail_exits": 0,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "PODDARMENT",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "BEARDSELL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "ENDURANCE",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "VHL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-07-06",
+            "action": "sell",
+            "symbol": "ENDURANCE",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "SBIN",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "AXISBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "AXISBANK",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "ICICIBANK",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "SBIN",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-07",
+            "action": "sell",
+            "symbol": "RELIANCE",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-31",
+            "action": "buy",
+            "symbol": "YESBANK",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "daily_40": {
+        "window": "W0_calm_2017",
+        "arm": "daily_40",
+        "threshold": 40.0,
+        "cadence": "daily",
+        "final_equity": 968343.4747211454,
+        "total_return": -0.03165652527885465,
+        "max_drawdown": 0.057885170690704646,
+        "gate_fires": [],
+        "n_gate_fires": 0,
+        "trail_exits": 0,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "PODDARMENT",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "BEARDSELL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "ENDURANCE",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "VHL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-07-06",
+            "action": "sell",
+            "symbol": "ENDURANCE",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "SBIN",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "AXISBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "AXISBANK",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "ICICIBANK",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "SBIN",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-07",
+            "action": "sell",
+            "symbol": "RELIANCE",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-31",
+            "action": "buy",
+            "symbol": "YESBANK",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "weekly_40": {
+        "window": "W0_calm_2017",
+        "arm": "weekly_40",
+        "threshold": 40.0,
+        "cadence": "weekly",
+        "final_equity": 968343.4747211454,
+        "total_return": -0.03165652527885465,
+        "max_drawdown": 0.057885170690704646,
+        "gate_fires": [],
+        "n_gate_fires": 0,
+        "trail_exits": 0,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "PODDARMENT",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "BEARDSELL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "ENDURANCE",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "VHL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-07-06",
+            "action": "sell",
+            "symbol": "ENDURANCE",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "SBIN",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "AXISBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "AXISBANK",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "ICICIBANK",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "SBIN",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-07",
+            "action": "sell",
+            "symbol": "RELIANCE",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-31",
+            "action": "buy",
+            "symbol": "YESBANK",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "daily_50": {
+        "window": "W0_calm_2017",
+        "arm": "daily_50",
+        "threshold": 50.0,
+        "cadence": "daily",
+        "final_equity": 968343.4747211454,
+        "total_return": -0.03165652527885465,
+        "max_drawdown": 0.057885170690704646,
+        "gate_fires": [],
+        "n_gate_fires": 0,
+        "trail_exits": 0,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "PODDARMENT",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "BEARDSELL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "ENDURANCE",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "VHL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-07-06",
+            "action": "sell",
+            "symbol": "ENDURANCE",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "SBIN",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "AXISBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "AXISBANK",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "ICICIBANK",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "SBIN",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-07",
+            "action": "sell",
+            "symbol": "RELIANCE",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-31",
+            "action": "buy",
+            "symbol": "YESBANK",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "weekly_50": {
+        "window": "W0_calm_2017",
+        "arm": "weekly_50",
+        "threshold": 50.0,
+        "cadence": "weekly",
+        "final_equity": 968343.4747211454,
+        "total_return": -0.03165652527885465,
+        "max_drawdown": 0.057885170690704646,
+        "gate_fires": [],
+        "n_gate_fires": 0,
+        "trail_exits": 0,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "PODDARMENT",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "BEARDSELL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "ENDURANCE",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-06-30",
+            "action": "buy",
+            "symbol": "VHL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2017-07-06",
+            "action": "sell",
+            "symbol": "ENDURANCE",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "SBIN",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-07-31",
+            "action": "buy",
+            "symbol": "AXISBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "AXISBANK",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "ICICIBANK",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-04",
+            "action": "sell",
+            "symbol": "SBIN",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-07",
+            "action": "sell",
+            "symbol": "RELIANCE",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2017-08-31",
+            "action": "buy",
+            "symbol": "YESBANK",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      }
+    },
+    "W1_midcap_stress_2018": {
+      "off": {
+        "window": "W1_midcap_stress_2018",
+        "arm": "off",
+        "threshold": null,
+        "cadence": null,
+        "final_equity": 999748.3883870593,
+        "total_return": -0.0002516116129406276,
+        "max_drawdown": 0.000254111612940644,
+        "gate_fires": [],
+        "n_gate_fires": 0,
+        "trail_exits": 0,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "LIQUIDETF",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "INFRABEES",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "SPLIL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "GKWLIMITED",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "LIQUIDETF",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "KDDL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "ASIANHOTNR",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "INFRABEES",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-11-05",
+            "action": "sell",
+            "symbol": "LIQUIDETF",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "YESBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "HDFCBANK",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "daily_30": {
+        "window": "W1_midcap_stress_2018",
+        "arm": "daily_30",
+        "threshold": 30.0,
+        "cadence": "daily",
+        "final_equity": 999748.3883870593,
+        "total_return": -0.0002516116129406276,
+        "max_drawdown": 0.000254111612940644,
+        "gate_fires": [],
+        "n_gate_fires": 0,
+        "trail_exits": 0,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "LIQUIDETF",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "INFRABEES",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "SPLIL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "GKWLIMITED",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "LIQUIDETF",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "KDDL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "ASIANHOTNR",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "INFRABEES",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-11-05",
+            "action": "sell",
+            "symbol": "LIQUIDETF",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "YESBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "HDFCBANK",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "weekly_30": {
+        "window": "W1_midcap_stress_2018",
+        "arm": "weekly_30",
+        "threshold": 30.0,
+        "cadence": "weekly",
+        "final_equity": 999748.3883870593,
+        "total_return": -0.0002516116129406276,
+        "max_drawdown": 0.000254111612940644,
+        "gate_fires": [],
+        "n_gate_fires": 0,
+        "trail_exits": 0,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "LIQUIDETF",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "INFRABEES",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "SPLIL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "GKWLIMITED",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "LIQUIDETF",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "KDDL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "ASIANHOTNR",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "INFRABEES",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-11-05",
+            "action": "sell",
+            "symbol": "LIQUIDETF",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "YESBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "HDFCBANK",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "daily_40": {
+        "window": "W1_midcap_stress_2018",
+        "arm": "daily_40",
+        "threshold": 40.0,
+        "cadence": "daily",
+        "final_equity": 999748.3883870593,
+        "total_return": -0.0002516116129406276,
+        "max_drawdown": 0.000254111612940644,
+        "gate_fires": [],
+        "n_gate_fires": 0,
+        "trail_exits": 0,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "LIQUIDETF",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "INFRABEES",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "SPLIL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "GKWLIMITED",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "LIQUIDETF",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "KDDL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "ASIANHOTNR",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "INFRABEES",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-11-05",
+            "action": "sell",
+            "symbol": "LIQUIDETF",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "YESBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "HDFCBANK",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "weekly_40": {
+        "window": "W1_midcap_stress_2018",
+        "arm": "weekly_40",
+        "threshold": 40.0,
+        "cadence": "weekly",
+        "final_equity": 999748.3883870593,
+        "total_return": -0.0002516116129406276,
+        "max_drawdown": 0.000254111612940644,
+        "gate_fires": [],
+        "n_gate_fires": 0,
+        "trail_exits": 0,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "LIQUIDETF",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "INFRABEES",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "SPLIL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "GKWLIMITED",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "LIQUIDETF",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "KDDL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "ASIANHOTNR",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "INFRABEES",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-11-05",
+            "action": "sell",
+            "symbol": "LIQUIDETF",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "YESBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "HDFCBANK",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "daily_50": {
+        "window": "W1_midcap_stress_2018",
+        "arm": "daily_50",
+        "threshold": 50.0,
+        "cadence": "daily",
+        "final_equity": 999748.3883870593,
+        "total_return": -0.0002516116129406276,
+        "max_drawdown": 0.000254111612940644,
+        "gate_fires": [],
+        "n_gate_fires": 0,
+        "trail_exits": 0,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "LIQUIDETF",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "INFRABEES",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "SPLIL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "GKWLIMITED",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "LIQUIDETF",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "KDDL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "ASIANHOTNR",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "INFRABEES",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-11-05",
+            "action": "sell",
+            "symbol": "LIQUIDETF",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "YESBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "HDFCBANK",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "weekly_50": {
+        "window": "W1_midcap_stress_2018",
+        "arm": "weekly_50",
+        "threshold": 50.0,
+        "cadence": "weekly",
+        "final_equity": 999748.3883870593,
+        "total_return": -0.0002516116129406276,
+        "max_drawdown": 0.000254111612940644,
+        "gate_fires": [],
+        "n_gate_fires": 0,
+        "trail_exits": 0,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "LIQUIDETF",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "INFRABEES",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "SPLIL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-09-28",
+            "action": "buy",
+            "symbol": "GKWLIMITED",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "LIQUIDETF",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "KDDL",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "ASIANHOTNR",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-10-31",
+            "action": "buy",
+            "symbol": "INFRABEES",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2018-11-05",
+            "action": "sell",
+            "symbol": "LIQUIDETF",
+            "trigger": "trigger_b_dma",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "YESBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2018-11-30",
+            "action": "buy",
+            "symbol": "HDFCBANK",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      }
+    },
+    "W2_crash_rebound_2020": {
+      "off": {
+        "window": "W2_crash_rebound_2020",
+        "arm": "off",
+        "threshold": null,
+        "cadence": null,
+        "final_equity": 978569.4601134534,
+        "total_return": -0.02143053988654653,
+        "max_drawdown": 0.20414260612842472,
+        "gate_fires": [],
+        "n_gate_fires": 0,
+        "trail_exits": 0,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "ARVINDFASN",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "TOKYOPLAST",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "KENNAMET",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "NBIFIN",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-03-09",
+            "action": "sell",
+            "symbol": "ARVINDFASN",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "SBIN",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "HDFCBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-04-03",
+            "action": "sell",
+            "symbol": "ICICIBANK",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-04-03",
+            "action": "sell",
+            "symbol": "SBIN",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-04-30",
+            "action": "buy",
+            "symbol": "BAJFINANCE",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "daily_30": {
+        "window": "W2_crash_rebound_2020",
+        "arm": "daily_30",
+        "threshold": 30.0,
+        "cadence": "daily",
+        "final_equity": 978569.4601134534,
+        "total_return": -0.02143053988654653,
+        "max_drawdown": 0.20414260612842472,
+        "gate_fires": [
+          {
+            "date": "2020-04-15",
+            "symbol": "HDFCBANK",
+            "breadth": 23.809523809523807
+          }
+        ],
+        "n_gate_fires": 1,
+        "trail_exits": 1,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "ARVINDFASN",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "TOKYOPLAST",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "KENNAMET",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "NBIFIN",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-03-09",
+            "action": "sell",
+            "symbol": "ARVINDFASN",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "SBIN",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "HDFCBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-04-03",
+            "action": "sell",
+            "symbol": "ICICIBANK",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-04-03",
+            "action": "sell",
+            "symbol": "SBIN",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-04-15",
+            "action": "sell",
+            "symbol": "HDFCBANK",
+            "trigger": "trigger_b_trail",
+            "note": "breadth 24% < 30%"
+          },
+          {
+            "date": "2020-04-30",
+            "action": "buy",
+            "symbol": "BAJFINANCE",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "weekly_30": {
+        "window": "W2_crash_rebound_2020",
+        "arm": "weekly_30",
+        "threshold": 30.0,
+        "cadence": "weekly",
+        "final_equity": 978569.4601134534,
+        "total_return": -0.02143053988654653,
+        "max_drawdown": 0.20414260612842472,
+        "gate_fires": [
+          {
+            "date": "2020-04-15",
+            "symbol": "HDFCBANK",
+            "breadth": 20.833333333333336
+          }
+        ],
+        "n_gate_fires": 1,
+        "trail_exits": 1,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "ARVINDFASN",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "TOKYOPLAST",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "KENNAMET",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "NBIFIN",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-03-09",
+            "action": "sell",
+            "symbol": "ARVINDFASN",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "SBIN",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "HDFCBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-04-03",
+            "action": "sell",
+            "symbol": "ICICIBANK",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-04-03",
+            "action": "sell",
+            "symbol": "SBIN",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-04-15",
+            "action": "sell",
+            "symbol": "HDFCBANK",
+            "trigger": "trigger_b_trail",
+            "note": "breadth 21% < 30%"
+          },
+          {
+            "date": "2020-04-30",
+            "action": "buy",
+            "symbol": "BAJFINANCE",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "daily_40": {
+        "window": "W2_crash_rebound_2020",
+        "arm": "daily_40",
+        "threshold": 40.0,
+        "cadence": "daily",
+        "final_equity": 978569.4601134534,
+        "total_return": -0.02143053988654653,
+        "max_drawdown": 0.20414260612842472,
+        "gate_fires": [
+          {
+            "date": "2020-04-15",
+            "symbol": "HDFCBANK",
+            "breadth": 23.809523809523807
+          }
+        ],
+        "n_gate_fires": 1,
+        "trail_exits": 1,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "ARVINDFASN",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "TOKYOPLAST",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "KENNAMET",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "NBIFIN",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-03-09",
+            "action": "sell",
+            "symbol": "ARVINDFASN",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "SBIN",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "HDFCBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-04-03",
+            "action": "sell",
+            "symbol": "ICICIBANK",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-04-03",
+            "action": "sell",
+            "symbol": "SBIN",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-04-15",
+            "action": "sell",
+            "symbol": "HDFCBANK",
+            "trigger": "trigger_b_trail",
+            "note": "breadth 24% < 40%"
+          },
+          {
+            "date": "2020-04-30",
+            "action": "buy",
+            "symbol": "BAJFINANCE",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "weekly_40": {
+        "window": "W2_crash_rebound_2020",
+        "arm": "weekly_40",
+        "threshold": 40.0,
+        "cadence": "weekly",
+        "final_equity": 978569.4601134534,
+        "total_return": -0.02143053988654653,
+        "max_drawdown": 0.20414260612842472,
+        "gate_fires": [
+          {
+            "date": "2020-04-15",
+            "symbol": "HDFCBANK",
+            "breadth": 20.833333333333336
+          }
+        ],
+        "n_gate_fires": 1,
+        "trail_exits": 1,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "ARVINDFASN",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "TOKYOPLAST",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "KENNAMET",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "NBIFIN",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-03-09",
+            "action": "sell",
+            "symbol": "ARVINDFASN",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "SBIN",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "HDFCBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-04-03",
+            "action": "sell",
+            "symbol": "ICICIBANK",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-04-03",
+            "action": "sell",
+            "symbol": "SBIN",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-04-15",
+            "action": "sell",
+            "symbol": "HDFCBANK",
+            "trigger": "trigger_b_trail",
+            "note": "breadth 21% < 40%"
+          },
+          {
+            "date": "2020-04-30",
+            "action": "buy",
+            "symbol": "BAJFINANCE",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "daily_50": {
+        "window": "W2_crash_rebound_2020",
+        "arm": "daily_50",
+        "threshold": 50.0,
+        "cadence": "daily",
+        "final_equity": 978569.4601134534,
+        "total_return": -0.02143053988654653,
+        "max_drawdown": 0.20414260612842472,
+        "gate_fires": [
+          {
+            "date": "2020-04-15",
+            "symbol": "HDFCBANK",
+            "breadth": 23.809523809523807
+          }
+        ],
+        "n_gate_fires": 1,
+        "trail_exits": 1,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "ARVINDFASN",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "TOKYOPLAST",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "KENNAMET",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "NBIFIN",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-03-09",
+            "action": "sell",
+            "symbol": "ARVINDFASN",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "SBIN",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "HDFCBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-04-03",
+            "action": "sell",
+            "symbol": "ICICIBANK",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-04-03",
+            "action": "sell",
+            "symbol": "SBIN",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-04-15",
+            "action": "sell",
+            "symbol": "HDFCBANK",
+            "trigger": "trigger_b_trail",
+            "note": "breadth 24% < 50%"
+          },
+          {
+            "date": "2020-04-30",
+            "action": "buy",
+            "symbol": "BAJFINANCE",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      },
+      "weekly_50": {
+        "window": "W2_crash_rebound_2020",
+        "arm": "weekly_50",
+        "threshold": 50.0,
+        "cadence": "weekly",
+        "final_equity": 978569.4601134534,
+        "total_return": -0.02143053988654653,
+        "max_drawdown": 0.20414260612842472,
+        "gate_fires": [
+          {
+            "date": "2020-04-15",
+            "symbol": "HDFCBANK",
+            "breadth": 20.833333333333336
+          }
+        ],
+        "n_gate_fires": 1,
+        "trail_exits": 1,
+        "n_forced": 0,
+        "decisions": [
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "ARVINDFASN",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "TOKYOPLAST",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "KENNAMET",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-02-28",
+            "action": "buy",
+            "symbol": "NBIFIN",
+            "trigger": "select",
+            "note": ""
+          },
+          {
+            "date": "2020-03-09",
+            "action": "sell",
+            "symbol": "ARVINDFASN",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "RELIANCE",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "SBIN",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "ICICIBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-03-31",
+            "action": "buy",
+            "symbol": "HDFCBANK",
+            "trigger": "replace",
+            "note": ""
+          },
+          {
+            "date": "2020-04-03",
+            "action": "sell",
+            "symbol": "ICICIBANK",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-04-03",
+            "action": "sell",
+            "symbol": "SBIN",
+            "trigger": "trigger_b_stop",
+            "note": ""
+          },
+          {
+            "date": "2020-04-15",
+            "action": "sell",
+            "symbol": "HDFCBANK",
+            "trigger": "trigger_b_trail",
+            "note": "breadth 21% < 50%"
+          },
+          {
+            "date": "2020-04-30",
+            "action": "buy",
+            "symbol": "BAJFINANCE",
+            "trigger": "replace",
+            "note": ""
+          }
+        ]
+      }
+    }
+  },
+  "decision": {
+    "daily_30": {
+      "dd_lower_both": false,
+      "ret_ge_both": true,
+      "w0_curve_identical": true,
+      "fired": true,
+      "PASS": false
+    },
+    "weekly_30": {
+      "dd_lower_both": false,
+      "ret_ge_both": true,
+      "w0_curve_identical": true,
+      "fired": true,
+      "PASS": false
+    },
+    "daily_40": {
+      "dd_lower_both": false,
+      "ret_ge_both": true,
+      "w0_curve_identical": true,
+      "fired": true,
+      "PASS": false
+    },
+    "weekly_40": {
+      "dd_lower_both": false,
+      "ret_ge_both": true,
+      "w0_curve_identical": true,
+      "fired": true,
+      "PASS": false
+    },
+    "daily_50": {
+      "dd_lower_both": false,
+      "ret_ge_both": true,
+      "w0_curve_identical": true,
+      "fired": true,
+      "PASS": false
+    },
+    "weekly_50": {
+      "dd_lower_both": false,
+      "ret_ge_both": true,
+      "w0_curve_identical": true,
+      "fired": true,
+      "PASS": false
+    }
+  },
+  "runtime_seconds": 198.1
+}

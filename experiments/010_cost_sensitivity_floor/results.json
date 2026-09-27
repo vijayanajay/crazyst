@@ -1,0 +1,357 @@
+{
+  "experiment": "E010_cost_sensitivity_floor",
+  "profile": "full",
+  "git_hash": "a8cc624640dfeecf5e98a9f25177a7fed547c353",
+  "data_cutoff": "2026-09-24",
+  "validation_boundary": "2023-09-24",
+  "shipped_floor_cr": 0.75,
+  "slot_rupees": 250000.0,
+  "sanity": {
+    "liq_daily20_rows": 301659,
+    "frozen_sample": {
+      "rows": 616,
+      "status": "re-verified vs frozen sample (616 rows)"
+    },
+    "member": {
+      "dates_checked": 6,
+      "rows_checked": 9186
+    }
+  },
+  "prefloor_vs_e006": {
+    "reproduced": true,
+    "e006_picks": 6622,
+    "remeasured_picks": 6622
+  },
+  "floor_arm": {
+    "picks": 3902,
+    "results": {
+      "by_rank_group": {
+        "rank<=600": {
+          "0.002": {
+            "picks": 2541,
+            "months": 145,
+            "mean_net": 0.022912843086266704,
+            "hit_rate": 0.5450609996064542
+          },
+          "0.005": {
+            "picks": 2541,
+            "months": 145,
+            "mean_net": 0.01691284308626667,
+            "hit_rate": 0.5222353404171586
+          },
+          "0.01": {
+            "picks": 2541,
+            "months": 145,
+            "mean_net": 0.0069128430862667395,
+            "hit_rate": 0.4793388429752066
+          }
+        },
+        "rank>600": {
+          "0.002": {
+            "picks": 1361,
+            "months": 87,
+            "mean_net": 0.024882055568442554,
+            "hit_rate": 0.5069801616458487
+          },
+          "0.005": {
+            "picks": 1361,
+            "months": 87,
+            "mean_net": 0.01888205556844258,
+            "hit_rate": 0.4856722997795738
+          },
+          "0.01": {
+            "picks": 1361,
+            "months": 87,
+            "mean_net": 0.008882055568442572,
+            "hit_rate": 0.44158706833210876
+          }
+        },
+        "all": {
+          "0.002": {
+            "picks": 3902,
+            "months": 145,
+            "mean_net": 0.023599695517902114,
+            "hit_rate": 0.5317785750896976
+          },
+          "0.005": {
+            "picks": 3902,
+            "months": 145,
+            "mean_net": 0.0175996955179021,
+            "hit_rate": 0.5094823167606356
+          },
+          "0.01": {
+            "picks": 3902,
+            "months": 145,
+            "mean_net": 0.007599695517902143,
+            "hit_rate": 0.46617119425935416
+          }
+        }
+      },
+      "by_bucket": {
+        "201-600": {
+          "0.002": {
+            "picks": 2132,
+            "months": 145,
+            "mean_net": 0.023554871183972884,
+            "hit_rate": 0.5422138836772983
+          },
+          "0.005": {
+            "picks": 2132,
+            "months": 145,
+            "mean_net": 0.01755487118397287,
+            "hit_rate": 0.5178236397748592
+          },
+          "0.01": {
+            "picks": 2132,
+            "months": 145,
+            "mean_net": 0.007554871183972952,
+            "hit_rate": 0.4774859287054409
+          }
+        },
+        "601-1500": {
+          "0.002": {
+            "picks": 1361,
+            "months": 87,
+            "mean_net": 0.024882055568442554,
+            "hit_rate": 0.5069801616458487
+          },
+          "0.005": {
+            "picks": 1361,
+            "months": 87,
+            "mean_net": 0.01888205556844258,
+            "hit_rate": 0.4856722997795738
+          },
+          "0.01": {
+            "picks": 1361,
+            "months": 87,
+            "mean_net": 0.008882055568442572,
+            "hit_rate": 0.44158706833210876
+          }
+        },
+        "top200": {
+          "0.002": {
+            "picks": 409,
+            "months": 128,
+            "mean_net": 0.019566134273773714,
+            "hit_rate": 0.5599022004889975
+          },
+          "0.005": {
+            "picks": 409,
+            "months": 128,
+            "mean_net": 0.01356613427377372,
+            "hit_rate": 0.5452322738386308
+          },
+          "0.01": {
+            "picks": 409,
+            "months": 128,
+            "mean_net": 0.003566134273773693,
+            "hit_rate": 0.4889975550122249
+          }
+        }
+      }
+    },
+    "impact": {
+      "picks_with_med20": 3887,
+      "slot_rupees": 250000.0,
+      "impact_cap_pct": 1.0,
+      "impact_coef": 0.1,
+      "by_band": {
+        "med20 < 1cr": {
+          "n": 703,
+          "mean_impact_pct": 0.3758123057128877,
+          "max_impact_pct": 1.0
+        },
+        "1-5cr": {
+          "n": 1924,
+          "mean_impact_pct": 0.12992191146003224,
+          "max_impact_pct": 0.24964124742845487
+        },
+        "5-20cr": {
+          "n": 834,
+          "mean_impact_pct": 0.029616088054990823,
+          "max_impact_pct": 0.04987559465586714
+        },
+        ">= 20cr": {
+          "n": 426,
+          "mean_impact_pct": 0.005986928034926451,
+          "max_impact_pct": 0.012470036803840914
+        }
+      },
+      "mean_impact_pct": 0.13928892651041996,
+      "impact_gt_half_cap_pct": 0.02238229997427322
+    },
+    "pick_med20_median_cr": 2.6276153275
+  },
+  "prefloor_arm": {
+    "picks": 6622,
+    "results": {
+      "by_rank_group": {
+        "rank<=600": {
+          "0.002": {
+            "picks": 1789,
+            "months": 145,
+            "mean_net": 0.022299842605494367,
+            "hit_rate": 0.5449972051425377
+          },
+          "0.005": {
+            "picks": 1789,
+            "months": 145,
+            "mean_net": 0.01629984260549439,
+            "hit_rate": 0.5248742314141979
+          },
+          "0.01": {
+            "picks": 1789,
+            "months": 145,
+            "mean_net": 0.006299842605494406,
+            "hit_rate": 0.4835103409726104
+          }
+        },
+        "rank>600": {
+          "0.002": {
+            "picks": 4833,
+            "months": 145,
+            "mean_net": 0.0334492982427938,
+            "hit_rate": 0.5220360024829298
+          },
+          "0.005": {
+            "picks": 4833,
+            "months": 145,
+            "mean_net": 0.027449298242793782,
+            "hit_rate": 0.4994827229464101
+          },
+          "0.01": {
+            "picks": 4833,
+            "months": 145,
+            "mean_net": 0.017449298242793884,
+            "hit_rate": 0.45603145044485827
+          }
+        },
+        "all": {
+          "0.002": {
+            "picks": 6622,
+            "months": 145,
+            "mean_net": 0.030437160499645434,
+            "hit_rate": 0.5282392026578073
+          },
+          "0.005": {
+            "picks": 6622,
+            "months": 145,
+            "mean_net": 0.024437160499645443,
+            "hit_rate": 0.5063424947145877
+          },
+          "0.01": {
+            "picks": 6622,
+            "months": 145,
+            "mean_net": 0.014437160499645439,
+            "hit_rate": 0.4634551495016611
+          }
+        }
+      },
+      "by_bucket": {
+        "201-600": {
+          "0.002": {
+            "picks": 1569,
+            "months": 145,
+            "mean_net": 0.02183726913117725,
+            "hit_rate": 0.538559592096877
+          },
+          "0.005": {
+            "picks": 1569,
+            "months": 145,
+            "mean_net": 0.015837269131177268,
+            "hit_rate": 0.5175270873167622
+          },
+          "0.01": {
+            "picks": 1569,
+            "months": 145,
+            "mean_net": 0.005837269131177265,
+            "hit_rate": 0.47737412364563414
+          }
+        },
+        "601-1500": {
+          "0.002": {
+            "picks": 4833,
+            "months": 145,
+            "mean_net": 0.0334492982427938,
+            "hit_rate": 0.5220360024829298
+          },
+          "0.005": {
+            "picks": 4833,
+            "months": 145,
+            "mean_net": 0.027449298242793782,
+            "hit_rate": 0.4994827229464101
+          },
+          "0.01": {
+            "picks": 4833,
+            "months": 145,
+            "mean_net": 0.017449298242793884,
+            "hit_rate": 0.45603145044485827
+          }
+        },
+        "top200": {
+          "0.002": {
+            "picks": 220,
+            "months": 102,
+            "mean_net": 0.025598832520056132,
+            "hit_rate": 0.5909090909090909
+          },
+          "0.005": {
+            "picks": 220,
+            "months": 102,
+            "mean_net": 0.019598832520056154,
+            "hit_rate": 0.5772727272727273
+          },
+          "0.01": {
+            "picks": 220,
+            "months": 102,
+            "mean_net": 0.009598832520056123,
+            "hit_rate": 0.5272727272727272
+          }
+        }
+      }
+    },
+    "impact": {
+      "picks_with_med20": 6539,
+      "slot_rupees": 250000.0,
+      "impact_cap_pct": 1.0,
+      "impact_coef": 0.1,
+      "by_band": {
+        "med20 < 1cr": {
+          "n": 4276,
+          "mean_impact_pct": 0.815405793052703,
+          "max_impact_pct": 1.0
+        },
+        "1-5cr": {
+          "n": 1428,
+          "mean_impact_pct": 0.1340184883052525,
+          "max_impact_pct": 0.24929598315764318
+        },
+        "5-20cr": {
+          "n": 578,
+          "mean_impact_pct": 0.029545306919026675,
+          "max_impact_pct": 0.04987559465586714
+        },
+        ">= 20cr": {
+          "n": 257,
+          "mean_impact_pct": 0.006270834925831252,
+          "max_impact_pct": 0.012470036803840914
+        }
+      },
+      "mean_impact_pct": 0.5653375691035909,
+      "impact_gt_half_cap_pct": 0.5205688943263496
+    }
+  },
+  "half_edge": {
+    "floor": 0.01,
+    "prefloor": null
+  },
+  "decision": {
+    "a_net_edge_2pct": true,
+    "b_warning_relaxes": false,
+    "c_impact_mechanism": true,
+    "d_gross_retained": true,
+    "floor_all_gross": 0.027599695517902114,
+    "MOVE_DEFAULT_TO_02": false
+  },
+  "runtime_seconds": 151.8
+}

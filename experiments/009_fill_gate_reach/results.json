@@ -1,0 +1,141 @@
+{
+  "experiment": "E009_fill_gate_reach",
+  "profile": "full",
+  "git_hash": "a8cc624640dfeecf5e98a9f25177a7fed547c353",
+  "data_cutoff": "2026-09-24",
+  "validation_boundary": "2023-09-24",
+  "liq_daily20_rows": 301659,
+  "frozen_sample": {
+    "rows": 1136,
+    "status": "re-verified vs frozen sample (1136 rows)"
+  },
+  "member_recompute": {
+    "dates_checked": 6,
+    "rows_checked": 9186
+  },
+  "gate_arithmetic": {
+    "max_position_adv_frac": 0.05,
+    "boundary_multiple_of_slot": 20.0
+  },
+  "R1_by_slot": {
+    "S125k": {
+      "slot_rupees": 125000.0,
+      "enterable_boundary_cr": 0.25,
+      "picks": 8802,
+      "picks_missing_liq20": 99,
+      "refused": 2584,
+      "refused_pct": 0.2935696432628948,
+      "refused_return_mass_pct": 0.3940169852786791,
+      "mean_all": 0.03111163642014216,
+      "mean_fillable": 0.02668787241515367,
+      "mean_refused": 0.041756746552889114,
+      "corrected_mean": 0.02668787241515367
+    },
+    "S250k": {
+      "slot_rupees": 250000.0,
+      "enterable_boundary_cr": 0.5,
+      "picks": 8802,
+      "picks_missing_liq20": 99,
+      "refused": 3413,
+      "refused_pct": 0.38775278345830494,
+      "refused_return_mass_pct": 0.5047153317901482,
+      "mean_all": 0.03111163642014216,
+      "mean_fillable": 0.02516812834014127,
+      "mean_refused": 0.04049621451657484,
+      "corrected_mean": 0.02516812834014127
+    },
+    "S500k": {
+      "slot_rupees": 500000.0,
+      "enterable_boundary_cr": 1.0,
+      "picks": 8802,
+      "picks_missing_liq20": 99,
+      "refused": 4370,
+      "refused_pct": 0.4964780731651897,
+      "refused_return_mass_pct": 0.5696812008928901,
+      "mean_all": 0.03111163642014216,
+      "mean_fillable": 0.026588558132374512,
+      "mean_refused": 0.035698886528010815,
+      "corrected_mean": 0.026588558132374512
+    },
+    "S1000k": {
+      "slot_rupees": 1000000.0,
+      "enterable_boundary_cr": 2.0,
+      "picks": 8802,
+      "picks_missing_liq20": 99,
+      "refused": 5385,
+      "refused_pct": 0.6117927743694614,
+      "refused_return_mass_pct": 0.6799014098999017,
+      "mean_all": 0.03111163642014216,
+      "mean_fillable": 0.025653285916095336,
+      "mean_refused": 0.034575180277584626,
+      "corrected_mean": 0.025653285916095336
+    }
+  },
+  "R1_top_decile_refusal_at_250k": 0.46625,
+  "R1_w1_2018_09_case": [
+    {
+      "symbol": "LIQUIDETF",
+      "med20_cr": 0.8983559390000001,
+      "boundary_at_250k_cr": 0.5,
+      "next_month_ret": -1.0590124724041416e-05,
+      "refused_at_250k": false
+    },
+    {
+      "symbol": "INFRABEES",
+      "med20_cr": 0.013652118,
+      "boundary_at_250k_cr": 0.5,
+      "next_month_ret": -0.03489062786896335,
+      "refused_at_250k": true
+    },
+    {
+      "symbol": "SPLIL",
+      "med20_cr": 0.6166591275000001,
+      "boundary_at_250k_cr": 0.5,
+      "next_month_ret": -0.1973827598308121,
+      "refused_at_250k": false
+    },
+    {
+      "symbol": "GKWLIMITED",
+      "med20_cr": 0.0439610975,
+      "boundary_at_250k_cr": 0.5,
+      "next_month_ret": 0.019075340987569023,
+      "refused_at_250k": true
+    }
+  ],
+  "R2": {
+    "floor_cr": 0.75,
+    "eligibles_baseline": 218648,
+    "excluded_by_floor": 164534,
+    "eligibles_floor": 144059,
+    "slot_rupees": 250000.0,
+    "enterable_boundary_cr": 0.5,
+    "picks": 6134,
+    "picks_missing_liq20": 31,
+    "refused": 90,
+    "refused_pct": 0.014672318226279752,
+    "refused_return_mass_pct": 0.028568703661757715,
+    "mean_all": 0.026509649442990585,
+    "mean_fillable": 0.026135775539685612,
+    "mean_refused": 0.05161735912716145,
+    "corrected_mean": 0.026135775539685612,
+    "ic_floor": 0.06745021254296184,
+    "paired_t_vs_baseline": {
+      "n_months": 145,
+      "mean_diff": -0.000674110405477184,
+      "t": -0.1175054440864986,
+      "p": 0.9066232679306288
+    }
+  },
+  "restore": {
+    "ic_restored": 0.068124322948439,
+    "frozen_ic": 0.06812432294843898,
+    "delta": 1.3877787807814457e-17
+  },
+  "decision": {
+    "corrected_mean_improves": true,
+    "ic_holds": true,
+    "refusal_drops_materially": true,
+    "ADOPT": true
+  },
+  "runtime_seconds": 192.2
+}

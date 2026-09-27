@@ -1,0 +1,58 @@
+{
+  "experiment": "E008a_breadth_premise",
+  "profile": "full",
+  "git_hash": "a8cc624640dfeecf5e98a9f25177a7fed547c353",
+  "data_cutoff": "2026-09-24",
+  "validation_boundary": "2023-09-24",
+  "breadth_months": 179,
+  "first_breadth_month": "2011-10-31",
+  "joined_months": 141,
+  "premise_by_threshold": {
+    "30.0": {
+      "months_below": 6,
+      "months_at_or_above": 135,
+      "pick_ret_below": 0.10699238391723916,
+      "pick_ret_above": 0.03283023519565228,
+      "universe_ret_below": 0.11091338814748135,
+      "universe_ret_above": 0.015626330293285844,
+      "hit_rate_below": 0.8195747619617278,
+      "hit_rate_above": 0.5383760707999596,
+      "flips_per_year": 1.0212765957446808
+    },
+    "40.0": {
+      "months_below": 21,
+      "months_at_or_above": 120,
+      "pick_ret_below": 0.038793768399579855,
+      "pick_ret_above": 0.03549472432104429,
+      "universe_ret_below": 0.04202564477758476,
+      "universe_ret_above": 0.015770803151243313,
+      "hit_rate_below": 0.6045319120141117,
+      "hit_rate_above": 0.5408587331455715,
+      "flips_per_year": 1.872340425531915
+    },
+    "50.0": {
+      "months_below": 44,
+      "months_at_or_above": 97,
+      "pick_ret_below": 0.02339617187379857,
+      "pick_ret_above": 0.041696953530611904,
+      "universe_ret_below": 0.0173922226605898,
+      "universe_ret_above": 0.020719351767139443,
+      "hit_rate_below": 0.5596099403338441,
+      "hit_rate_above": 0.5461379459286161,
+      "flips_per_year": 2.297872340425532
+    }
+  },
+  "spearman_breadth_vs_pick_ret": 0.14400491461046852,
+  "spearman_breadth_vs_universe_ret": 0.07724242446984611,
+  "tier_spearman_200_vs_mid": 0.9392223092718519,
+  "tier_disagreement_months_at_30": 19,
+  "stress_month_breadth_200": {
+    "2018-09-28": 30.67484662576687,
+    "2018-10-31": 28.834355828220858,
+    "2018-11-30": 36.809815950920246,
+    "2018-12-31": 49.382716049382715,
+    "2020-02-28": 42.60355029585799,
+    "2020-03-31": 15.476190476190476
+  },
+  "runtime_seconds": 44.5
+}
