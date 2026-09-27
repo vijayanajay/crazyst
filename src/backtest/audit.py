@@ -39,15 +39,15 @@ import duckdb
 from src.config import load
 from src.stats import spearman_ic
 
-P41 = importlib.import_module("experiments.004_composite_v0.run")
-P41B = importlib.import_module("experiments.004b_composite_2feat.run")
-COMPOSITE_2F = P41B.COMPOSITE_2F
-SYM = 2 + len(P41B.FEATURES) + 1     # symbol column in the audit fetch (features + rank)
+P41 = importlib.import_module("experiments.004_composite_v0.run")   # frozen slice split
+from src.model import composite as model       # the extracted, pinned composite_2f
+COMPOSITE_2F = model.FEATURES
+SYM = 2 + len(model.PANEL_FEATURES) + 1     # symbol column in the audit fetch (features + rank)
 
 
 def _fetch(con):
     rows = con.execute(
-        "SELECT mdate, next_month_ret, " + ", ".join(P41B.FEATURES) +
+        "SELECT mdate, next_month_ret, " + ", ".join(model.PANEL_FEATURES) +
         ", liquidity_rank, symbol, size_bucket FROM feature_matrix "
         "WHERE next_month_ret IS NOT NULL ORDER BY mdate").fetchall()
     cutoff = con.execute("SELECT max(mdate) FROM feature_matrix").fetchone()[0]
@@ -57,9 +57,9 @@ def _fetch(con):
 def picks_for_month(rs) -> set[str]:
     """Top-5% of composite_2f scores for one month's rows -> set of symbols (deterministic:
     ties broken by symbol, matching the engine's sorted-order contract)."""
-    scores = P41B.score_month_2f(rs)
-    fi = {name: 2 + i for i, name in enumerate(P41B.FEATURES)}
-    sym_at = 2 + len(P41B.FEATURES) + 1
+    scores = model.score_month_2f(rs)
+    fi = {name: 2 + i for i, name in enumerate(model.PANEL_FEATURES)}
+    sym_at = 2 + len(model.PANEL_FEATURES) + 1
     scored = [(s, rs[i][sym_at]) for i, s in enumerate(scores) if s is not None]
     if len(scored) < 20:
         return set()
@@ -70,8 +70,8 @@ def picks_for_month(rs) -> set[str]:
 
 def score_month_ic(rs) -> float | None:
     """Cross-sectional IC of composite_2f for one month (used to detect future tampering)."""
-    fi = {name: 2 + i for i, name in enumerate(P41B.FEATURES)}
-    scores = P41B.score_month_2f(rs)
+    fi = {name: 2 + i for i, name in enumerate(model.PANEL_FEATURES)}
+    scores = model.score_month_2f(rs)
     pairs = [(s, r[1]) for s, r in zip(scores, rs)
              if s is not None and r[1] is not None]
     return spearman_ic([p[0] for p in pairs], [p[1] for p in pairs]) if len(pairs) >= 3 else None
@@ -86,9 +86,9 @@ def _synthetic() -> None:
     from datetime import date, timedelta
 
     def row(mdate, ret, mom, dlv, sym):
-        vals = {name: None for name in P41B.FEATURES}
+        vals = {name: None for name in model.PANEL_FEATURES}
         vals["mom_12m_1m"], vals["delivery_pct"] = mom, dlv
-        return (mdate, ret, *[vals[n] for n in P41B.FEATURES], 1, sym, "top200")
+        return (mdate, ret, *[vals[n] for n in model.PANEL_FEATURES], 1, sym, "top200")
 
     months = []
     d0 = date(2024, 1, 31)
