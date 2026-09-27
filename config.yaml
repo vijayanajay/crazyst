@@ -25,12 +25,21 @@ universe:
   liquidity_lookback_months: 3  # trailing 3-month median turnover rank, as of decision date
   min_price: 20.0             # ₹ price floor (penny guard)
   min_listed_months: 6        # listed >= 6 months
-  min_median_turnover_cr: 0.0 # ₹ crore median daily turnover floor; 0.0 = guard OFF. BRD §4 keeps
-                              # ₹5cr "as a config guard, subsumed by the top-1500 rank" — measured,
-                              # that premise FAILS: rank 1500 turns over ₹1.94cr/day, so 6,010
-                              # in-universe symbol-months sit below ₹5cr and enforcing it would cut
-                              # ~18% of the universe. Left off pending a BRD decision; set 5.0 to
-                              # enforce (eligibility then excludes with reason turnover<5.0cr).
+  min_median_turnover_cr: 0.375 # Rs crore median daily turnover floor (E009 ADOPTED 0.75 at the
+                              # 4-slot Rs250k notional; E012 re-derived it at the E011 8-slot
+                              # Rs125k notional and ADOPTED 0.375 — the gate's own 0.25cr boundary
+                              # x the same 1.5x headroom E009 used, through the real chain).
+                              # Mechanism: the gate boundary scales with per-slot notional
+                              # (med20 >= 20 x S), so the floor must move with it; at S125k the
+                              # un-floored refusal is 29.4% with a BETTER corrected mean than at
+                              # S250k. 0.375 keeps refusal at 1.14% (bar: <= 1/3 of baseline),
+                              # corrected pick mean +2.692% vs the 0.75 floor's +2.632%, IC
+                              # 0.0717 vs 0.0675, modelled impact 0.092%/side vs 0.056% (both
+                              # far under the E010 0.5%/side stack). Baseline guards: E009's R1
+                              # rows bit-identical, restore IC = P4.1b frozen, 0.75 arm = E009's
+                              # R2 verbatim. See the 2026-09-26 E012 ledger block; the floor is
+                              # DERIVED from (gate boundary, headroom) — re-derive it on any
+                              # notional change, not a tuning hunt.
   allowed_series: [EQ]        # BRD §4 "EQ series; not in T2T/BE" IS this filter: every other code
                               # is excluded by construction. BE is the trade-to-trade series that
                               # actually appears in bhav; the literal "T2T" appears in no row, so the
@@ -49,7 +58,19 @@ universe:
 # ---- Portfolio rules (BRD §8) ----
 portfolio:
   start_capital: 1000000      # engine starting cash, Rs (synthetic checks + Phase 6 runs)
-  n_slots: 4                  # 4 positions, equal weight 25% each (§7.2/§7.3)
+  n_slots: 8                  # 8 positions, equal weight across free slots (§7.2/§7.3).
+                              # E011 (ADOPTED 2026-09-26) moved this from 4: the Phase 6.1
+                              # harness isolated the realized -51% as CONCENTRATION, not
+                              # selection - 8 slots recovered Rs402,923 of the Rs510,297 loss
+                              # (489,703 -> 892,626; maxDD -65.2% -> -23.9%; Sharpe -0.38 ->
+                              # -0.29) with the completed-pick hit rate unchanged (33% -> 32%),
+                              # clearing all four pre-registered bars. A12 (731,870) passed too
+                              # but lost to A8 on final equity; B8 ruled the churn rise a slot
+                              # artifact. Buy-side slippage vs the decision mark flipped
+                              # +0.441% -> -0.099%/side at the halved per-slot notional (part
+                              # of the gain is execution, not diversification - held-constant
+                              # notional arm is the declared follow-up). See 2026-09-26 E011
+                              # ledger block.
   cash_earns: 0.0             # interest on cash slots, 0 = conservative default (§13: reported)
   monthly_review:
     ma_window_days: 50
@@ -64,11 +85,23 @@ portfolio:
     trigger_b_deliv_z: -2.0       # delivery% z-score < -2 (§8.2 B)
     trigger_b_deliv_days: 3       # ...for 3 consecutive days while price falls
     gsm_asm_stage_exit: 2         # GSM/ASM stage >= 2 = forced exit, no exceptions
+    trigger_b_breadth_threshold: 40.0   # E008b breadth-protection gate (default OFF, see
+                                  # tighten below): trail tightens while the as-of top-200
+                                  # breadth share (% above own 200-session adj DMA, E008a's
+                                  # machinery sampled daily) is below this line
+    trigger_b_breadth_trail_tighten: null   # pp REMOVED from the 12% trail giveback when
+                                  # armed (12% -> 8%): sell EARLIER into stress. null/0 =
+                                  # OFF (shipped default — E008b is pre-registered, its
+                                  # evaluator decides; a PASS promotes the candidate with
+                                  # the default still OFF, the 6.1 harness as final judge)
   churn_report_threshold: 1.5   # avg replacements/month above this = "too twitchy" flag (§8.3)
 
 # ---- Backtest engine (BRD §9) ----
 backtest:
-  cost_per_side_pct: 0.20      # brokerage + STT + slippage + impact
+  cost_per_side_pct: 0.50      # E006's Phase 6 default (fixissues 4.6): STT 0.1%+0.1% round
+                               # trip, stamp, fees+GST, plus spread/impact headroom in the
+                               # 201-1500 buckets; 0.20 was measured optimistic. All three
+                               # sensitivity levels still reported (cost_sensitivity_pct).
   cost_sensitivity_pct: [0.20, 0.50, 1.00]  # E006 pre-registered sensitivity
   suspension_exit_days: 5      # mark at last close if no trade within 5 days
   fill:                        # E006's lesson: the fill model is the hard part, not the cost
@@ -78,14 +111,18 @@ backtest:
     impact_cap_pct: 1.0          # impact capped at 1% per side (the key is a percent; the
                                  # old 0.01 capped at 0.01% — silently optimistic)
   exit_gate:                   # Decision 3 (docs/brd_decisions_universe.md): what a refused
-                               # SELL does. stuck = refused, retried by the caller (the
-                               # pre-Decision-3 default, BRD-normative until decided);
+                               # SELL does. stuck = refused, retried by the caller;
                                # force = risk-management exits always fill, impact uncapped;
                                # escalate = force after escalate_after consecutive refusals.
                                # Only non_fill_adv counts; circuit locks/suspensions never do.
                                # A forced exit carries Fill.forced=True and uncapped impact,
                                # reported separately in the run's cost breakdown.
-    mode: stuck
+                               # Default is now ESCALATE (fixissues 4.3 / Decision 3's
+                               # recommendation): a stop the fill gate can veto indefinitely is
+                               # not a stop — the smoke's SOLARINDS case held a slot for 8
+                               # reviews. stuck/force stay available; the smoke reports both
+                               # side by side per run.
+    mode: escalate
     escalate_after: 2
   purge_months: 1              # 1-month purge gap between train end and test month (§10.2)
   random_seed: 42
@@ -127,6 +164,8 @@ paths:
   raw_bhavcopy_udiff: data/raw/bhavcopy_udiff/
   raw_delivery: data/raw/delivery/
   raw_yf_adj: data/raw/yf_adj/
+  raw_nifty_tri: data/raw/nifty_tri/    # niftyindices.com BackPage TRI JSON, one file per
+                                        # <=1yr chunk (the API's own limit), TRI + NTR cols
   surveillance_csv: data/surveillance/surveillance.csv   # optional GSM/ASM snapshot, one row per
                               # symbol+start: symbol,effective_from,list,stage (list = GSM|ASM)
   duckdb: data/duckdb/quant.duckdb

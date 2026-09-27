@@ -119,7 +119,15 @@ def _validate(cfg: dict) -> None:
     mm = p["midmonth"]
     assert 0 < mm["trigger_b_stop_pct"] < 1 and 0 < mm["trigger_b_trail_pct"] < 1, \
         f"trigger B thresholds are fractions < 1, got {mm['trigger_b_stop_pct']}, {mm['trigger_b_trail_pct']}"
+    tighten = mm.get("trigger_b_breadth_trail_tighten")
+    assert not tighten or (0 < tighten < mm["trigger_b_trail_pct"] * 100), \
+        (f"trigger_b_breadth_trail_tighten is pp REMOVED from the trail giveback "
+         f"(must stay < trail_pct x 100), got {tighten!r}")
+    assert 0 < mm["trigger_b_breadth_threshold"] < 100, \
+        f"trigger_b_breadth_threshold is a gauge percent (0, 100), got {mm['trigger_b_breadth_threshold']!r}"
     assert 0 < b["cost_per_side_pct"] < 5, f"cost_per_side_pct is a percent, got {b['cost_per_side_pct']}"
+    assert b["cost_per_side_pct"] in b["cost_sensitivity_pct"], \
+        "the default cost must be one of E006's reported sensitivity levels"
     assert len(b["cost_sensitivity_pct"]) == 3, "E006 needs exactly three cost levels"
     gate = b.get("exit_gate", {}) or {}
     assert gate.get("mode", "stuck") in ("stuck", "force", "escalate"), \
