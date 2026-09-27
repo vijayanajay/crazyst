@@ -1743,4 +1743,36 @@ from scratch.**
   and E012's floor re-derivation per arm. The inert `size_scale` hook stays in
   `smoke_e2e._engine_pass` (default `None` = bit-identical, re-proved by G1a on every run).
 
+### E015 supersession — rerun on the repaired tape: FAIL strengthened (2026-09-27, profile `full`)
+
+- **Why rerun:** the adj_close repair (row above) fills the 7 Yahoo-less sessions, and
+  E015 is the one experiment that consumes them at run time — σ windows end at each fold's
+  decision date, so the repaired sessions enter arms B/C's σ directly (2019-03-29 gains a
+  view it lacked — the frozen run's "no σ view, behaves as baseline" note is obsolete;
+  months with no σ-bearing pool 1 → 0 of 145) and the four muhurat sessions enter the
+  60-session windows of later folds. The IC-pin re-baseline (smoke `SLICE_IC_PIN`) was the
+  prompting commit; this rerun measures what the repair actually did to E015's arms.
+- **Protocol:** fresh full run after the re-baseline commit; frozen `results.json` diffed
+  leaf-by-leaf against the fresh one (1,567 differing paths). Arm A baseline: ZERO differing
+  paths — bit-identical to its frozen self and to E014's `arms.baseline` (G1b re-passed);
+  it never reads σ, so the repair is invisible to it by construction. The IC-guard fields
+  and `runtime_seconds`/`git_hash` account for the rest of the bookkeeping deltas.
+- **Arms B/C magnitudes moved; direction did not:** B EQUAL_RISK_MEAN1 — final equity
+  772,093 → **756,608** (−15,484), total −22.79% → −24.34%, CAGR −2.13% → −2.30%, Sharpe
+  0.009 → 0.001, maxDD −67.51% → **−68.11%**, arith mean/mo +0.015% → +0.001% at sd 6.17%
+  (unchanged to 3dp), fills 949 → 947; drawdown gain −1.93pp → **−2.53pp** (−10% → −13% of
+  R). C DERISK_CAP — final equity 965,412 → 966,926, maxDD −62.19% → −62.13%, gain +3.40pp
+  → +3.45pp (17.8% → 18.1% of R), CAGR −0.29% → −0.28%. Episodes: same 3/6 better for B
+  (2018_ilfs, 2020_covid, 2022_rates), per-episode maxDDs moved ≤ 0.05pp except 2013_taper
+  +0.16pp. Decision text unchanged: **FAIL** (B1 False, B2 True 3/6, G4 −0.49pp → −0.56pp
+  inside ±2.00).
+- **Reading:** the repair strengthens the verdict. B's arithmetic mean collapsed further
+  (the composite's alpha concentration is now bet against across a slightly wider σ cross-
+  section) while its sd barely moved, so the equal-risk normalization destroys even a
+  little more compound return than first measured; C's relief remains proportional to the
+  1.5pp of mean invested share it removes. The original arms stay the committed record
+  (`results.json`/`verdict.md` not overwritten — they describe the pre-repair tape, as
+  E012's do); this row + the verdict's historical note are the supersession record.
+  No config change; nothing promoted.
+
 ---
