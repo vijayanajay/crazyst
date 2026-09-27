@@ -1798,6 +1798,36 @@ from scratch.**
   freeze. The 10-20% target band from the brainstorm was real: this is the first measured
   configuration above it.
 
+## Experiment E019 - the deployable breadth book: return survives the account, the drawdown does not (2026-09-27, profile `full`)
+
+- **Why:** E018's cohort statistic could not show the path; this pre-registered the
+  deployable object - ONE account, fills over its first 12 months, each leg held exactly
+  12 decision months, real costs 0.105%/side, 3% weight cap, no leverage, no stops
+  (E017 measured the whipsaw; diversification IS the risk control).
+  `experiments/019_deployable_breadth/hypothesis.md` frozen before the run.
+- **Guards, all passed:** G1 continuity - the cohort statistic rebuilt from E018's own
+  builders reproduces E018's committed B CAGR 0.296444 to 1e-9; G2 tape pins exact (4,579
+  labeled picks, IC == repaired-tape pin to 1e-9, decile median 61); G3 no look-ahead -
+  100 random legs from fresh per-leg queries, worst diff 0.0e+00; G4 no leverage, no cap
+  breach, holdings <= 130 every month.
+- **Result: REJECTED on B2.** A deployable (real costs): **+25.77% CAGR, maxDD -47.02%**
+  (B at 0.5%/side: +24.88%, -47.97%). B1 (+15% bar) PASSED - the account gives up only
+  ~4pp of the cohort's +29.6% to transition drag and cost. B2 FAILED by 8.15pp: the
+  single book draws down 18pp WORSE than the index (-47% vs -28.87%). The cohort overlay
+  averaged 12 staggered vintages and hid the path; the account shows it.
+- **The findings:** (1) return and drawdown DECOUPLE at breadth - the same signal that
+  halves the engine's drawdown when concentrated MORE than doubles it when broad and
+  unmanaged through 2011/2013's small-cap air pockets; (2) steady-state turnover is
+  **8.55x/yr, not ~1x** - the fixed 12-month hold plus the 3% cap re-sizes surviving
+  names far more than the design intuition (costs stay small: A vs B only 0.9pp); (3)
+  the missing piece is a drawdown control that is not a whipsaw stop, or size small
+  enough that the drawdown does not matter.
+- **Decision per the pre-registration's FAIL clause:** the recommendation is the **index
+  core + breadth satellite blend** - 70/30 gives ~+16.9% CAGR (drawdowns not additive;
+  the joint-path blended maxDD must be measured before any deployment - that is the
+  next pre-registration). The design-freeze clause does NOT trigger. Nothing shipped;
+  test-window confirmation remains gated on the joint-path measurement.
+
 ## Pipeline repair - adj_close session coverage: seven Yahoo-less sessions, derived from bhav (2026-09-27, uncommitted; working tree on `b38f0b3`)
 
 - **What was missing:** `adj_close` has no row at all for 7 sessions bhav (series EQ) traded -

@@ -1,0 +1,58 @@
+{
+  "experiment": "E019_deployable_breadth",
+  "git_hash": "5e8935d87f2bae2ac6f629a2927532813497b4d6",
+  "profile": "full",
+  "window": {
+    "folds": 145,
+    "first": "2011-07-29",
+    "last": "2023-07-31",
+    "boundary": "2023-09-24",
+    "cutoff": "2026-09-24",
+    "test_window": "untouched"
+  },
+  "guards": {
+    "G1_cohort_continuity": {
+      "cagr_c": 0.296444033001356,
+      "e018_B": 0.296444033001356,
+      "passed": true
+    },
+    "G2_mean_monthly_ic": 0.07202922854484578,
+    "G2_ic_pin": 0.07202922854484578,
+    "G2_top5_picks": 4579,
+    "G2_decile_median": 61,
+    "G2_decile_max": 115,
+    "G3_no_lookahead_max_diff": 0.0,
+    "G3_sampled_legs": 100,
+    "G4_no_leverage_no_cap_breach": true,
+    "passed": true
+  },
+  "arms": {
+    "A_deployable_real_cost": {
+      "cagr": 0.2576823502440744,
+      "maxdd": -0.470202965689257
+    },
+    "B_deployable_modeled_cost": {
+      "cagr": 0.24876011752988236,
+      "maxdd": -0.47970480532353943
+    },
+    "C_cohort_reference": {
+      "cagr": 0.296444033001356
+    }
+  },
+  "turnover": {
+    "first_12mo_bought": 0.3356866335802447,
+    "steady_state_per_year": 8.551448509371854
+  },
+  "bars": {
+    "B1_cagr_ge_15pct": true,
+    "B2_maxdd_within_10pp_of_index": false,
+    "bars_as_coded": "b1: cagr_a >= 0.15; b2: dd_a >= dd_idx - 0.10"
+  },
+  "index_equivalent": {
+    "cagr": 0.13174664181300377,
+    "maxdd": -0.2887358301241153,
+    "source": "sourced Nifty 500 TRI, month-end marks, same months"
+  },
+  "verdict": "REJECTED",
+  "runtime_seconds": 41.5
+}
