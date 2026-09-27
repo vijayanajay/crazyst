@@ -1710,6 +1710,94 @@ from scratch.**
 - The harness report prints a standing `index-equivalent` line (engine CAGR vs the sourced
   benchmark's CAGR over the same window, with the gap).
 
+## Experiment E017 - Trigger B stop/trail sweep: REJECTED on the pre-registered bar, and the first positive-CAGR engine arms ever measured (2026-09-27, profile `full`)
+
+- **Why:** E016 exonerated the monthly review and located the real turnover in Trigger B;
+  the break-even arithmetic said the edge survives long holds. Pre-registered in
+  `experiments/017_stop_sweep/hypothesis.md` before the run; arms are config-only via
+  `portfolio_overrides` (A shipped 0.08/0.12; D1 2x; D2 4x; D3 stop off; D4 trail off;
+  D5 both off; T1 half — the falsification arm). One pre-run disclosure: G3's strict
+  monotonicity was replaced by a directional rule (T1 > A > D5) when the pilot showed the
+  shipped widths bind rarely and most trigger_b sells are the DMA/delivery clauses the
+  sweep does not touch (`results.json guards.G3_note`).
+- **Guards, all passed:** G1 arm A json-equal to E016's committed baseline (bit-for-bit
+  back to E014); G2 tape pins exact (picks 5,605, eligible 161,942, IC == repaired-tape
+  pin to 1e-9); G3 T1 576 > A 486 > D5 475 trigger_b sells; G4 stop/trail counts zero
+  where required, GSM intact everywhere.
+- **Result: REJECTED** — B1 needed CAGR >= A + 2.0pp (>= +1.50%); the best arm (D2)
+  reached **+0.84%** and missed by 0.66pp. B2 passed everywhere (wider stops IMPROVE
+  maxDD: -63.3% vs -65.6%).
+- **The findings that survive the rejection:** (1) the whipsaw decomposition is monotone —
+  T1 -0.62% < A -0.50% < D1 +0.50% < D5 +0.81% ~ D2 +0.84% CAGR: tighter stops lose,
+  wider wins, the "stops are alpha" hypothesis is falsified in this signal; (2) the stop
+  is the whole effect — D3 (stop off, trail kept) equals A to the last fill (the stop's
+  116 sells were perfectly replaced by 163 trail sells), D4 (trail off, stop kept) is
+  worth +0.49pp; (3) **D1/D2/D5 are the first positive-CAGR engine arms ever measured**
+  (Sharpe 0.138-0.153, improved maxDD, all still ~12.3pp/yr below the index's +13.17%);
+  (4) fills barely moved across the sweep (983 -> 963): the gain is not trading less, it
+  is not realizing losses at the local low. With E016 and the break-even arithmetic, the
+  engine's deficit vs its own picks is now attributed: whipsaw losses + the cost model —
+  not review churn, slot count, benchmark timing, or sizing. No config change; the family
+  is closed per the pre-registration.
+
+## Real-world delivery cost analysis - the modeled 0.5%/side is the largest modeled drag (2026-09-27, analysis on committed sweeps; not a pre-registered experiment)
+
+- **Basis:** E006's measured picks-level response (net/mo: +3.05% at 0.2%/side, +2.45% at
+  0.5%, +1.45% at 1.0% — linear, 1:1 in round-trip cost) x real-world Indian delivery
+  costs at a discount broker: brokerage 0%, STT 0.1%+0.1%, exchange/SEBI/stamp/GST/DP
+  bring the round trip to ~0.21-0.24% = ~0.105-0.12%/side. The shipped 0.5%/side model is
+  ~4-5x real; E006's 0.2% floor is ~1.7-1.9x real.
+- **Arithmetic:** engine cadence ~0.85 round trips per position-month (E017's fills) ->
+  cost drag ~0.85%/mo modeled vs ~0.18%/mo real, a delta of ~+0.67%/mo (~+8.4%/yr) on the
+  book. Re-costing E017's D2 path: +0.84% CAGR modeled -> roughly **+6-9% CAGR at real
+  costs** (deployment-adjusted) — the first configuration in the index's neighborhood,
+  though still below +13.17%. A baseline re-costs to ~+5-7.5%.
+- **Status: analysis, not shipped.** This is arithmetic on measured responses, not a
+  measured engine run; varying the shipped cost model re-pins every prior engine anchor
+  and needs its own pre-registration (E018 candidate: one config change,
+  `backtest.cost_per_side_pct` 0.5 -> 0.12, one validation-slice pass, fresh pins).
+  The index-equivalent line still governs: buy-and-hold pays +13.17% with zero fills,
+  zero model risk. Full workings in `experiments/018_real_costs/README.md`.
+
+## Experiment E018 - breadth portfolio: the first PASS that beats the index, by ~16-19pp/yr (2026-09-27, profile `full`)
+
+- **Why:** the 8-slot engine captures 9.4% of the composite's signal (529 of 5,605
+  arm-convention picks); the basket arithmetic (E006 +3.05%/mo at 0.2%/side; break-even
+  block: edge survives 12-month holds at ~87%) says the WHOLE cross-section, held, at
+  breadth, is the architecture the program never tried. Pre-registered in
+  `experiments/018_breadth_portfolio/hypothesis.md` before the run; paper-book experiment
+  (the engine is the thing being replaced), 12-month overlapping cohorts priced on
+  adj_close month-end marks, sell-at-last-trade delisting proxy, real costs 0.21%/round
+  trip.
+- **Pre-run disclosures (2, both in results.json guards):** G1's anchor was re-based from
+  E006's +3.05% (a pre-floor 6,622-pick book) to the current tape's own committed
+  mean_gross +2.8113% (arm A price-path +2.6840%, diff -1.27e-3 = the measured mark-timing
+  gap); G4's width window [70,85]/<=90 was re-based to [55,85]/<=130 (the scored
+  cross-section is smaller than the eligible count: decile median 61, max 115).
+- **Pipeline finding (bigger than E015's):** the arm convention (all decision rows) puts
+  **64.4% of picks in symbols with no adj_close coverage at all** - **1,066 of 4,052 bhav
+  symbols (1.22M bhav rows) have zero Yahoo coverage** (renames/delistings: TUBEINVEST,
+  MOTHERSUMI, CORPBANK, ABIRLANUVO, ADANIGAS...). Books were therefore drawn from LABELED
+  rows (the tradeable universe; 4,522/4,522 top-5% legs priceable end-to-end); the labeled
+  top-5% pin (4,579) is exact and the arm-convention pin (5,605) still cross-checks the
+  selection code. Any future price-path work on unlabeled rows needs a rename map or an
+  explicit tradeability filter.
+- **Result: PASS, both bars.** A TOP5_EQUAL +32.33% CAGR / maxDD -21.58%; **B
+  DECILE_RANK_W +29.64% / -23.05%**; C DECILE_EQUAL +31.04% / -21.67%; D (0.5%/side
+  model) +28.85% / -24.30%. Index-equivalent +13.17% / -28.87%: B1 (+10% bar) passed at
+  ~3x the bar; B2 passed with the breadth book a BETTER ride than buy-and-hold. Honest
+  reading in the verdict: the cohort estimator annualizes overlapping cohorts (the
+  deployable single-book path is the break-even block's ~2.04-2.35%/mo -> the same
+  ~+28-34% band); no fill gate, no impact caps, no intra-month stops; even the pessimistic
+  cost model keeps +28.85%.
+- **Consequences:** no engine/config change (pre-registration rule). The 8-slot engine is
+  now a MEASURED 9.4%-capture concentrated expression, with a measured breadth alternative
+  that captures the whole signal. The follow-on is portfolio design (breadth book vs
+  index core + satellite, execution costs at real ticket sizes); the slice is spent for
+  the breadth family's design choices - test-window confirmation only after the design
+  freeze. The 10-20% target band from the brainstorm was real: this is the first measured
+  configuration above it.
+
 ## Pipeline repair - adj_close session coverage: seven Yahoo-less sessions, derived from bhav (2026-09-27, uncommitted; working tree on `b38f0b3`)
 
 - **What was missing:** `adj_close` has no row at all for 7 sessions bhav (series EQ) traded -

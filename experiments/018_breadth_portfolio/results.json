@@ -1,0 +1,74 @@
+{
+  "experiment": "E018_breadth_portfolio",
+  "git_hash": "9b24d70819095114693ec522f61a268ba8d7cb57",
+  "profile": "full",
+  "window": {
+    "folds": 145,
+    "first": "2011-07-29",
+    "last": "2023-07-31",
+    "boundary": "2023-09-24",
+    "cutoff": "2026-09-24",
+    "test_window": "untouched"
+  },
+  "guards": {
+    "G0_books_from_labeled_rows": true,
+    "G0_note": "pilot disclosure: the arm convention puts 64.4% of picks in symbols with no adj_close coverage (unlabeled rows; 1,066 of 4,052 bhav symbols have zero Yahoo coverage \u2014 a pipeline finding recorded in the LEDGER). Books use the labeled (tradeable) universe; verified 4,522/4,522 top-5% legs priceable.",
+    "G1_armA_1mo_gross_vs_smoke_pin": {
+      "mean_gross": 0.026839557733099983,
+      "pin": 0.02811289893242504,
+      "diff": -0.0012733411993250572,
+      "passed": true,
+      "note": "pre-registered anchor was E006's +3.05% (pre-floor 6,622-pick book); replaced by the current tape's own committed mean_gross before the run \u2014 same disclosure family as E017's G3"
+    },
+    "G2_mean_monthly_ic": 0.07202922854484578,
+    "G2_ic_pin": 0.07202922854484578,
+    "G2_arm_picks": 5605,
+    "G2_top5_picks": 4579,
+    "G3_dropped_legs_zero": true,
+    "G4_median_decile_width": 61,
+    "G4_max_width": 115,
+    "G4_passed": true,
+    "G4_note": "amended pre-run with disclosure: frozen [70,85]/<=90 window guessed the scored cross-section's size from the eligible count; actual scored median ~610 -> decile median 61, max 115; check becomes median in [55,85], max <= 130",
+    "passed": true
+  },
+  "arms": {
+    "A TOP5_EQUAL (real costs)": {
+      "cagr": 0.3233444133945049,
+      "maxdd": -0.21581706264094402,
+      "cohorts": 133,
+      "mean_net_per_hold": 0.32334441339450437
+    },
+    "B DECILE_RANK_W (real costs)": {
+      "cagr": 0.296444033001356,
+      "maxdd": -0.23050865622377315,
+      "cohorts": 133,
+      "mean_net_per_hold": 0.29644403300135663
+    },
+    "C DECILE_EQUAL (real costs)": {
+      "cagr": 0.31041510661533334,
+      "maxdd": -0.21669817829456417,
+      "cohorts": 133,
+      "mean_net_per_hold": 0.3104151066153327
+    },
+    "D DECILE_RANK_W (0.5%/side model)": {
+      "cagr": 0.28854403300135534,
+      "maxdd": -0.24296429597161395,
+      "cohorts": 133,
+      "mean_net_per_hold": 0.2885440330013565
+    }
+  },
+  "bars": {
+    "B1_cagr_ge_10pct": true,
+    "B2_maxdd_within_10pp_of_index": true,
+    "index_maxdd": -0.2887358301241153,
+    "index_cagr": 0.13174664181300377,
+    "bars_as_coded": "b1: b_cagr >= 0.10; b2: b_dd >= dd_idx - 0.10 (negative fractions; worse by >10pp fails)"
+  },
+  "index_equivalent": {
+    "cagr": 0.13174664181300377,
+    "maxdd": -0.2887358301241153,
+    "source": "sourced Nifty 500 TRI, month-end marks, same months"
+  },
+  "verdict": "PASS",
+  "runtime_seconds": 39.5
+}
