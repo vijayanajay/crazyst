@@ -43,6 +43,7 @@ from src.download.backfill_bhavcopy import months_between
 from src.download.bhavcopy_old import OLD_FORMAT_LAST_DAY, download_month as old_month
 from src.download.bhavcopy_udiff import FIRST_DAY as UDIFF_FIRST, download_month as udiff_month
 from src.download.delivery import download_month as deliv_month
+from src.download import nifty_tri
 from src.normalize import adj_close, panels
 from src.normalize import bhav as norm_bhav
 from src.normalize import delivery as norm_deliv
@@ -158,6 +159,10 @@ def main(argv: list[str]) -> int:
                 f"{adj['newest']} yet — Yahoo publishes later than the NSE close and serves a "
                 f"placeholder row (Close and Adj Close both NaN, refused by design); they stay "
                 f"queued and the next run retries them")
+
+    tri = nifty_tri.fetch_chunks(cfg)   # the §11 benchmark source: cache-skip, current year re-POSTs
+    say(f"nifty_tri: +{tri['downloaded']} chunk(s) ({tri['refreshed']} refreshed), "
+        f"{tri['cached']} cached; index_tri rebuilt")
 
     con = duckdb.connect(cfg["paths"]["duckdb"])
     try:
