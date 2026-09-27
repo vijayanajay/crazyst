@@ -1,0 +1,167 @@
+{
+  "experiment": "E022_regime_decomposition",
+  "git_hash": "d2a0386df58258d6706dace3d43339cbcd441f82",
+  "profile": "full",
+  "window": {
+    "months": 180,
+    "first": "2011-07-29",
+    "last": "2026-06-30",
+    "validation": 145,
+    "test_pooled": 35,
+    "pooling_disclosure": "test window burnt as of E020-C; diagnostic only"
+  },
+  "guards": {
+    "G1_top5_anchor": true,
+    "G1_mean_gross": 0.026839557733099983,
+    "G1_pin": 0.02811289893242504,
+    "G2_index_anchor": true,
+    "G2_index_cagr": 0.13174664181300377,
+    "G2_index_maxdd": -0.2887358301241153,
+    "G3_coverage": true,
+    "G3_no_band_months": 0,
+    "passed": true
+  },
+  "book": {
+    "overall": {
+      "n": 179,
+      "mean_book": 0.02267830292687354,
+      "mean_index": 0.011399689210418867,
+      "mean_excess": 0.01127861371645468,
+      "t_stat": 2.85942183904094,
+      "hit_rate": 0.6089385474860335
+    },
+    "by_regime_band": {
+      "down": {
+        "n": 40,
+        "mean_book": 0.011060283102342075,
+        "mean_index": 0.009804362562605261,
+        "mean_excess": 0.0012559205397368127,
+        "t_stat": 0.11012256607899344,
+        "hit_rate": 0.55
+      },
+      "flat": {
+        "n": 63,
+        "mean_book": 0.016286750109310605,
+        "mean_index": 0.010703215259962175,
+        "mean_excess": 0.005583534849348435,
+        "t_stat": 0.9489164214303373,
+        "hit_rate": 0.5555555555555556
+      },
+      "up": {
+        "n": 76,
+        "mean_book": 0.034091311091185676,
+        "mean_index": 0.012816675062936165,
+        "mean_excess": 0.021274636028249527,
+        "t_stat": 4.234009324595874,
+        "hit_rate": 0.6842105263157895
+      }
+    },
+    "by_index_dd": {
+      "deep": {
+        "n": 7,
+        "mean_book": 0.10575357592296002,
+        "mean_index": 0.06689427895792055,
+        "mean_excess": 0.03885929696503947,
+        "t_stat": 1.2832160570212712,
+        "hit_rate": 0.7142857142857143
+      },
+      "moderate": {
+        "n": 58,
+        "mean_book": 0.010098843163515392,
+        "mean_index": 0.008383033337535166,
+        "mean_excess": 0.0017158098259802245,
+        "t_stat": 0.23142861909580897,
+        "hit_rate": 0.5862068965517241
+      },
+      "shallow": {
+        "n": 114,
+        "mean_book": 0.023977265692682007,
+        "mean_index": 0.009526916512127129,
+        "mean_excess": 0.014450349180554899,
+        "t_stat": 3.193870544823761,
+        "hit_rate": 0.6140350877192983
+      }
+    },
+    "episode_2018_2020": {
+      "n": 36,
+      "mean_excess": 0.0008036834630530281,
+      "share_of_full_mean": 0.07125729129995047
+    },
+    "top5_overall": {
+      "n": 179,
+      "mean_book": 0.026551862357312796,
+      "mean_index": 0.011399689210418867,
+      "mean_excess": 0.015152173146893938,
+      "t_stat": 4.685462763091936,
+      "hit_rate": 0.6759776536312849
+    },
+    "post_hoc_slice_split": {
+      "disclosure": "slice x band split added after the first run to reconcile with E020-C; descriptive only, no gate reads it",
+      "validation_by_band": {
+        "down": {
+          "n": 33,
+          "mean_book": 0.005393378284651997,
+          "mean_index": 0.007058894541448483,
+          "mean_excess": -0.0016655162567964852,
+          "t_stat": -0.12488431932204502,
+          "hit_rate": 0.5454545454545454
+        },
+        "flat": {
+          "n": 49,
+          "mean_book": 0.019440899104008313,
+          "mean_index": 0.012728413797967788,
+          "mean_excess": 0.0067124853060405235,
+          "t_stat": 1.0205844781049507,
+          "hit_rate": 0.5510204081632653
+        },
+        "up": {
+          "n": 63,
+          "mean_book": 0.036904470103937284,
+          "mean_index": 0.012949890542633355,
+          "mean_excess": 0.023954579561303944,
+          "t_stat": 4.138673138812943,
+          "hit_rate": 0.6984126984126984
+        }
+      },
+      "test_by_band": {
+        "down": {
+          "n": 7,
+          "mean_book": 0.03777569152859529,
+          "mean_index": 0.022747283233772935,
+          "mean_excess": 0.01502840829482236,
+          "t_stat": 0.8390063568054797,
+          "hit_rate": 0.5714285714285714
+        },
+        "flat": {
+          "n": 14,
+          "mean_book": 0.0052472286278686464,
+          "mean_index": 0.0036150203769425254,
+          "mean_excess": 0.0016322082509261247,
+          "t_stat": 0.12082626332506143,
+          "hit_rate": 0.5714285714285714
+        },
+        "up": {
+          "n": 13,
+          "mean_book": 0.020458309721697123,
+          "mean_index": 0.012171092353634397,
+          "mean_excess": 0.008287217368062724,
+          "t_stat": 1.0143751192120731,
+          "hit_rate": 0.6153846153846154
+        }
+      }
+    }
+  },
+  "decision_rule": {
+    "deep_minus_shallow_pp": 2.4408947784484574,
+    "n_deep": 7,
+    "deep_hit_rate": 0.7142857142857143,
+    "thresholds": {
+      "edge_pp": 3.0,
+      "hit_rate": 0.7,
+      "n_deep": 12
+    }
+  },
+  "reopens_family": false,
+  "runtime_seconds": 45.0,
+  "construction_disclosure": "hypothesis.md's frozen words specify the book return as the weighted mean of legs' next_month_ret; the run implements E018's exact MARK-BASED cohort construction (adj_close month-end marks, decision month-end -> next decision month-end) because the frozen G1 anchor (smoke light_pass.mean_gross) is defined on E018's mark-based series - the label-based recompute misses it by ~44bp/mo, far beyond the 15bp tolerance, while the mark-based recompute reproduces it. The label-vs-mark gap is the measured 6.3e-4 timing offset (E018's break-even block); it is a near-constant across months and cancels in every between-bucket excess comparison. Disclosed post-hoc per the E013/E014 deviations rule; the guards, cuts and decision rule are unchanged."
+}
