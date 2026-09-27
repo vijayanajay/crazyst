@@ -8,3 +8,4 @@ scikit-learn>=1.4  # plan 4.2 learned ranker (HistGradientBoosting, walk-forward
                    # rank-aware loss without a second dependency (no lightgbm), NaN-native, deterministic
                    # under a fixed seed with early stopping off
 pyinstaller>=6.0   # build-time only: build_exe.py (the portable quantdata.exe); not needed to run
+xlrd==2.0.2  # E025: NSE IndexInclExcl.xls (BIFF) parser, pure Python

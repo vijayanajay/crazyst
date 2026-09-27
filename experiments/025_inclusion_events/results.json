@@ -1,0 +1,53 @@
+{
+  "experiment": "E025_inclusion_events",
+  "git_hash": "341e7a1a19170f14d8b2f789dc44bf31ae98e8a8",
+  "profile": "full",
+  "window": {
+    "validation_months": 145,
+    "first": "2011-07-29",
+    "last": "2023-07-31",
+    "event_window_months": 12,
+    "test_window": "burnt; not touched"
+  },
+  "guards": {
+    "G1_source_coverage": true,
+    "G1_events_total": 2495,
+    "G1_events_matched": 1216,
+    "G1_last_event": "2020-09-14",
+    "G2_slice_pins": true,
+    "G3_no_lookahead": "flags read only events dated <= m; asserted by construction in flag_in_window",
+    "passed": true
+  },
+  "disclosures": {
+    "stale_source": "the workbook's last event is 2020-09-14; months after that have empty flag sets and cannot contribute (visible in event_bearing_months)",
+    "match_rate": "1216/2495 Nifty 500 events matched to NSE symbols via the EQUITY_L master; unmatched are renames/delistings/master gaps (counted, excluded)"
+  },
+  "sweep": {
+    "include": {
+      "event_bearing_months": 122,
+      "flagged_name_months": 3652,
+      "mean_monthly_ic": -0.0011709749073234993,
+      "ic_t_across_months": -0.2345664234626295,
+      "mean_label_gap": -0.0016538013819474256,
+      "gap_t_across_months": -0.6511958279924269,
+      "months_in_sample": 145
+    },
+    "exclude": {
+      "event_bearing_months": 122,
+      "flagged_name_months": 1898,
+      "mean_monthly_ic": -0.0094243417775659,
+      "ic_t_across_months": -1.81539121276136,
+      "mean_label_gap": -0.005790934051716383,
+      "gap_t_across_months": -0.9630684652193271,
+      "months_in_sample": 145
+    }
+  },
+  "bars": {
+    "gap_bar_pp": 1.0,
+    "event_months_min": 30,
+    "pass_include": false,
+    "pass_exclude": false
+  },
+  "verdict": "REJECTED",
+  "runtime_seconds": 88.7
+}
