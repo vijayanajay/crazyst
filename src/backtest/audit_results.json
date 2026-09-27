@@ -3,9 +3,9 @@
   "picks_audited": 717,
   "first_month": "2025-09-30",
   "last_month": "2026-07-31",
-  "boundary": "2026-09-24",
-  "cutoff": "2026-09-24",
+  "boundary": "2026-09-25",
+  "cutoff": "2026-09-25",
   "future_tamper_drift_months": 0,
-  "runtime_seconds": 0.485,
-  "git_hash": "a8cc624640dfeecf5e98a9f25177a7fed547c353"
+  "runtime_seconds": 0.547,
+  "git_hash": "833662c66ef6849a896b147dde597d8b36c7bb1a"
 }

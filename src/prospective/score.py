@@ -172,15 +172,25 @@ def score(name: str) -> int:
     top = sorted(pairs, key=lambda p: -p[0])[:top_k]
     top_mean_ret = sum(r for _s, r in top) / top_k
 
+    # optional paired reference (a design may ship score_month_reference) + validity flag
+    ref_ic = ""
+    if hasattr(mod, "score_month_reference"):
+        ref_scores = mod.score_month_reference(rs)
+        rp = [(s, r[1]) for s, r in zip(ref_scores, rs) if s is not None and r[1] is not None]
+        ref_ic = f"{spearman_ic([p[0] for p in rp], [p[1] for p in rp]):.6f}"
+    min_scored = getattr(mod, "MIN_SCORED", 0)
+    valid = int(len(pairs) >= min_scored)
+
     os.makedirs(os.path.dirname(_folds_csv(name)), exist_ok=True)
     new_file = not os.path.exists(_folds_csv(name))
     with open(_folds_csv(name), "a", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
         if new_file:
             w.writerow(["month", "ic", "n_scored", "mean_score", "mean_label",
-                        "top5_mean_label", "scored_at", "design_sha256"])
+                        "top5_mean_label", "ref_ic", "valid", "scored_at",
+                        "design_sha256"])
         w.writerow([fold, f"{ic:.6f}", len(pairs), f"{mean_score:.6f}",
-                    f"{mean_ret:.6f}", f"{top_mean_ret:.6f}",
+                    f"{mean_ret:.6f}", f"{top_mean_ret:.6f}", ref_ic, valid,
                     time.strftime("%Y-%m-%d %H:%M:%S"), d["sha256"][:16]])
     n_folds = len({row["month"] for row in csv.DictReader(open(_folds_csv(name),
                                                                encoding="utf-8"))})

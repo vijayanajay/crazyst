@@ -1,0 +1,15 @@
+{
+  "x2f_interaction": {
+    "design_md": "docs/prospective/x2f_interaction/design.md",
+    "sha256": "878f54b6031a626f180a9f0db031d3ddad57669e65ece3e937ac7ad9c847ae31",
+    "registered_at": "2026-09-28 00:17:40",
+    "reference_insample_ic": {
+      "product": 0.07433458078333899,
+      "shipped_mean": 0.07202922854484578,
+      "paired_diff": 0.0023053522384932227,
+      "t": 1.3081117674588028,
+      "months": 145,
+      "note": "context only; the verdict reads virgin folds alone (design.md G2)"
+    }
+  }
+}

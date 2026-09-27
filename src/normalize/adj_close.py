@@ -217,7 +217,8 @@ def _replace_symbol(cfg: dict, symbol: str, df: pd.DataFrame) -> int:
     try:
         con.execute("DELETE FROM adj_close WHERE symbol = ?", [symbol])
         con.register("aview", df[ADJ_COLS])
-        con.execute(f"INSERT INTO adj_close SELECT {', '.join(ADJ_COLS)} FROM aview")
+        con.execute(f"INSERT INTO adj_close ({', '.join(ADJ_COLS)}) "
+                    f"SELECT {', '.join(ADJ_COLS)} FROM aview")
         con.unregister("aview")
         con.execute("CHECKPOINT")
         return len(df)

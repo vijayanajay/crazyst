@@ -2159,3 +2159,38 @@ from scratch.**
   at full precision, with the reproducing experiment for each.
 
 ---
+
+## Prospective program live - first design registered, monthly job wired (2026-09-28)
+
+- **First design: `x2f_interaction`** (docs/prospective/x2f_interaction/design.md, frozen
+  from the template, sha256-pinned at registration): the CONJUNCTIVE aggregation of the
+  shipped pair — score = pct(mom_12m_1m) x pct(delivery_pct), the audit's #4 (aggregation
+  structure, a family never measured; the mean is compensatory, the product requires
+  strength in both legs). Scorer at src/prospective/designs/x2f_interaction.py with the
+  shipped 2f as the paired reference in the same folds.csv row; G3 coverage floor 100
+  scored names/fold; NaN contract deliberately stricter than the mean's (any None -> None).
+  Registration-time G2 context (in-sample, 145 months, NOT gating): product 0.0743 vs
+  shipped 0.0720, paired diff +0.0023 (t 1.31) — directionally right, decisively not
+  conclusive; the reference reproduced SLICE_IC_PIN to full precision. Bar (frozen):
+  paired fold-difference >= +0.005 over 18 valid virgin folds; early stop allowed in the
+  fail direction only after 12. First virgin fold: the first labeled month whose decision
+  month is after 2026-09 (expected to close with November's data).
+- **Monthly job wired:** src/prospective/job.py = `src.download.scheduler --once` then
+  `src.prospective.score --all`, appending to data/prospective.log (exit 1 only when the
+  scorer itself fails; refresh exit 2 is a normal holiday/late-archive). Launcher
+  `prospective_job.cmd` for Task Scheduler (schtasks line in the job's docstring; NOT
+  installed on this machine — installation is the operator's). End-to-end verified live:
+  the run surfaced and fixed a REAL production bug the refresh had been hiding —
+  adj_close._replace_symbol's INSERT omitted the `source` column added by the repair work
+  (Binder Error; the refresh had been failing and retrying). Fixed, refresh completed
+  clean (371s, self-check 26/26), lock handled, scorer no-op correct.
+- **Fundamentals tranche: NO-GO for now** (docs/fundamentals_scope.md): factor families
+  mapped (quality/accruals, ownership/pledge, earnings reactions, value) with priors and
+  the E022/E025 horizon lessons attached; source routes costed (yfinance days-but-inverted-
+  coverage, screener ToS-fragile, filings 1-2 weeks messy, vendor priced annually); 3-10
+  weeks to a first LEDGER row and 2+ years to a deployable verdict under the prospective
+  protocol. One revisit trigger recorded: a machine-readable pledge/SAST event feed
+  re-opens E004 (pre-registered, never measured, event-shaped — where E025 showed the
+  signal actually is).
+
+---
