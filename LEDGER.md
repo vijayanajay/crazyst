@@ -1848,6 +1848,31 @@ from scratch.**
   from solo deployment.
 - Both pre-registrations are frozen before their runs per BRD 12; neither has run yet.
 
+## Experiments E020/E021 - the blend frontier and the drawdown control: the family is complete (2026-09-27, profile `full`)
+
+- **E020 (joint path) - PASS, winner 90/10.** The blend re-splits two committed monthly
+  curves (satellite leg rebuilt from E019's sim, CAGR/maxDD == committed to 1e-9; index
+  leg == committed +13.17%/-28.87%). Frontier: 90/10 **+15.33% CAGR / -31.13% maxDD**
+  (Sharpe 0.89); 80/20 +17.12%/-33.13%; 70/30 +18.66%/-35.84%. Bars: B1 (>= index +2pp)
+  all pass; B2 (maxDD <= index +3pp) only 90/10 — the 70/30 everyone reaches for breaks
+  the risk tolerance by 4pp. **The 90/10 blend is the design freeze:** +2.2pp CAGR over
+  the index for +2.3pp of drawdown, with the 2018-2020 small-cap stress INSIDE the number.
+- **E021 (entry gate) - REJECTED.** The frozen mechanism (while the book is >15% below its
+  own equity peak, new entries go to cash; scheduled 12-month exits untouched) engaged
+  63/145 months, force-sold nothing (G3 zero), and cut maxDD -47.02% -> **-30.23%** (B1
+  >= -35% passed) — but at +9.80% CAGR, **12.97pp below the B2 tolerance** (A - 3pp): it
+  sat out the 2011-2015 rebound years that ARE the edge. The gated 70/30 blend (+12.27%/
+  -26.88%) is dominated by E020's ungated 90/10 (better on both axes). One pre-run
+  amendment disclosed: G3's gated-month ceiling 60 -> 90 (the pilot measured 63).
+- **The whipsaw asymmetry, now measured on both sides:** per-name stops cost ~1.3pp
+  (E017); a whole-book entry gate costs ~16pp (E021). There is no non-whipsaw drawdown
+  control at this breadth — the drawdown is structural to broad small-cap exposure in
+  this signal. The breadth family's validation-slice work is COMPLETE: E018 design ->
+  E019 deployable -> E020 blend frontier -> E021 control, every branch measured, nothing
+  shipped, test window untouched. The only remaining step before any deployment is the
+  test-window confirmation of the frozen 90/10 blend, using E020's exact construction
+  with no re-tuning.
+
 ## Pipeline repair - adj_close session coverage: seven Yahoo-less sessions, derived from bhav (2026-09-27, uncommitted; working tree on `b38f0b3`)
 
 - **What was missing:** `adj_close` has no row at all for 7 sessions bhav (series EQ) traded -

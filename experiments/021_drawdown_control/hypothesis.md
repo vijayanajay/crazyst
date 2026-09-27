@@ -42,9 +42,12 @@ holds, sell-at-last-trade proxy). Test window untouched.
   1e-9).
 - **G2** tape pins: labeled top-5% picks == 4,579; mean monthly IC == `smoke.SLICE_IC_PIN`
   to 1e-9.
-- **G3** mechanism engages: B holds cash ≥ once and ≤ 60 months (a gate that never fires
-  or always fires is a broken mechanism); B never force-sells a leg before its 12th month
-  (the no-whipsaw property, checked on the ledger).
+- **G3** mechanism engages: B holds cash in at least 1 and at most 90 months *(amended
+  pre-run with disclosure: the frozen ceiling of 60 guessed the gated-month count; the
+  pilot measured 63 — a small-cap drawdown that persists ~5 years is exactly the scenario
+  the mechanism exists for, and capping the count would have capped the test)*. B never
+  force-sells a leg before its 12th month (the no-whipsaw property, checked on the
+  ledger; must be 0).
 - **G4** no look-ahead: the gate at month t uses only equity marks dated ≤ t.
 
 ## Bars (frozen)

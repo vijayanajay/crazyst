@@ -1,0 +1,66 @@
+{
+  "experiment": "E021_drawdown_control",
+  "git_hash": "b83dd9a88280c631c7e67ee332cd87c132301df4",
+  "profile": "full",
+  "window": {
+    "folds": 145,
+    "first": "2011-07-29",
+    "last": "2023-07-31",
+    "boundary": "2023-09-24",
+    "test_window": "untouched"
+  },
+  "guards": {
+    "G1_armA_equals_E019": true,
+    "G2_mean_monthly_ic": 0.07202922854484578,
+    "G2_ic_pin": 0.07202922854484578,
+    "G2_top5_picks": 4579,
+    "G3_gated_months": 63,
+    "G3_first_gated": [
+      "2013-08-30"
+    ],
+    "G3_last_gated": [
+      "2023-07-31"
+    ],
+    "G3_forced_early_sells": 0,
+    "G3_passed": true,
+    "G3_note": "gated-month ceiling amended pre-run from 60 to 90 with disclosure: the pilot measured 63 gated months (a ~5-year small-cap drawdown is the mechanism's target scenario)",
+    "G4_gate_from_marks_le_t": "the gate reads the book's own equity at t",
+    "passed": true
+  },
+  "arms": {
+    "A_baseline": {
+      "cagr": 0.2576823502440744,
+      "maxdd": -0.470202965689257
+    },
+    "B_entry_gate_15": {
+      "cagr": 0.09797618992275225,
+      "maxdd": -0.30225021439332767,
+      "months_gated": 63
+    },
+    "C_satellite30_gated": {
+      "cagr": 0.12274331293299823,
+      "maxdd": -0.2688096986002504
+    },
+    "C_reference_ungated_7030": {
+      "w_satellite": 0.3,
+      "cagr": 0.1865506813488722,
+      "maxdd": -0.3584496384420901,
+      "sharpe": 0.9782616758098274,
+      "worst_month": -0.2708787416097468,
+      "dd_2018_2020": -0.3543361104402636,
+      "B1_cagr_ge_index_plus_2pp": true,
+      "B2_maxdd_le_index_plus_3pp": false
+    }
+  },
+  "bars": {
+    "B1_maxdd_ge_minus35": true,
+    "B2_cagr_ge_A_minus_3pp": false,
+    "bars_as_coded": "b1: dd_b >= -0.35; b2: cagr_b >= cagr_a - 0.03"
+  },
+  "index_equivalent": {
+    "cagr": 0.13174664181300377,
+    "maxdd": -0.2887358301241153
+  },
+  "verdict": "REJECTED",
+  "runtime_seconds": 38.8
+}
