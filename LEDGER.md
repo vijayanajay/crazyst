@@ -2009,3 +2009,73 @@ from scratch.**
   No config change; nothing promoted.
 
 ---
+
+## E020-C - test-window confirmation of the frozen 90/10 blend: NON-CONFIRMED (2026-09-27, profile `full`)
+
+- **The run:** E020's exact construction (constant-mix 90/10, satellite = E019 arm A sim,
+  index core = sourced Nifty 500 TRI; no re-tuning) on the 35 untouched test months
+  2023-08-31 -> 2026-06-30. Pre-registered in `experiments/020_joint_path_blend/confirm_hypothesis.md`
+  before the run, including the one degree of freedom E020's words do not settle — the sim's
+  warm-up start: the satellite runs from the slice month exactly 12 before the test window
+  (2022-08-30), leg rebased at 2023-08-31, with a fresh-start sensitivity arm recorded but
+  not gating. `results_confirm.json` is the record; `verdict_confirm.md` the verdict.
+- **Guards all green:** G1 satellite re-run over the 145-month slice == E020's committed
+  satellite to 1e-9 (0.257682/-0.4702); G2 index leg built with the harness's own
+  `_benchmark_sourced_tri`/`_benchmark_for_window` and `metrics.cagr` == the committed
+  test-window benchmark 0.12457495616414915 to 1e-9; G3 no look-ahead by construction.
+- **Result - NON-CONFIRMED on B1, decisively on both arms:**
+
+  | arm         | CAGR    | maxDD   | Sharpe | sat-CAGR | sat-maxDD | B1   | B2   |
+  |-------------|---------|---------|--------|----------|-----------|------|------|
+  | warm_up     | +12.59% | -18.46% | 0.83   | +13.82%  | -24.50%   | FAIL | PASS |
+  | fresh_start | +12.60% | -18.48% | 0.83   | +13.95%  | -24.61%   | FAIL | PASS |
+  | index (ref) | +12.46% | -17.74% |        |          |           |      |      |
+
+- **Reading:** the failure is reward, not risk. The test window was mild (index maxDD
+  -17.74% vs the slice's -28.87%), the satellite's edge is a crash-regime edge, and with no
+  crash to exploit the blend at w=0.10 earned +0.13pp over the index against a +2.0pp bar.
+  The fresh-start arm agrees to 0.01pp, so the pre-registered warm-up choice did not drive
+  the verdict. The harness engine itself did -6.14% CAGR over the same months.
+- **Decision:** per E020's decision rule and the confirmation's frozen rule, the deploy
+  recommendation is **pure indexing** (Nifty 500 TRI). The 90/10 design is not deployable on
+  this evidence: PASS on 145 validation months, FAIL on 35 test months. The breadth family
+  (E018 design -> E019 deployable -> E020 blend frontier -> E021 control -> E020-C
+  confirmation) is measured end to end and nothing ships; the signal is filed as a research
+  result with no deployable configuration, and the non-confirmation is final for this design.
+
+---
+
+## Experiment E022 - regime decomposition: the edge is an UP-month edge, family stays closed (2026-09-27, profile `full`)
+
+- **Diagnostic, not a design** (pre-registered in `experiments/022_regime_decomposition/hypothesis.md`
+  before the run): the E018 decile rank-weighted book's monthly excess over the sourced
+  Nifty 500 TRI, decomposed by the harness's regime band (index return ending at m,
+  ±2%) and an index-drawdown bucket (shallow > -5% / moderate / deep <= -15%), over ALL
+  180 labeled months (2011-07-29 -> 2026-06-30; test window pooled as disclosed - it was
+  burnt by E020-C). Motivation: explain the 12.6pp -> 1.36pp satellite-edge collapse and
+  settle whether the edge is crash-concentrated (E020 tracked dd_2018_2020 for this
+  reason), which would have licensed an index-conditional-sizing pre-registration.
+- **Guards all green:** G1 top-5% 1-month gross anchor 0.0268 vs the committed smoke pin
+  0.0281 (0.15pp tolerance, E018's construction); G2 index leg == E019's committed
+  index_equivalent to 1e-9; G3 180 months, 0 without a band, zero dropped legs. One
+  post-hoc addition disclosed (slice x band split, added after the first run to reconcile
+  with E020-C; no gate reads it).
+- **Result:** overall excess +1.13%/mo (t 2.86, hit 61%). By band: down +0.13% (t 0.11),
+  flat +0.56% (t 0.95), **up +2.13% (t 4.23)**. By index DD: deep +3.89% at n=7 (t 1.28,
+  noise), moderate +0.17%, shallow +1.45%. The 2018-2020 episode is **7%** of the
+  full-sample excess. Post-hoc slice split: validation up-months +2.40%/mo (t 4.14,
+  n=63) vs test up-months +0.83% (t 1.01, n=13) — E020-C reconciled; validation
+  down-months -0.17% (t -0.12).
+- **Reading:** the crash-alpha suspicion is dead. The satellite is a long-beta up-capture
+  overlay: alpha concentrates in up months in-sample and is indistinguishable from zero
+  out of sample; the -47% deployable-book maxDD is beta, not negative alpha. The frozen
+  re-open rule fails (deep - shallow +2.44pp < 3.0pp, n_deep 7), and the measured
+  structure offers nothing better - conditioning on the in-sample-winning band would have
+  reduced exposure into the test window's only positive bucket. No mechanism on this
+  signal converts it into a deployable configuration (stops E017, gates E021, sizing
+  E015/E021, blends E020, regime conditioning E022 - all measured).
+- **Decision: family stays closed** per the frozen rule. Next step is new signal
+  families (feature-family audit delivered alongside as `docs/feature_family_audit.md`),
+  not more mechanics on this one. Standing deploy recommendation: pure indexing.
+
+---

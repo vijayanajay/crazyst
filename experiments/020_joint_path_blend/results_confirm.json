@@ -1,0 +1,61 @@
+{
+  "experiment": "E020_confirm_test_window",
+  "git_hash": "d2a0386df58258d6706dace3d43339cbcd441f82",
+  "profile": "full",
+  "window": {
+    "test_months": 35,
+    "first": "2023-08-31",
+    "last": "2026-06-30",
+    "warmup_start": "2022-08-30",
+    "construction": "E020 exact, w=0.10, no re-tuning; warm-up start pre-registered in confirm_hypothesis.md"
+  },
+  "guards": {
+    "G1_satellite_repro_E020": true,
+    "G1_recomputed": {
+      "cagr": 0.2576823502440744,
+      "maxdd": -0.470202965689257
+    },
+    "G2_index_leg_equals_harness_benchmark": true,
+    "G2_index_cagr": 0.12457495616414915,
+    "G2_index_maxdd": -0.1774117458879565,
+    "G3_no_lookahead": "construction: sim at month t consumes only marks dated <= t; selections from month-t rows only",
+    "passed": true
+  },
+  "arms": {
+    "warm_up": {
+      "w_satellite": 0.1,
+      "cagr": 0.12585463056146362,
+      "maxdd": -0.18462537440628035,
+      "sharpe": 0.8303940114480903,
+      "worst_month": -0.11385569787967076,
+      "satellite_cagr": 0.1382369593456787,
+      "satellite_maxdd": -0.24502467905096703,
+      "B1_cagr_ge_index_plus_2pp": false,
+      "B2_maxdd_le_index_plus_3pp": true
+    },
+    "fresh_start": {
+      "w_satellite": 0.1,
+      "cagr": 0.1259864270130966,
+      "maxdd": -0.18479550689896473,
+      "sharpe": 0.8315217056480392,
+      "worst_month": -0.11391488591917565,
+      "satellite_cagr": 0.13953770929804166,
+      "satellite_maxdd": -0.24611992893718027,
+      "B1_cagr_ge_index_plus_2pp": false,
+      "B2_maxdd_le_index_plus_3pp": true
+    }
+  },
+  "reference": {
+    "test_window_index_cagr": 0.12457495616414915,
+    "test_window_index_maxdd": -0.1774117458879565,
+    "harness_engine_cagr": -0.061435391495316294,
+    "harness_benchmark_cagr_committed": 0.12457495616414915
+  },
+  "bars": {
+    "CAGR_bar_pp": 2.0,
+    "DD_tol_pp": 3.0,
+    "bars_as_coded": "b1: cagr >= idx_cagr + 0.02; b2: maxdd >= idx_dd - 0.03 (negative fractions); gating arm = warm_up"
+  },
+  "verdict": "NON-CONFIRMED",
+  "runtime_seconds": 47.5
+}
