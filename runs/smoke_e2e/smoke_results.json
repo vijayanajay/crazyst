@@ -1,33 +1,35 @@
 {
   "smoke": "composite_2f through engine + portfolio on real full-profile data",
-  "git_hash": "a8cc624640dfeecf5e98a9f25177a7fed547c353",
+  "git_hash": "c74a43aab149a0472e0e6715f398613bb13af552",
   "profile": "full",
   "cutoff": "2026-09-24",
   "slice_months": 145,
   "boundary": "2023-09-24",
   "light_pass": {
     "pick_months_total": 4579,
-    "mean_gross": 0.028109020054610453,
-    "hit_at_0_2pct": 0.5335226031884691,
-    "mean_monthly_ic": 0.07171797803434904,
+    "mean_gross": 0.02811289893242504,
+    "hit_at_0_2pct": 0.5333042148940816,
+    "mean_monthly_ic": 0.07202922854484578,
+    "slice_ic_pin": 0.07202922854484578,
+    "slice_ic_pin_pre_repair": 0.07171797803434904,
     "e012_arm_ic": 0.07171797803434904,
     "boundary_tie_months": 19,
-    "e012_cross_check": "pick count exact (4,579) + IC bit-identical to E012's 0.375-arm IC; the E009-era anchor (3,902 picks) described the pre-E012 0.75-floor chain and is retired to the E012 block",
+    "e012_cross_check": "pick count exact (4,579) against E012's frozen artifact; IC on the re-baselined repaired-tape pin SLICE_IC_PIN (+3.11e-4 from E012's frozen 0.375-arm IC, which the artifact still holds by assert \u2014 LEDGER 2026-09-27 adj_close repair); the E009-era anchor (3,902 picks) described the pre-E012 0.75-floor chain and is retired to the E012 block",
     "by_bucket": {
       "top200": {
         "picks": 357,
         "hit_rate": 0.5658263305322129,
-        "mean_net": 0.01841117759771804
+        "mean_net": 0.018311775321738322
       },
       "201-600": {
         "picks": 2033,
-        "hit_rate": 0.5454992621741269,
-        "mean_net": 0.023721613228166218
+        "hit_rate": 0.5450073782587309,
+        "mean_net": 0.02376604138240598
       },
       "601-1500": {
         "picks": 2189,
         "hit_rate": 0.5171311100959343,
-        "mean_net": 0.02539806886012517
+        "mean_net": 0.025381132156821525
       }
     }
   },
@@ -6412,5 +6414,5 @@
       }
     }
   },
-  "runtime_seconds": 6.9
+  "runtime_seconds": 6.6
 }

@@ -14,7 +14,8 @@ names smaller, average exposure falls by construction).
 
 Guards: G1a the hook is inert (12-month smoke escalate prefix bit-equal); G1b arm A equals
 E014's committed arms.baseline exactly; G2 tape pins (arm-convention picks 5,605, mean
-monthly IC == E012's 0.375-arm IC); G3 sigma is point-in-time (every 40th (month, symbol)
+monthly IC == the repaired-tape pin smoke.SLICE_IC_PIN, re-baselined 2026-09-27 with the
+adj_close repair); G3 sigma is point-in-time (every 40th (month, symbol)
 pair of B's map recomputed from a fresh per-pair query); G4 B's mean invested share within
 +/-2.00pp of A's; G5 per-month pool mean scale == 1.0 (B) and every C scale <= 1.0.
 
@@ -170,7 +171,10 @@ def main(argv) -> int:
                          ).stdout.strip()
     e012 = json.load(open(E012_RESULTS, encoding="utf-8"))
     e014 = json.load(open(E014_RESULTS, encoding="utf-8"))
-    ic_pin = e012["arms"]["0.375"]["ic_val_slice"]
+    # single source of truth for the IC pin: the smoke's re-baselined constant (LEDGER
+    # 2026-09-27 "adj_close pipeline repair"). E012's frozen results.json still holds the
+    # pre-repair 0.375-arm IC and must keep holding it — the smoke asserts that.
+    ic_pin = smoke.SLICE_IC_PIN
     smoke_ep = json.load(open(SMOKE_RESULTS, encoding="utf-8"))["engine_passes"]["escalate"]
     dump = lambda x: json.dumps(x, default=str, sort_keys=True)          # noqa: E731
     assert smoke._cfg_test()["portfolio"]["monthly_review_replace_above_top_pct"] == POOL_PCT
@@ -326,7 +330,10 @@ def main(argv) -> int:
                    "arms_warm": HARNESS.WARM_SESSIONS,
                    "G2_picks_total": len(all_picks), "G2_picks_pin": PICKS_PIN,
                    "G2_eligible_rows_pin": elig_pin,
-                   "G2_mean_monthly_ic": mean_ic, "G2_e012_arm_ic": ic_pin,
+                   "G2_mean_monthly_ic": mean_ic, "G2_ic_pin": ic_pin,
+                   "G2_ic_pin_source": "smoke.SLICE_IC_PIN (repaired tape, LEDGER 2026-09-27); "
+                                       "E012's frozen arm IC 0.07171797803434904 is the "
+                                       "pre-repair value and stays frozen",
                    "G3_sampled_sigma_pairs": len(sample),
                    "G3_max_abs_sigma_diff": worst,
                    "G4_invested_share_A": inv_a, "G4_invested_share_B": inv_b,
@@ -379,7 +386,8 @@ def main(argv) -> int:
     print(f"slice: {len(folds)} months {folds[0]} -> {folds[-1]} (boundary {boundary}, "
           f"cutoff {cutoff}); test window untouched")
     print(f"guards: hook inert (smoke 12-month escalate prefix bit-equal); arm A == E014 "
-          f"baseline; picks {len(all_picks)} >= pin {PICKS_PIN}; IC {mean_ic:.10f} == E012; "
+          f"baseline; picks {len(all_picks)} >= pin {PICKS_PIN}; IC {mean_ic:.10f} == "
+          f"repaired-tape pin {ic_pin:.10f}; "
           f"sigma PIT {worst:.1e} over {len(sample)} sampled pairs; G4 exposure diff "
           f"{(inv_b - inv_a) * 100:+.2f}pp (tol +/-{EXPOSURE_TOL_PP}); pool mean scale 1.0")
     print(f"sigma views: months with no sigma-bearing pool "

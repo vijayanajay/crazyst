@@ -12,7 +12,11 @@ the record; `hypothesis.md` was written before the run and is not edited.
 - **G1b** arm A's metrics equal E014's committed `arms.baseline` exactly, on the same tape
   (cutoff 2026-09-24 asserted).
 - **G2** tape pins: arm-convention picks 5,605 (== the pin), mean monthly IC
-  0.07171797803434904 (== E012's 0.375-arm IC), eligible rows 161,942.
+  0.07171797803434904 (== E012's 0.375-arm IC), eligible rows 161,942. *(Historical note,
+  2026-09-27: the adj_close pipeline repair moved the repaired-tape IC to 0.0720292285 —
+  LEDGER's adj_close-repair row — and the G2 pin was re-baselined to it the same day;
+  this verdict's text records the pre-repair run as it happened. G2's other pins —
+  picks, eligible — were unaffected by the repair.)*
 - **G3** σ is point-in-time: every 40th (month, symbol) pair of B's map (364 pairs)
   recomputed from a fresh per-pair query — max abs diff **1.4e-17**.
 - **G4** the exposure contract held: B's mean invested share 67.4% vs A's 67.9% —

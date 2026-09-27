@@ -13,7 +13,10 @@ use it), and the test window was not touched.
 - Eligible rows 161,942 == E012's chain pin; mean monthly IC 0.0717179780 == E012's
   0.375-arm IC (1e-9); the arm convention (the harness's: selection from ALL decision-date
   eligible rows) picks 5,605 ≥ the labeled-only pin 4,579; every warmed fold's DMA
-  recomputed in Python, max diff 1.1e-11 over 142 folds.
+  recomputed in Python, max diff 1.1e-11 over 142 folds. *(Historical note, 2026-09-27:
+  the adj_close pipeline repair moved the repaired-tape IC to 0.0720292285 — LEDGER's
+  adj_close-repair row — and the runner's IC pin was re-baselined to it the same day; this
+  verdict records the pre-repair run as it happened. The other pins were unaffected.)*
 
 ## Arms (145 months, 2011-07-29 → 2023-07-31; the test window excluded)
 

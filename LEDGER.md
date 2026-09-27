@@ -1681,12 +1681,20 @@ from scratch.**
   (+3.11e-4)**, and the whole delta is four decision months whose feature windows touch a
   repaired session - 2019-02-28 +0.0030, 2019-03-29 +0.0444 (the decision month that had no
   cross-sectional mark at all), 2019-04-30 -0.0031, 2020-03-31 +0.0008.
-- **Named next step (now live):** the smoke's lightweight anchor asserts mean IC == E012's
-  frozen `ic_val_slice` to 1e-9; the repaired tape's value is **0.0720292285**, so that assert
-  FAILS until re-baselined - the E012-style re-baseline (new anchor constant citing this row;
-  E012's results.json stays frozen), plus the same value in the E014/E015 IC pins if those
-  runners are re-run. Picks/eligible pins are unaffected and still exact. Not done here: it
-  changes a frozen guard and deserves its own decision. No config change. Nothing committed.
+- **Named next step (DONE the same day, 2026-09-27):** the IC pin was re-baselined to the
+  repaired tape. The smoke now holds `SLICE_IC_PIN = 0.07202922854484578` (with
+  `SLICE_IC_PIN_PRE_REPAIR = 0.07171797803434904` beside it), and the light pass asserts the
+  fresh IC against the new pin while a new 1e-12 assert pins E012's frozen
+  `ic_val_slice` to the pre-repair value — the frozen artifact is forced to keep describing
+  the tape it ran on. E014/E015 runners read `smoke.SLICE_IC_PIN` (single source of truth;
+  their results.json gain an `ic_pin_source` note). Verified: smoke PASS with the engine
+  passes bit-identical to the committed artifact (the repair touches only the 2019/2012-10
+  label flows); a fresh E014 run differed from its frozen results.json ONLY in the IC fields
+  (mean 0.0717179780 -> 0.0720292285, +3.11e-4) + runtime + git_hash — every decision-relevant
+  number (all three arms' equity/curve/fills/picks, risk-off intervals, episodes, verdict) is
+  bit-identical, so the repair moves no conclusion; the frozen results.json was restored
+  untouched. E014/E015 verdicts carry a historical note recording their pre-repair IC.
+  Picks (4,579 / 5,605) and eligible (161,942) pins unaffected. No config change.
 
 ## Experiment E015 - volatility-scaled slot sizing at unchanged average exposure: the relief is not reachable by sizing (2026-09-27, profile `full`)
 

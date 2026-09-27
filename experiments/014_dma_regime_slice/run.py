@@ -14,8 +14,10 @@ Arms: BASELINE (gate inert), BUY_BLOCK (no new buys in risk-off folds; E013's co
 (BUY_BLOCK + liquidation at risk-off month-ends; diagnostic, no verdict). Guards: the
 baseline's 12-month prefix (warm=0, the smoke's own convention) must reproduce the
 persisted `runs/smoke_e2e/smoke_results.json` escalate arm bit-for-bit; the slice's
-pick-months must equal E012's committed 4,579 with the mean monthly IC equal to E012's
-0.375-arm IC to 1e-9; every warmed fold's DMA is recomputed in Python.
+pick-months must equal E012's committed 4,579 with the mean monthly IC equal to the
+repaired-tape pin `smoke.SLICE_IC_PIN` to 1e-9 (the 2026-09-27 adj_close repair moved that
+number +3.11e-4 and the pin was re-baselined with it; E012's frozen artifact keeps the
+pre-repair value); every warmed fold's DMA is recomputed in Python.
 
 python -m experiments.014_dma_regime_slice.run --profile full
 """
@@ -132,7 +134,10 @@ def main(argv) -> int:
     git = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True
                          ).stdout.strip()
     e012 = json.load(open(E012_RESULTS, encoding="utf-8"))
-    ic_pin = e012["arms"]["0.375"]["ic_val_slice"]
+    # single source of truth for the IC pin: the smoke's re-baselined constant (LEDGER
+    # 2026-09-27 "adj_close pipeline repair"). E012's frozen results.json still holds the
+    # pre-repair 0.375-arm IC and must keep holding it — the smoke asserts that.
+    ic_pin = smoke.SLICE_IC_PIN
     smoke_ep = json.load(open(SMOKE_RESULTS, encoding="utf-8"))["engine_passes"]["escalate"]
     dump = lambda x: json.dumps(x, default=str, sort_keys=True)          # noqa: E731
 
@@ -289,7 +294,10 @@ def main(argv) -> int:
                    "arms_warm": HARNESS.WARM_SESSIONS,
                    "picks_total": len(all_picks), "picks_pin_labeled_only": PICKS_PIN,
                    "eligible_rows_pin": elig_pin,
-                   "mean_monthly_ic": mean_ic, "e012_arm_ic": ic_pin,
+                   "mean_monthly_ic": mean_ic, "ic_pin": ic_pin,
+                   "ic_pin_source": "smoke.SLICE_IC_PIN (repaired tape, LEDGER 2026-09-27); "
+                                     "E012's frozen arm IC 0.07171797803434904 is the "
+                                     "pre-repair value and stays frozen",
                    "picks_and_ic_guards": "passed"},
         "arms": {"baseline": E013._arm_metrics(ev_base, res_base),
                  "buy_block": E013._arm_metrics(ev_bb, res_bb),
@@ -331,7 +339,8 @@ def main(argv) -> int:
     print(f"slice: {len(folds)} months {folds[0]} -> {folds[-1]} (boundary {boundary}, "
           f"cutoff {cutoff}); test window untouched")
     print(f"guards: smoke escalate 12-month prefix bit-equal (labeled-only tape); eligible "
-          f"rows {elig_pin} == E012 pin; IC {mean_ic:.10f} == E012 {ic_pin:.10f}; "
+          f"rows {elig_pin} == E012 pin; IC {mean_ic:.10f} == repaired-tape pin "
+          f"{ic_pin:.10f}; "
           f"arm-convention picks {len(all_picks)} >= labeled-only pin {PICKS_PIN}; DMA sanity "
           f"{sanity['max_abs_dma_diff']:.1e} over {sanity['warmed_folds_checked']} warmed folds")
     print(f"signal: risk-off in {len(risk_off)} of {len(folds)} folds "

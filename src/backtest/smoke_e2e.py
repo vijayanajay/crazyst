@@ -14,7 +14,9 @@ Two passes over the validation slice (P4.1's split: 145 months, boundary 2023-09
 1. **Light pass, all 145 months:** score each month with P4.1b's `score_month_2f`
    (importlib, so experiments cannot drift), take top-5% picks, and cross-check the
    aggregate against E012's committed results.json (the 0.375-arm re-baseline after the
-   E011 8-slot move: 4,579 pick-months, IC bit-identical to E012's arm IC; the E009-era
+   E011 8-slot move: 4,579 pick-months, and the mean monthly IC on `SLICE_IC_PIN` — the
+   pin moved +3.11e-4 on 2026-09-27 when the adj_close repair filled the 7 Yahoo-less
+   sessions, so E012's frozen arm IC is now the recorded pre-repair value; the E009-era
    anchor of 3,902 picks described the pre-E012 0.75-floor chain and was retired with
    E012, as E006's was retired with E009).
 2. **Engine pass, the FIRST 12 slice months consecutively (2011-07 -> 2012-06), once per
@@ -64,6 +66,17 @@ from src.model import composite as model       # the extracted, pinned composite
 SAMPLE_MONTHS = 12          # consecutive slice months through the engine
 ENGINE_MONTHS_LIMIT = 12
 ENGINE_MODES = (("stuck", 2), ("escalate", 2))   # compared side by side per run
+
+# The light pass's IC anchor, re-baselined to the repaired tape (LEDGER block "adj_close
+# pipeline repair", 2026-09-27). The 7-session repair — derived rows for the sessions Yahoo
+# never served, 2011-10-26 / 2012-10-26 / 2012-11-13 / 2014-10-23 / 2015-11-11 / 2019-02-13
+# / 2019-03-29 — moved the labeled-only slice mean monthly IC by +3.11e-4, all of it in the
+# four decision months whose feature windows touch a repaired session. This is the pin the
+# smoke and the E014/E015 IC guards assert to 1e-9; E012's frozen results.json is NOT
+# rewritten and is asserted below to still hold the pre-repair value (the frozen artifacts
+# keep describing the tape they ran on).
+SLICE_IC_PIN = 0.07202922854484578
+SLICE_IC_PIN_PRE_REPAIR = 0.07171797803434904
 
 
 def _cfg_test() -> dict:
@@ -498,9 +511,13 @@ def main() -> int:
     arm = e012["arms"]["0.375"]
     e_picks, e_ic = arm["eligibles"], arm["ic_val_slice"]
     assert e_picks == 161_942, (f"E012's recorded eligible count drifted: {e_picks}")
+    assert abs(e_ic - SLICE_IC_PIN_PRE_REPAIR) < 1e-12, \
+        (f"E012's frozen 0.375-arm IC moved: {e_ic} != {SLICE_IC_PIN_PRE_REPAIR} — the "
+         f"frozen artifacts describe the pre-repair tape and must not be rewritten")
     mean_ic = _mean_monthly_ic(by_month)
-    assert abs(mean_ic - e_ic) < 1e-9, \
-        (f"smoke IC {mean_ic} does not reproduce E012's 0.375-arm IC {e_ic}")
+    assert abs(mean_ic - SLICE_IC_PIN) < 1e-9, \
+        (f"smoke IC {mean_ic} does not reproduce the repaired-tape pin {SLICE_IC_PIN} "
+         f"(pre-repair {SLICE_IC_PIN_PRE_REPAIR}; LEDGER 2026-09-27 adj_close repair)")
     assert len(all_picks) == 4579, \
         (f"pick count drifted from the E012 re-baseline: {len(all_picks)} != 4579")
     assert e009["R2"]["eligibles_floor"] == 144_059, \
@@ -534,12 +551,18 @@ def main() -> int:
         "slice_months": len(months), "boundary": str(boundary),
         "light_pass": {"pick_months_total": len(all_picks),
                        "mean_gross": mean_gross, "hit_at_0_2pct": hit,
-                       "mean_monthly_ic": mean_ic, "e012_arm_ic": e_ic,
+                       "mean_monthly_ic": mean_ic, "slice_ic_pin": SLICE_IC_PIN,
+                       "slice_ic_pin_pre_repair": SLICE_IC_PIN_PRE_REPAIR,
+                       "e012_arm_ic": e_ic,
                        "boundary_tie_months": tie_months,
-                       "e012_cross_check": "pick count exact (4,579) + IC bit-identical to "
-                                          "E012's 0.375-arm IC; the E009-era anchor (3,902 "
-                                          "picks) described the pre-E012 0.75-floor chain and "
-                                          "is retired to the E012 block",
+                       "e012_cross_check": "pick count exact (4,579) against E012's frozen "
+                                          "artifact; IC on the re-baselined repaired-tape "
+                                          "pin SLICE_IC_PIN (+3.11e-4 from E012's frozen "
+                                          "0.375-arm IC, which the artifact still holds by "
+                                          "assert — LEDGER 2026-09-27 adj_close repair); the "
+                                          "E009-era anchor (3,902 picks) described the "
+                                          "pre-E012 0.75-floor chain and is retired to the "
+                                          "E012 block",
                        "by_bucket": buckets_all},
         "engine_passes": engine,
         "runtime_seconds": round(time.monotonic() - t0, 1),
