@@ -1828,6 +1828,26 @@ from scratch.**
   next pre-registration). The design-freeze clause does NOT trigger. Nothing shipped;
   test-window confirmation remains gated on the joint-path measurement.
 
+## Pre-registrations E020/E021 - the joint path and the non-whipsaw drawdown control (2026-09-27, frozen before their runs)
+
+- **E020** (`experiments/020_joint_path_blend/hypothesis.md`) measures the joint monthly
+  path of the index core + breadth satellite (constant-mix rebalance; drawdowns are not
+  additive and E019's FAIL clause required exactly this). Arms: 90/10, 80/20, 70/30 vs
+  pure index. Bars: B1 blended CAGR >= index + 2.0pp; B2 blended maxDD <= index + 3.0pp
+  (deliberately tighter than E019's 10pp - the point of blending is risk control). On
+  PASS the passed w becomes the design freeze; on FAIL the recorded recommendation is
+  pure indexing and further breadth work on this slice is prohibited.
+- **E021** (`experiments/021_drawdown_control/hypothesis.md`) tests the one mechanism
+  E017's whipsaw result permits: a BOOK-level entry gate - while the book is >15% below
+  its own equity peak, new entries go to cash; existing legs keep their scheduled 12-month
+  exits (nothing a whipsaw could shake out; no forced selling, no trail changes). Arms:
+  A = E019's baseline verbatim, B = gated book, C = E020's 70/30 blend with the gated
+  satellite. Bars: B1 maxDD >= -35% (a >= 12pp improvement); B2 CAGR >= A - 3.0pp. On
+  PASS the gated book/satellite becomes the design-freeze candidate; on FAIL the
+  drawdown is structural to broad small-cap exposure and the breadth book is excluded
+  from solo deployment.
+- Both pre-registrations are frozen before their runs per BRD 12; neither has run yet.
+
 ## Pipeline repair - adj_close session coverage: seven Yahoo-less sessions, derived from bhav (2026-09-27, uncommitted; working tree on `b38f0b3`)
 
 - **What was missing:** `adj_close` has no row at all for 7 sessions bhav (series EQ) traded -
