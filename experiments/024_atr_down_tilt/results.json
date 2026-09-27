@@ -1,0 +1,81 @@
+{
+  "experiment": "E024_atr_down_tilt",
+  "git_hash": "341e7a1a19170f14d8b2f789dc44bf31ae98e8a8",
+  "profile": "full",
+  "window": {
+    "validation_months": 145,
+    "first": "2011-07-29",
+    "last": "2023-07-31",
+    "test_window": "burnt; not touched"
+  },
+  "guards": {
+    "G1_armA_equals_E022": true,
+    "G1_armA_by_band": {
+      "down": -0.0016655162567964852,
+      "flat": 0.0067124853060405235,
+      "up": 0.023954579561303944
+    },
+    "G2_index_anchor": true,
+    "G3_zero_mark_dropped": true,
+    "G3_min_tilted_book_legs": 25,
+    "G3_note": "tilt dropouts (pct_atr=1.0, factor 0) are the frozen construction, counted separately: 5 legs over 145 cohorts",
+    "passed": true
+  },
+  "disclosures": {
+    "boundary_interval": "E022's committed post-hoc validation_by_band includes the 2023-07-31 -> 2023-08-31 interval (exit mark = the first test month); reproduced here for an exact G1 anchor. Both arms use identical intervals, so B1/B2/B3 comparisons are unaffected. E022's gating cuts were pooled over all 179 intervals by design (disclosed there) and are unaffected.",
+    "tilt_dropouts": "5 legs across 145 cohorts had pct_atr = 1.0 (factor 0) and left the tilted book, per the frozen construction; every tilted book kept >= 5 legs."
+  },
+  "arms": {
+    "A_baseline": {
+      "overall_excess": 0.012297160385405863,
+      "down": {
+        "n": 33,
+        "mean_excess": -0.0016655162567964852
+      },
+      "flat": {
+        "n": 49,
+        "mean_excess": 0.0067124853060405235
+      },
+      "up": {
+        "n": 63,
+        "mean_excess": 0.023954579561303944
+      }
+    },
+    "B_atr_tilt": {
+      "overall_excess": 0.01328474852992148,
+      "down": {
+        "n": 33,
+        "mean_excess": 0.0008886895453938762
+      },
+      "flat": {
+        "n": 49,
+        "mean_excess": 0.006775408622744675
+      },
+      "up": {
+        "n": 63,
+        "mean_excess": 0.02484074221152582
+      }
+    }
+  },
+  "bars": {
+    "B1_down_ge_0.5pp": {
+      "value": 0.0008886895453938762,
+      "bar": 0.005,
+      "passed": false
+    },
+    "B2_up_within_1pp": {
+      "A_up": 0.023954579561303944,
+      "B_up": 0.02484074221152582,
+      "tolerance": 0.01,
+      "passed": true
+    },
+    "B3_paired_diff_positive": {
+      "mean_diff": 0.0009875881445156136,
+      "t": 0.32778995773200664,
+      "n": 145,
+      "passed": true
+    }
+  },
+  "verdict": "REJECTED",
+  "runtime_seconds": 44.8
+}
