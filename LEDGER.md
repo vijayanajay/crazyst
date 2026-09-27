@@ -1640,6 +1640,54 @@ from scratch.**
   (2015-02-28, 2016-10-30) where the sourced index's own month-end marks disagree with the
   equity calendar. Nothing committed.
 
+## Pipeline repair - adj_close session coverage: seven Yahoo-less sessions, derived from bhav (2026-09-27, uncommitted; working tree on `b38f0b3`)
+
+- **What was missing:** `adj_close` has no row at all for 7 sessions bhav (series EQ) traded -
+  2011-10-26, 2012-10-26, 2012-11-13, 2014-10-23, 2015-11-11, 2019-02-13, 2019-03-29. Four are
+  NSE Diwali muhurat sessions (1-hour evenings at 15-23% of a normal day's turnover) Yahoo
+  simply does not carry; 2012-10-26 (71% turnover), 2019-02-13 and 2019-03-29 (full sessions)
+  are ordinary vendor holes. **2019-03-29 is the March-2019 month-end**, so every symbol's
+  March mark was a session stale (found twice: E015's sigma had no view at that fold, and the
+  new coverage check's first run).
+- **The check (new):** `adj_close.session_gaps()` + `_classify_gaps` - every bhav EQ session
+  from the table's start to the cutoff must carry an adjusted close; the 7 holes are pinned
+  in `KNOWN_SESSION_GAPS`, a NEW unpinned Yahoo-less session FAILS `normalize.adj_close`
+  (registered in the suite), sessions inside refresh_recent's 7-day retry buffer are exempt
+  ("still filling"), a pin Yahoo later covers is reported as healed, and rows covered only by
+  derived data are reported as such - the FAIL contract keys on Yahoo's feed, so a derived
+  row can never mask a new feed hole. Surfaced daily in src/download/refresh.py.
+- **The repair:** `derive_session_gaps` - adj_close(s) = bhav raw close(s) x the adjustment
+  factor held across the gap, the factor read from the nearest Yahoo row on EACH side of s,
+  refusing when the two disagree by >0.5% (a corporate action inside the gap) or when either
+  basis sits >10 sessions away. Rows land with `source='derived'` (a new nullable column; NULL
+  = Yahoo's own row), are outranked by any real row (`_insert` prefers Yahoo on a (symbol,
+  date) collision), are wiped by refresh_recent's full re-fetch, and the derivation is
+  idempotent (a repaired session stops being a hole). Yield: **6,646 rows** over the 7
+  sessions (820-1,188 per session); refused 129 symbol-sessions (moved factor / no raw close)
+  and 3,239 with no Yahoo basis within +-10 sessions - verified to be renamed/delisted tickers
+  Yahoo no longer serves (3IINFOTECH, ADANIGAS, ADANITRANS, ADLABS sampled: zero adj_close rows
+  ever for the ticker),
+  not a window bug. Hand-checked: derived value == raw close x held factor to the last bit.
+- **Momentum canary before -> after:** PASS both times. [1] momentum IC pooled median
+  +0.0639 -> +0.0639 (unchanged) over 200 -> **201** month-ends - the added month-end is
+  2019-03-29 itself (1,182 names); [0] symbol coverage, [2] delivery autocorr (0.890 /
+  293,787 pairs) and [3] eligible-count stability unchanged.
+- **Tape effect (measured on a throwaway DB copy first, then in the workspace itself: panels +
+  chain rebuilt, the derived rows are the only input change):** eligible 161,942, labeled
+  picks 4,579 and arm-convention picks 5,605 all UNCHANGED; month-end dates 310 -> 311; the
+  1,182 moved March marks move a median 1.18%
+  (typical March-2019 daily move 1.32%, p95 5.3%, max 15% - ordinary session moves, no factor
+  glitches). One number moves: the slice mean monthly IC **0.0717179780 -> 0.0720292285
+  (+3.11e-4)**, and the whole delta is four decision months whose feature windows touch a
+  repaired session - 2019-02-28 +0.0030, 2019-03-29 +0.0444 (the decision month that had no
+  cross-sectional mark at all), 2019-04-30 -0.0031, 2020-03-31 +0.0008.
+- **Named next step (now live):** the smoke's lightweight anchor asserts mean IC == E012's
+  frozen `ic_val_slice` to 1e-9; the repaired tape's value is **0.0720292285**, so that assert
+  FAILS until re-baselined - the E012-style re-baseline (new anchor constant citing this row;
+  E012's results.json stays frozen), plus the same value in the E014/E015 IC pins if those
+  runners are re-run. Picks/eligible pins are unaffected and still exact. Not done here: it
+  changes a frozen guard and deserves its own decision. No config change. Nothing committed.
+
 ## Experiment E015 - volatility-scaled slot sizing at unchanged average exposure: the relief is not reachable by sizing (2026-09-27, profile `full`)
 
 - **Why:** E014 rejected the index regime filter as timing and traced its whole-slice edge

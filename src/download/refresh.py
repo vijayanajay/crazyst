@@ -160,6 +160,31 @@ def main(argv: list[str]) -> int:
                 f"placeholder row (Close and Adj Close both NaN, refused by design); they stay "
                 f"queued and the next run retries them")
 
+    der = adj_close.derive_session_gaps(cfg)   # E015's find: fill Yahoo-less sessions from
+    gaps = adj_close.session_gaps(cfg)         # bhav raw closes x the held adjustment factor
+    if der["derived"] or der["skipped"]:
+        say(f"adj_close gaps: derived {der['derived']:,} row(s) for {len(der['sessions'])} "
+            f"Yahoo-less session(s) (source='derived'), {der['skipped']:,} symbol-session(s) "
+            f"skipped (no fresh basis / moved factor); a real Yahoo row always outranks a "
+            f"derived one")
+    say(f"adj_close coverage: {gaps['sessions']:,} bhav EQ sessions to {gaps['to']}, "
+        f"{len(gaps['known_gaps'])} pinned gap(s), {len(gaps['pending'])} pending in the "
+        f"trailing {adj_close.TRAILING_BUFFER_DAYS}-day buffer")
+    if gaps["short"]:
+        shown = ", ".join(f"{r['session']} ({r['adj_symbols']}/{r['bhav_symbols']})"
+                          for r in gaps["short"][:5])
+        more = "" if len(gaps["short"]) <= 5 else f" (+{len(gaps['short']) - 5} more)"
+        say(f"  still filling: {shown}{more}")
+    if gaps["new_gaps"]:
+        say(f"  WARNING: {len(gaps['new_gaps'])} NEW zero-coverage session(s): "
+            f"{', '.join(gaps['new_gaps'])} — Yahoo served nothing for a session bhav traded, "
+            f"so the momentum input and the pick marks have a hole there. The self-check "
+            f"FAILS until the affected window is re-fetched or the date is pinned in "
+            f"KNOWN_SESSION_GAPS with evidence")
+    if gaps["healed"]:
+        say(f"  note: pinned session gap(s) now covered (retire the pin): "
+            f"{', '.join(gaps['healed'])}")
+
     tri = nifty_tri.fetch_chunks(cfg)   # the §11 benchmark source: cache-skip, current year re-POSTs
     say(f"nifty_tri: +{tri['downloaded']} chunk(s) ({tri['refreshed']} refreshed), "
         f"{tri['cached']} cached; index_tri rebuilt")

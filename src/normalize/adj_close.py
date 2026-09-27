@@ -21,7 +21,11 @@ that is the written dependency reason BRD §13 requires. NSE raw prices stay unt
 
 `python -m src.normalize.adj_close` runs the self-check: mapping/fraction logic on
 synthetic data, then the done-when — 20 random symbols, NSE raw close vs Yahoo raw
-close matching on >=95% of overlapping days (a symbol-mapping bug shows as ~0%).
+close matching on >=95% of overlapping days (a symbol-mapping bug shows as ~0%) — and
+the session-coverage check: every bhav EQ session must carry an adjusted close, with the
+known vendor holes pinned in KNOWN_SESSION_GAPS (a NEW hole fails; see session_gaps).
+`--derive-gaps` fills a Yahoo-less session from bhav raw closes x the held adjustment
+factor, marking the rows source='derived' (src/download/refresh.py calls it daily).
 `python -m src.normalize.adj_close --backfill` fetches all EQ symbols (~15 min, resumable).
 `--refresh` is the daily path (src/download/refresh.py calls it): symbols whose bhav history
 runs past their last stored adjusted date, one short window each, plus a full re-fetch for any
@@ -41,9 +45,40 @@ from src.normalize import panels
 
 ADJ_COLS = ["symbol", "date", "adj_close"]
 SCHEMA = """CREATE TABLE IF NOT EXISTS adj_close (
-    symbol VARCHAR, date DATE, adj_close DOUBLE)"""
+    symbol VARCHAR, date DATE, adj_close DOUBLE,
+    source VARCHAR)  -- NULL = Yahoo's own row; 'derived' = repaired from bhav x held factor"""
 MATCH_TOL = 0.005  # raw closes should agree to 0.5% on matched days
 RECENT_DAYS = 365  # cross-check window: see cross_check's docstring for why not full history
+TRAILING_BUFFER_DAYS = 7  # refresh_recent's retry window: sessions this recent are not gaps yet
+DERIVED = "derived"       # adj_close.source value for a repaired session (NULL = Yahoo's row)
+ADJ_FACTOR_TOL = 0.005    # the held adjustment factor must agree across the gap this well
+MAX_FACTOR_AGE_SESSIONS = 10  # ...and both bases must sit this close to it, else nothing is derived
+
+# Sessions bhav (series EQ) traded that adj_close has NO row for, as of 2026-09-27 — pinned
+# so the check fails on NEW holes only. Four are NSE's Diwali muhurat sessions (1-hour
+# evening sessions at 15–23% of a normal day's turnover: 2011-10-26, 2012-11-13,
+# 2014-10-23, 2015-11-11) which Yahoo simply does not carry; 2012-10-26 (71% turnover),
+# 2019-02-13 and 2019-03-29 (full sessions) are ordinary vendor holes. 2019-03-29 was
+# found by E015 (sigma had no view that fold); the rest by this check's first run.
+KNOWN_SESSION_GAPS = ("2011-10-26", "2012-10-26", "2012-11-13", "2014-10-23",
+                      "2015-11-11", "2019-02-13", "2019-03-29")
+# The pinned sessions are covered by derive_session_gaps (source='derived'): the pin remains
+# because Yahoo still serves no row for them, and the check FAILS on any UNPINNED Yahoo-less
+# session. 2019-03-29 is the one that matters downstream - it is the March-2019 month-end, so
+# the monthly marks for that month were a session stale (E015's sigma had no view there).
+
+
+def _ensure_source_column(con) -> None:
+    """`source` arrived after the first backfills: CREATE for a fresh table, ALTER for an
+    existing one (both idempotent). NULL = Yahoo's own row, 'derived' = derive_session_gaps."""
+    con.execute(SCHEMA)
+    con.execute("ALTER TABLE adj_close ADD COLUMN IF NOT EXISTS source VARCHAR")
+
+
+def _has_source(con) -> bool:
+    """True when the table already carries the `source` column (an old DB may not)."""
+    return bool(con.execute("SELECT 1 FROM duckdb_columns() WHERE table_name = 'adj_close' "
+                            "AND column_name = 'source'").fetchall())
 
 
 def yahoo_ticker(symbol: str) -> str:
@@ -100,7 +135,7 @@ def _done_symbols(cfg: dict) -> set[str]:
     # CREATE on a read-only-attached DB raises — caught live on the first backfill.
     con = duckdb.connect(cfg["paths"]["duckdb"])
     try:
-        con.execute(SCHEMA)
+        _ensure_source_column(con)
         return {r[0] for r in con.execute("SELECT DISTINCT symbol FROM adj_close").fetchall()}
     finally:
         con.close()
@@ -109,12 +144,19 @@ def _done_symbols(cfg: dict) -> set[str]:
 def _insert(cfg: dict, frames: dict[str, pd.DataFrame]) -> int:
     con = duckdb.connect(cfg["paths"]["duckdb"])
     try:
+        _ensure_source_column(con)
         rows = 0
         for sym, df in frames.items():
             con.register("aview", df[ADJ_COLS])
-            con.execute(f"INSERT INTO adj_close SELECT {', '.join(ADJ_COLS)} FROM aview")
+            con.execute(f"INSERT INTO adj_close ({', '.join(ADJ_COLS)}) "
+                        f"SELECT {', '.join(ADJ_COLS)} FROM aview")
             con.unregister("aview")
             rows += len(df)
+        # a Yahoo row outranks a derived one for the same (symbol, date): a session repaired in
+        # an earlier run must not shadow the real close when Yahoo delivers it later
+        con.execute("DELETE FROM adj_close a WHERE a.source IS NOT NULL AND EXISTS "
+                    "(SELECT 1 FROM adj_close b WHERE b.symbol = a.symbol AND b.date = a.date "
+                    "AND b.source IS NULL)")
         con.execute("DELETE FROM adj_close WHERE rowid NOT IN "
                     "(SELECT min(rowid) FROM adj_close GROUP BY symbol, date)")
         con.execute("CHECKPOINT")
@@ -376,6 +418,200 @@ def trim(cfg: dict) -> int:
         con.close()
 
 
+_GAP_SQL = """
+WITH sess AS (
+    SELECT date, count(DISTINCT symbol) AS n_bhav FROM bhav WHERE series = 'EQ' GROUP BY 1
+), adj AS (
+    SELECT date, count(DISTINCT symbol) AS n_adj,
+           count(DISTINCT CASE WHEN source IS NULL THEN symbol END) AS n_yahoo
+    FROM adj_close GROUP BY 1
+)
+SELECT strftime(s.date, '%Y-%m-%d') AS d, coalesce(a.n_adj, 0) AS n_adj,
+       coalesce(a.n_yahoo, 0) AS n_yahoo, s.n_bhav
+FROM sess s LEFT JOIN adj a USING (date)
+WHERE s.date >= (SELECT min(date) FROM adj_close)
+ORDER BY s.date
+"""
+
+
+def _classify_gaps(rows: list, known: set[str], buffer_floor: str) -> dict:
+    """PURE classification (self-checked on a synthetic fixture); rows are
+    (date_str, adj_close_symbols, bhav_symbols) per bhav session, oldest first.
+
+    - new_gaps: zero-coverage, older than the refresh buffer and not pinned -> the caller
+      FAILS (a hole in the momentum input, the panels' marks and every experiment's data).
+    - known_gaps / pending: zero-coverage but pinned, or inside the buffer (refresh_recent
+      is still retrying that window).
+    - derived: Yahoo has NO row but derived rows cover the session (the repair, not a gap to
+      fail on - yet the FAIL contract keys on Yahoo's feed, so an UNPINNED Yahoo-less session
+      still fails even when a derived row covers it; a pinned one is reported).
+    - short: partial coverage inside the buffer (Yahoo lags the newest session).
+    - healed: a pinned gap that Yahoo itself now delivers (it backfills on its own schedule) —
+      reported so the pin can be retired, never a failure. Derived rows do NOT heal a pin.
+    """
+    gaps = [(d, nb) for d, na, _ny, nb in rows if na == 0]
+    gap_dates = {d for d, _ in gaps}
+    yahoo_dates = {d for d, _na, ny, _nb in rows if ny}   # sessions Yahoo itself delivered
+    return {
+        "gaps": [d for d, _ in gaps],
+        "derived": [d for d, na, ny, _nb in rows if na and ny == 0],
+        "new_gaps": [d for d, na, ny, _nb in rows if ny == 0 and d <= buffer_floor
+                     and d not in known],
+        "known_gaps": [d for d, na, ny, _nb in rows if ny == 0 and d in known],
+        "pending": sorted(d for d, _ in gaps if d > buffer_floor),
+        "healed": [d for d in sorted(known) if d in yahoo_dates],
+        # ponytail: only ZERO-coverage sessions fail — a session stuck at partial coverage
+        # (e.g. one symbol Yahoo never delivered on 2026-09-21) stays informational. Add a
+        # per-session coverage floor if a stuck-thin session ever misleads a feature.
+        "short": [{"session": d, "adj_symbols": na, "bhav_symbols": nb}
+                  for d, na, _ny, nb in rows if 0 < na < nb and d > buffer_floor],
+    }
+
+
+def session_gaps(cfg: dict, buffer_days: int = TRAILING_BUFFER_DAYS) -> dict:
+    """The coverage contract for the adjusted-close feed, in one query: every bhav EQ
+    session from adj_close's own start to the bhav cutoff must carry at least one adjusted
+    close (the momentum feature, the panels' month-end marks and every experiment read
+    adj_close). Returns _classify_gaps' classification; callers decide the verdict:
+    _self_check fails on any new gap outside KNOWN_SESSION_GAPS, src/download/refresh.py
+    prints the summary after the daily fetch. Sessions inside the trailing `buffer_days`
+    are exempt — Yahoo publishes later than the NSE close and refresh_recent retries that
+    window."""
+    from datetime import timedelta
+
+    # write connection (not read_only): a pre-`source` table needs the column added before the
+    # query can tell derived rows from Yahoo's — metadata-only, and the check runs in every
+    # CI/refresh path, so it must clean up after its own schema change
+    con = duckdb.connect(cfg["paths"]["duckdb"])
+    try:
+        if not _has_source(con):
+            _ensure_source_column(con)
+        rows = con.execute(_GAP_SQL).fetchall()
+        cutoff, = con.execute("SELECT max(date) FROM bhav WHERE series = 'EQ'").fetchone()
+    finally:
+        con.close()
+    rows = [(str(d), int(na), int(ny), int(nb)) for d, na, ny, nb in rows]
+    assert rows, "no bhav EQ sessions to check"
+    floor = str(cutoff - timedelta(days=buffer_days))
+    out = _classify_gaps(rows, set(KNOWN_SESSION_GAPS), floor)
+    out.update({"sessions": len(rows), "from": rows[0][0], "to": rows[-1][0],
+                "buffer_floor": floor, "known": list(KNOWN_SESSION_GAPS)})
+    return out
+
+
+def _factor_derive(close_s: float, adj_prev: float, raw_prev: float,
+                   adj_next: float, raw_next: float, tol: float) -> float | None:
+    """PURE derivation (self-checked below): the adjusted close for a session Yahoo never
+    delivered, from NSE's own raw close x the adjustment factor held across the gap. The
+    factor is the previous AND the next Yahoo row's adj_close/raw_close; if the two disagree
+    by more than `tol` a corporate action moved the basis inside the gap (a split/bonus ratio
+    is never a small move) and the symbol is REFUSED, never guessed. None = no derivation."""
+    if not (close_s and adj_prev and raw_prev and adj_next and raw_next):
+        return None
+    f_prev, f_next = adj_prev / raw_prev, adj_next / raw_next
+    if abs(f_next / f_prev - 1.0) > tol:
+        return None
+    return close_s * f_prev
+
+
+def derive_session_gaps(cfg: dict, sessions: list[str] | None = None, dry_run: bool = False,
+                        tol: float = ADJ_FACTOR_TOL) -> dict:
+    """Fill Yahoo-less bhav EQ sessions from data already in the DB: adj_close(s) = bhav raw
+    close(s) x the adjustment factor held across the gap, the factor read from the nearest
+    Yahoo row on EACH side of s (see _factor_derive for the refusal rule).
+
+    Default target: every hole older than the refresh buffer (session_gaps' gaps minus
+    pending). Rows are written with source='derived' — real NSE prices times a held factor, but
+    NOT Yahoo coverage: session_gaps still reports the session as Yahoo-less, and a new
+    unpinned hole still fails the check. Idempotent (a repaired session stops being a hole) and
+    self-healing: a derived row is removed wherever a Yahoo row exists for the same
+    (symbol, date) — here and in _insert — and refresh_recent's full re-fetch wipes a symbol's
+    derived rows along with the rest of its history.
+    """
+    g = session_gaps(cfg)
+    want = sorted(sessions if sessions is not None else
+                  [d for d in g["gaps"] if d not in g["pending"]])
+    out = {"sessions": want, "derived": 0, "skipped": 0, "skip_reasons": {},
+           "by_session": {}, "dry_run": dry_run}
+    if not want:
+        return out
+    con = duckdb.connect(cfg["paths"]["duckdb"])
+    try:
+        _ensure_source_column(con)
+        cal = [str(r[0]) for r in con.execute(
+            "SELECT DISTINCT date FROM bhav WHERE series = 'EQ' ORDER BY date").fetchall()]
+        idx = {d: i for i, d in enumerate(cal)}
+        want = [s for s in want if s in idx]
+        assert want, f"no bhav session to repair: {out['sessions']}"
+        out["sessions"] = want
+        window = sorted({cal[j] for s in want
+                         for j in range(max(0, idx[s] - MAX_FACTOR_AGE_SESSIONS),
+                                        min(len(cal), idx[s] + MAX_FACTOR_AGE_SESSIONS + 1))})
+        adj: dict[str, dict[str, float]] = {}
+        for sym, d, px in con.execute(
+                "SELECT symbol, date, adj_close FROM adj_close WHERE source IS NULL "
+                "AND date IN (SELECT unnest(CAST($ds AS DATE[])))", {"ds": window}).fetchall():
+            adj.setdefault(sym, {})[str(d)] = px
+        raw: dict[str, dict[str, float]] = {}
+        for sym, d, c in con.execute(
+                "SELECT symbol, date, close FROM bhav WHERE series = 'EQ' AND close IS NOT NULL "
+                "AND close > 0 AND date IN (SELECT unnest(CAST($ds AS DATE[])))",
+                {"ds": window}).fetchall():
+            raw.setdefault(sym, {})[str(d)] = c
+        rows = []
+        for s in want:
+            i = idx[s]
+            n = 0
+            for sym in sorted(raw):
+                c_s = raw[sym].get(s)
+                if not c_s:
+                    continue              # did not trade that session: nothing to derive
+                p = max((d for d in adj.get(sym, {}) if idx[d] < i), key=lambda d: idx[d],
+                        default=None)
+                q = min((d for d in adj.get(sym, {}) if i < idx[d]), key=lambda d: idx[d],
+                        default=None)
+                if p is None or q is None or idx[p] < i - MAX_FACTOR_AGE_SESSIONS \
+                        or idx[q] > i + MAX_FACTOR_AGE_SESSIONS:
+                    key = (f"no Yahoo basis within +-{MAX_FACTOR_AGE_SESSIONS} sessions (ticker "
+                           f"renamed/delisted — Yahoo never served it — or suspended)")
+                else:
+                    v = _factor_derive(c_s, adj[sym][p], raw[sym].get(p), adj[sym][q],
+                                       raw[sym].get(q), tol)
+                    if v is not None:
+                        rows.append({"symbol": sym, "date": s, "adj_close": v,
+                                     "source": DERIVED})
+                        n += 1
+                        continue
+                    key = ("factor moved across the gap (corporate action?) or basis session "
+                           "has no raw close")
+                out["skipped"] += 1
+                out["skip_reasons"][key] = out["skip_reasons"].get(key, 0) + 1
+            out["by_session"][s] = n
+        out["derived"] = len(rows)
+        if rows and not dry_run:
+            frame = pd.DataFrame(rows)
+            frame["date"] = pd.to_datetime(frame["date"])
+            con.register("dview", frame[["symbol", "date", "adj_close", "source"]])
+            con.execute("INSERT INTO adj_close (symbol, date, adj_close, source) "
+                        "SELECT symbol, date, adj_close, source FROM dview")
+            con.unregister("dview")
+            ds = sorted({r["date"] for r in rows})
+            con.execute("DELETE FROM adj_close a "
+                        "WHERE a.date IN (SELECT unnest(CAST($ds AS DATE[]))) "
+                        "AND a.source IS NOT NULL AND EXISTS (SELECT 1 FROM adj_close b "
+                        "WHERE b.symbol = a.symbol AND b.date = a.date AND b.source IS NULL)",
+                        {"ds": ds})
+            con.execute("DELETE FROM adj_close "
+                        "WHERE date IN (SELECT unnest(CAST($ds AS DATE[]))) AND rowid NOT IN "
+                        "(SELECT min(rowid) FROM adj_close "
+                        "WHERE date IN (SELECT unnest(CAST($ds AS DATE[]))) "
+                        "GROUP BY symbol, date)", {"ds": ds})
+            con.execute("CHECKPOINT")
+        return out
+    finally:
+        con.close()
+
+
 def _self_check() -> None:
     # 1. mapping edge cases
     assert yahoo_ticker("M&M") == "M&M.NS" and yahoo_ticker("BAJAJ-AUTO") == "BAJAJ-AUTO.NS"
@@ -421,7 +657,51 @@ def _self_check() -> None:
     got = _fetch_batch(dead, cfg)
     print(f"delisted probe: {len(got)}/5 long-dead symbols still on Yahoo "
           f"({', '.join(dead)})", flush=True)
-    print("PASS: adj_close mapping/fraction logic + live 20-symbol cross-check")
+    # 6. session coverage (the E015 find: sigma had no view on 2019-03-29 because this table
+    #    is empty that session). Synthetic fixture first — classification only — then the
+    #    live table: a NEW zero-coverage bhav session FAILS, pinned ones are reported.
+    rows0 = [("2024-01-01", 10, 10, 10), ("2024-01-02", 0, 0, 10), ("2024-01-03", 0, 0, 10),
+             ("2024-01-04", 4, 4, 10), ("2024-01-05", 3, 3, 10)]
+    c0 = _classify_gaps(rows0, known={"2024-01-02"}, buffer_floor="2024-01-02")
+    assert c0["new_gaps"] == [] and c0["known_gaps"] == ["2024-01-02"], c0
+    assert c0["pending"] == ["2024-01-03"], c0      # inside the buffer: refresh still retries
+    assert [r["session"] for r in c0["short"]] == ["2024-01-04", "2024-01-05"], c0
+    c1 = _classify_gaps(rows0, known={"2024-01-01", "2024-01-02"}, buffer_floor="2024-01-02")
+    assert c1["healed"] == ["2024-01-01"] and c1["known_gaps"] == ["2024-01-02"], c1
+    c2 = _classify_gaps(rows0, known={"2000-01-01"}, buffer_floor="2024-01-02")
+    assert c2["new_gaps"] == ["2024-01-02"] and c2["healed"] == [], c2
+    # a session covered ONLY by derived rows is repaired, but NOT Yahoo coverage: it stops
+    # being a table hole and still fails the feed check while unpinned
+    rows1 = [("2024-01-01", 10, 10, 10), ("2024-01-02", 10, 0, 10)]
+    c3 = _classify_gaps(rows1, known={"2024-01-02"}, buffer_floor="2024-01-02")
+    assert c3["derived"] == ["2024-01-02"] and c3["gaps"] == [], c3
+    assert c3["known_gaps"] == ["2024-01-02"] and c3["new_gaps"] == [], c3
+    c4 = _classify_gaps(rows1, known=set(), buffer_floor="2024-01-02")
+    assert c4["new_gaps"] == ["2024-01-02"], c4
+    # derivation math: a held factor derives, a moved one (split ratio) refuses
+    v = _factor_derive(100.0, 9.0, 10.0, 13.5, 15.0, ADJ_FACTOR_TOL)
+    assert abs(v - 90.0) < 1e-12, v                     # 100 x the held factor 0.9
+    assert _factor_derive(100.0, 9.0, 10.0, 15.0, 10.0, ADJ_FACTOR_TOL) is None, \
+        "a factor that moved 67% across the gap must be refused, never guessed"
+    assert _factor_derive(100.0, None, 10.0, 13.5, 15.0, ADJ_FACTOR_TOL) is None
+    assert _factor_derive(0.0, 9.0, 10.0, 13.5, 15.0, ADJ_FACTOR_TOL) is None
+    g = session_gaps(cfg)
+    assert not g["new_gaps"], (
+        f"adj_close is missing {len(g['new_gaps'])} session(s) bhav traded: "
+        f"{g['new_gaps'][:10]}{' …' if len(g['new_gaps']) > 10 else ''} — "
+        f"the momentum input and the pick marks have a hole there; re-fetch the affected "
+        f"window (--backfill) or pin the date in KNOWN_SESSION_GAPS with evidence "
+        f"(currently pinned: {len(g['known_gaps'])})")
+    assert (set(g["known_gaps"]) | set(g["derived"]) | set(g["healed"])) >= set(KNOWN_SESSION_GAPS), (
+        "a pinned session vanished from the coverage report", g)
+    assert derive_session_gaps(cfg, dry_run=True)["derived"] == 0, (
+        "a Yahoo-less session is still derivable after the repair pass — run --derive-gaps")
+    print(f"session coverage: {g['sessions']:,} bhav EQ sessions {g['from']} -> {g['to']}, "
+          f"{len(g['known_gaps'])} Yahoo-less pinned gap(s) ({len(g['derived'])} covered by "
+          f"derived rows), {len(g['pending'])} pending in the trailing "
+          f"{TRAILING_BUFFER_DAYS}-day buffer, {len(g['healed'])} pin(s) healed, "
+          f"{len(g['short'])} still-filling session(s)", flush=True)
+    print("PASS: adj_close mapping/fraction logic + live 20-symbol cross-check + session coverage")
     sys.exit(0)
 
 
@@ -435,6 +715,14 @@ if __name__ == "__main__":
         n = trim(cfg)
         print(f"trimmed {n:,} adj_close rows (pre-{cfg['adj_history_start']} or NULL-valued)",
               flush=True)
+        sys.exit(0)
+    if "--derive-gaps" in sys.argv:
+        r = derive_session_gaps(load("quick"), dry_run="--dry-run" in sys.argv)
+        print(f"derive-gaps: {r['derived']:,} row(s) over {len(r['sessions'])} session(s) "
+              f"({r['skipped']:,} symbol-session(s) skipped){' [dry run]' if r['dry_run'] else ''}",
+              flush=True)
+        for k, v in sorted(r["skip_reasons"].items()):
+            print(f"  skipped {v:,}: {k}", flush=True)
         sys.exit(0)
     if "--refresh" in sys.argv:
         st = refresh_recent(load("quick"))
