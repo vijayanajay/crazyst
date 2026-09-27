@@ -2140,3 +2140,22 @@ from scratch.**
   distinct future effort. Nothing ships.
 
 ---
+
+## Program report + prospective protocol - the standing record (2026-09-27, docs)
+
+- **`docs/program_report.md`** is the capstone: the E000 -> E025 arc in one table (signal
+  discovery -> model -> universe/costs -> engine -> regimes/sizing -> breadth book ->
+  out-of-sample -> closure forensics), the three numbers that answer the deployment
+  question (+29.64% in-sample / +25.77% deployable at -47% maxDD / +12.59% vs +12.46% on
+  virgin months), what the factory built, why pure indexing is the honest endpoint, and
+  the only two things that could change it (a prospective PASS, or a fundamentals tranche).
+- **`docs/prospective_protocol.md` + `src/prospective/score.py`** are the forward path:
+  new designs freeze before the fold exists (hash-pinned), score each virgin labeled
+  month exactly once (append-only, re-scores are a hard error), verdict only at the
+  pre-registered fold count. The monthly job chains behind the data scheduler; no design
+  is registered yet. Closed families are named as closed.
+- **`docs/data_dictionary.md`** pins the map: every table and raw cache, every committed
+  constant the guards consume (IC pins, index equivalents, pick counts, benchmark CAGR),
+  at full precision, with the reproducing experiment for each.
+
+---
