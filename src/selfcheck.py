@@ -49,10 +49,13 @@ CHECKS = [
     ("universe.winners", "src.universe.winners"),
     ("backtest.engine", "src.backtest.engine"),
     ("backtest.portfolio", "src.backtest.portfolio"),
+    ("model.composite", "src.model.composite"),
     ("backtest.metrics", "src.backtest.metrics"),
     ("backtest.audit", "src.backtest.audit"),
     ("backtest.attribution", "src.backtest.attribution"),
     ("backtest.checkpoint", "src.backtest.checkpoint"),
+    ("walkforward.harness", "src.walkforward.harness"),
+    ("walkforward.trigger_pnl", "src.walkforward.diag_trigger_pnl"),
 ]
 
 SUITE_KEY = "selfcheck"
