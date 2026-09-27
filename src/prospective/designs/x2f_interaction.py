@@ -13,6 +13,12 @@ FEATURES = ("mom_12m_1m", "delivery_pct")
 fi = {name: 2 + PANEL_FEATURES.index(name) for name in FEATURES}
 MIN_SCORED = 100                                   # G3: a fold below this is valid = FALSE
 
+# the frozen bar (design.md §4), codified for the dashboard — set before any fold scored
+BAR_DIFF = 0.005            # paired mean IC difference (product - shipped mean) required
+N_FOLDS = 18                # valid folds before the verdict may be written
+EARLY_STOP_N = 12           # early stop (fail direction only) allowed after this many
+EARLY_STOP_T = -1.5
+
 
 def score_month(rs) -> list[float | None]:
     pcts = [model._pct([r[fi[name]] for r in rs]) for name in FEATURES]
