@@ -2079,3 +2079,64 @@ from scratch.**
   not more mechanics on this one. Standing deploy recommendation: pure indexing.
 
 ---
+
+## Experiments E023/E024 - the two panel-reuse candidates: both REJECTED (2026-09-27, profile `full`)
+
+- **E023 (3f delivery-dynamics composite) - REJECTED, significantly worse.** Pre-registered
+  (shortlist #1 of the audit): composite_3f_dt = mom_12m_1m + delivery_pct +
+  delivery_pct_trend vs the shipped 2f, P4.1's paired-t machinery re-used verbatim, control
+  anchored to smoke.SLICE_IC_PIN to 1e-9. Result: 3f mean IC +0.0606 vs 2f +0.0720; paired
+  diff -0.0115, t -2.69, **p 0.008** over 145 months — a significant degradation, not a
+  near-miss. The trend feature is the delivery level's own 20-session difference; the
+  equal-weight mean pays for the redundancy by diluting momentum from 1/2 to 1/3 of the
+  weight. One implementation note disclosed: model.score_month iterates its own hardcoded
+  two-feature global and silently drops a third feature passed via its lambda (caught when
+  the first run reproduced the control bit-identically); the treatment was rebuilt on
+  model._pct with the three frozen features explicit; production untouched. The composite
+  family is closed — two 3f variants have now missed their bars (P4.1's mom_6m, E023's
+  delivery_pct_trend).
+- **E024 (down-month low-ATR tilt) - REJECTED, free but toothless.** Pre-registered
+  (shortlist #2): weight ∝ 1/rank_pos × (1 - pct_atr), parameter-free, E022's exact
+  machinery; G1 anchors arm A to E022's committed by-band excess to 1e-6 (reproducing its
+  145-interval chain including the 2023-07 -> 2023-08 boundary interval, disclosed), G2 the
+  index pin to 1e-9, G3 zero mark-dropped legs and >= 25 tilted-book legs. Result: down
+  -0.17% -> **+0.09%** (+0.26pp) while up stayed +2.48% vs +2.40% — the tilt is genuinely
+  free, and B2/B3 pass, but B1 (down >= +0.5pp) fails by 5x and the paired t is 0.33. The
+  94%-consistent atr IC ranks names that fall less; inside a long momentum book that
+  cannot overcome bucket beta. A stronger tilt needs a knob — the overfitting surface the
+  frozen construction excluded. The conditional-volatility direction closes.
+- **Where this leaves the program:** with E023/E024 both REJECTED, every remaining use of
+  the existing panel is measured (composites: P4.1/P4.1b/E023; conditional: E013/E014/
+  E022/E024; mechanics: E015-E021). The audit's last open direction is NEW DATA —
+  index-inclusion flows (E025). Standing deploy recommendation unchanged: pure indexing.
+
+---
+
+## Experiment E025 - index-inclusion events: sourced, screened, REJECTED (2026-09-27, profile `full`)
+
+- **New data direction, pre-registered as a screen** (audit item #3): NSE's
+  IndexInclExcl.xls (2,495 Nifty 500 events, 1998-08-01 -> 2020-09-14 — the community-
+  reported staleness confirmed) fetched via the new `src/download/index_events.py`
+  (raw cache under data/raw/index_events/, xlrd added to requirements.txt), with NSE's
+  EQUITY_L equity master as the name->symbol bridge: 1,216/2,495 events matched (48.7%;
+  unmatched = renames/delistings/master gaps — counted, never silently dropped). The
+  `index_events` table is derived from the raw file each run, idempotent.
+- **Sweep (frozen):** per labeled decision month, a symbol's flag is 1 iff the sheet
+  records a Nifty 500 inclusion/exclusion dated within the 12 months BEFORE m (no
+  look-ahead). Guards: G1 >= 1,000 matched events (1,216), G2 slice pins, G3 no-lookahead
+  by construction. Bar: includer gap >= +1.0pp/mo or excluder gap <= -1.0pp/mo over >= 30
+  event-bearing months.
+- **Result - REJECTED on both arms:** include — 122 event-months, mean IC -0.0012
+  (t -0.23), gap **-0.17pp/mo** (t -0.65; wrong sign); exclude — 122 event-months, IC
+  -0.0094 (t -1.82), gap **-0.58pp/mo** (t -0.96; right sign, half the bar). At the
+  monthly horizon with a 12-month smearing window there is no includer drift on this
+  universe, consistent with the announcement-window concentration the literature reports;
+  the exclusion side is universe decay, not a tradeable signal.
+- **Where the audit's shortlist now stands:** E023 (3f composite) REJECTED, E024 (atr
+  tilt) REJECTED, E025 (inclusion flows) REJECTED — every free item on the list is
+  measured. The standing deploy recommendation is unchanged (pure indexing). The honest
+  remaining options, recorded here and in the audit: prospective pre-registrations judged
+  on virgin monthly folds as the cutoff advances, or a fundamentals/vendor source as a
+  distinct future effort. Nothing ships.
+
+---

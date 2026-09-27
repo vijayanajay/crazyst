@@ -1,0 +1,57 @@
+{
+  "experiment": "E023_composite_3f_delivery_trend",
+  "git_hash": "341e7a1a19170f14d8b2f789dc44bf31ae98e8a8",
+  "profile": "full",
+  "window": {
+    "validation_months": 145,
+    "first": "2011-07-29",
+    "last": "2023-07-31",
+    "boundary": "2023-09-24",
+    "test_window": "burnt by E020-C; not touched"
+  },
+  "guards": {
+    "G1_control_equals_ic_pin": true,
+    "G1_control_mean_ic": 0.07202922854484578,
+    "G1_pin": 0.07202922854484578,
+    "G2_slice_pins": true,
+    "G3_paired_months": 145,
+    "passed": true
+  },
+  "arms": {
+    "composite_3f_dt": {
+      "features": [
+        "mom_12m_1m",
+        "delivery_pct",
+        "delivery_pct_trend"
+      ],
+      "mean_monthly_ic": 0.06057557642419117,
+      "months": 145,
+      "frac_rows_scored": 1.0,
+      "top5_precision": {
+        "precision": 0.5548601449769343,
+        "months": 145
+      }
+    },
+    "shipped_2f": {
+      "mean_monthly_ic": 0.07202922854484578,
+      "months": 145,
+      "top5_precision": {
+        "precision": 0.5574642133807973,
+        "months": 145
+      }
+    }
+  },
+  "bars": {
+    "B1_paired_t": {
+      "n_months": 145,
+      "mean_diff": -0.011453652120654637,
+      "t": -2.6911941255329466,
+      "p": 0.007962513571217113,
+      "alpha": 0.05,
+      "passed": false
+    },
+    "as_coded": "P41._paired_t(ics_3f, ics_2f); b1 = mean_diff > 0 and p < 0.05"
+  },
+  "verdict": "REJECTED",
+  "runtime_seconds": 45.7
+}
