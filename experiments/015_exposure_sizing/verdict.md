@@ -1,5 +1,10 @@
 # E015 verdict — FAIL: at unchanged average exposure, volatility-scaled sizing does not capture the relief
 
+> **Index-equivalent (added 2026-09-27):** over this experiment's identical 145-month slice,
+> the same capital in Nifty 500 TRI compounds at **+13.17% CAGR** (`results.json`
+> `arms.*.benchmark_cagr`) — every arm in this verdict loses to the index, from ~13pp/yr
+> (C) to ~25pp/yr (B, on the repaired-tape rerun numbers).
+
 Run 2026-09-27, profile `full`, working tree on `cd204c4`, 145-month validation slice
 (2011-07-29 → 2023-07-31, boundary 2023-09-24), test window untouched. `results.json` is
 the record; `hypothesis.md` was written before the run and is not edited.

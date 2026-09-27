@@ -610,6 +610,12 @@ def run(profile: str = "full", verify_determinism: bool = False,
           f"{ev['sharpe_monthly']:.2f} vs {ev['benchmark_sharpe']:.2f}"
           + (f"; Nifty 200 TRI ref CAGR {_pct(bench200['cagr'])}, "
              f"Sharpe {bench200['sharpe']:.2f}" if bench200 else ""))
+    if ev["cagr"] is not None and ev["benchmark_cagr"] is not None:
+        gap = ev["benchmark_cagr"] - ev["cagr"]
+        print(f"  index-equivalent: the same capital in {bench_source.split(' (')[0]} earns "
+              f"{_pct(ev['benchmark_cagr'])} over this window — the engine underperforms "
+              f"buy-and-hold by {gap:.2%}/yr (the do-nothing alternative every engine "
+              f"result must be read against)")
     s = ev["slippage"]
     print(f"  realized slippage: {s['fills_measured']} fills measured "
           f"(buy {s['mean_buy_slip_vs_mark_pct']:+.3f}%, sell "

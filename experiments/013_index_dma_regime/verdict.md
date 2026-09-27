@@ -1,5 +1,10 @@
 # E013 verdict — the index regime filter improves the realized window, and that is all it proves
 
+> **Index-equivalent (added 2026-09-27):** over this experiment's identical 35-month window,
+> the same capital in Nifty 500 TRI compounds at **+12.46% CAGR** (`results.json`
+> `arms.*.benchmark_cagr`) — every arm in this verdict, including the PASSing CASH arm
+> (−4.29% CAGR), loses to the index by ~17pp/yr.
+
 Run: `python -m experiments.013_index_dma_regime.run --profile full` (109.4 s);
 `results.json` committed. `hypothesis.md` was written before the run. **Nothing shipped**:
 no config, model, portfolio, engine or harness change — the only production-file edit is

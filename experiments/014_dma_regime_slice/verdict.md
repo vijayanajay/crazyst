@@ -1,5 +1,10 @@
 # E014 verdict — REJECTED: the signal does not mark bad months, and E013's gain was exposure, not timing
 
+> **Index-equivalent (added 2026-09-27):** over this experiment's identical 145-month slice,
+> the same capital in Nifty 500 TRI compounds at **+13.17% CAGR** (`results.json`
+> `arms.*.benchmark_cagr`) — every arm in this verdict, including the best one (BUY_BLOCK,
+> +0.86% CAGR), loses to the index by ~12pp/yr.
+
 Run: `python -m experiments.014_dma_regime_slice.run --profile full` (175.1 s);
 `results.json` committed. `hypothesis.md` was written before the run. No config, model,
 portfolio, engine or harness change (the inert `regime_off` hook is E013's; the arms just
