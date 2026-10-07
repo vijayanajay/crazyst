@@ -17,7 +17,10 @@ Commands:
 
 Designs live at src/prospective/designs/<name>.py and expose `score_month(rows) ->
 list[float | None]` over the harness's labeled row tuples (same layout every P4.x
-experiment scored). `--self-check` runs the hand-computed fixture.
+experiment scored). A design MAY also expose `fold_metrics(rows) -> dict` for
+book-level constructions: its items are appended as extra folds.csv columns (disclosed
+in the design freeze before any fold exists). `--self-check` runs the hand-computed
+fixture.
 """
 from __future__ import annotations
 
@@ -79,13 +82,17 @@ def register(design_md: str) -> int:
     name = os.path.basename(os.path.dirname(os.path.abspath(design_md)))
     if name in designs:
         raise SystemExit(f"design {name!r} already registered — use --repin for amendments")
+    code_path = os.path.join(_repo_root(), "src", "prospective", "designs", f"{name}.py")
+    code_sha = _sha256(code_path) if os.path.exists(code_path) else None
     designs[name] = {
         "design_md": os.path.relpath(design_md, _repo_root()).replace("\\", "/"),
         "sha256": _sha256(design_md),
+        "code_path": os.path.relpath(code_path, _repo_root()).replace("\\", "/") if code_sha else None,
+        "code_sha256": code_sha,
         "registered_at": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
     _save_designs(designs)
-    print(f"registered {name!r}: sha256 {designs[name]['sha256'][:16]}…")
+    print(f"registered {name!r}: sha256 {designs[name]['sha256'][:16]}… (code {code_sha[:16] if code_sha else 'none'}…)")
     return 0
 
 
@@ -94,13 +101,19 @@ def repin(name: str, reason: str) -> int:
     if name not in designs:
         raise SystemExit(f"design {name!r} not registered")
     d = designs[name]
-    old = d["sha256"]
+    old_md = d["sha256"]
     d["sha256"] = _sha256(os.path.join(_repo_root(), d["design_md"]))
+    code_path = os.path.join(_repo_root(), "src", "prospective", "designs", f"{name}.py")
+    old_code = d.get("code_sha256")
+    new_code = _sha256(code_path) if os.path.exists(code_path) else None
+    d["code_path"] = os.path.relpath(code_path, _repo_root()).replace("\\", "/") if new_code else None
+    d["code_sha256"] = new_code
     d.setdefault("amendments", []).append(
-        {"at": time.strftime("%Y-%m-%d %H:%M:%S"), "from": old, "to": d["sha256"],
+        {"at": time.strftime("%Y-%m-%d %H:%M:%S"), "from": old_md, "to": d["sha256"],
+         "code_from": old_code, "code_to": new_code,
          "reason": reason})
     _save_designs(designs)
-    print(f"re-pinned {name!r}: {old[:12]}… -> {d['sha256'][:12]}… (reason recorded)")
+    print(f"re-pinned {name!r}: {old_md[:12]}… -> {d['sha256'][:12]}… (reason recorded)")
     return 0
 
 
@@ -139,6 +152,13 @@ def score(name: str) -> int:
     if _sha256(md_path) != d["sha256"]:
         raise SystemExit("design file changed since registration — amend via --repin "
                          "with a disclosure, never silently")
+    code_path = os.path.join(_repo_root(), "src", "prospective", "designs", f"{name}.py")
+    if d.get("code_sha256"):
+        if not os.path.exists(code_path):
+            raise SystemExit(f"scorer code missing: {code_path}")
+        if _sha256(code_path) != d["code_sha256"]:
+            raise SystemExit(f"scorer code {code_path} changed since registration — amend via --repin "
+                             "with a disclosure, never silently")
     mod = importlib.import_module(f"{DESIGNS_PKG}.{name}")
     cfg = load("full")
 
@@ -181,17 +201,34 @@ def score(name: str) -> int:
     min_scored = getattr(mod, "MIN_SCORED", 0)
     valid = int(len(pairs) >= min_scored)
 
+    # optional design-level fold metrics (book-level designs record their construction
+    # here; the hook must be disclosed in the design freeze BEFORE any fold exists).
+    # Appended as extra columns so the record stays one row per fold. Designs without
+    # the hook (x2f_interaction) are untouched: no extra columns, identical schema.
+    extras: list[tuple[str, str]] = []
+    if hasattr(mod, "fold_metrics"):
+        for k, v in mod.fold_metrics(rs).items():
+            extras.append((k, f"{v:.6f}" if isinstance(v, float) else str(v)))
+
+    expected_header = ["month", "ic", "n_scored", "mean_score", "mean_label",
+                       "top5_mean_label", "ref_ic", "valid", "scored_at",
+                       "design_sha256"] + [k for k, _v in extras]
     os.makedirs(os.path.dirname(_folds_csv(name)), exist_ok=True)
     new_file = not os.path.exists(_folds_csv(name))
+    if not new_file:
+        with open(_folds_csv(name), encoding="utf-8") as f:
+            existing_header = next(csv.reader(f), [])
+        if existing_header != expected_header:
+            raise SystemExit(f"{name}: folds.csv header mismatch — "
+                             f"existing {existing_header} != expected {expected_header}")
     with open(_folds_csv(name), "a", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
         if new_file:
-            w.writerow(["month", "ic", "n_scored", "mean_score", "mean_label",
-                        "top5_mean_label", "ref_ic", "valid", "scored_at",
-                        "design_sha256"])
+            w.writerow(expected_header)
         w.writerow([fold, f"{ic:.6f}", len(pairs), f"{mean_score:.6f}",
                     f"{mean_ret:.6f}", f"{top_mean_ret:.6f}", ref_ic, valid,
-                    time.strftime("%Y-%m-%d %H:%M:%S"), d["sha256"][:16]])
+                    time.strftime("%Y-%m-%d %H:%M:%S"), d["sha256"][:16]]
+                   + [v for _k, v in extras])
     n_folds = len({row["month"] for row in csv.DictReader(open(_folds_csv(name),
                                                                encoding="utf-8"))})
     print(f"{name}: fold {fold} scored — IC {ic:+.4f} over {len(pairs)} rows, "
@@ -202,7 +239,7 @@ def score(name: str) -> int:
 
 def self_check() -> int:
     """Hand-computed fixture for the record path: a fake month, a known ranking, an
-    append-only assertion (a second identical score must fail)."""
+    append-only assertion (a second identical score must fail), and header consistency."""
     import tempfile
     from src.stats import spearman_ic
 
@@ -228,7 +265,12 @@ def self_check() -> int:
     rows = list(csv.DictReader(open(f, encoding="utf-8")))
     assert rows[0]["month"] == "2026-10-31"
     assert len({r["month"] for r in rows}) == len(rows)
-    print("PASS: src.prospective.score self-check (hand IC, top-5 pick, append-only record)")
+
+    # header alignment check assertion
+    with open(f, encoding="utf-8") as fh:
+        hdr = next(csv.reader(fh), [])
+    assert hdr == ["month", "ic"]
+    print("PASS: src.prospective.score self-check (hand IC, top-5 pick, append-only record, header check)")
     return 0
 
 

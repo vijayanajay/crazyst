@@ -28,6 +28,8 @@ experiment's `results.json`.
 | E013 | The shelved index regime filter (BRD §15: Nifty 200 TRI vs its 200-session DMA), measured on the realized 35-month harness window: arms BUY_BLOCK / CASH (diagnostic) at risk-off fold month-ends. PASS = all three pre-registered bars (CAGR, drawdown severity, Sharpe) vs the shipped baseline, with a hair-trigger probe (2024-12-31, ratio 0.9990, forced risk-ON) | **passed, NOT adopted** — baseline 835,695 / −6.14% CAGR / −0.427 Sharpe / −22.99% maxDD; CASH 883,270 / −4.29% / −0.244 / −19.55%; NO_BUYS 886,195 / −4.18% / −0.235 (better than CASH — the liquidation leg adds nothing); forced-risk-on probe 873,170 / −4.68% / −0.273 / −20.47%, the gain survives. NOT adopted: the test window is burned for this rule family, the gate's 8 intervals were the baseline's *better* ones in aggregate (attribution), and VIX still has no data path. Disclosed sign slip in the hypothesis (maxDD is a negative fraction; the prose governs, the literal signed reading is recorded as REJECTED). E014 later rejected the premise on the validation slice. See 2026-09-27 E013 block | 2026-09-27 |
 | E014 | The risk-off buy-block re-run on the 145-month validation slice (test window untouched) across 6 pre-named episodes: B1 the baseline is worse inside gated intervals (mean d < 0 at one-sided p < 0.05, n ≥ 10); B2 ≥ ceil(2/3) counted episodes gate-favored | **rejected** — mean d = +0.542%, p(gate helps) = 0.654; the baseline's engine return was +0.754%/mo (sd 8.26%) in the gate's 35 intervals vs −0.026% (sd 5.50%) in the other 109 — risk-off marks VOLATILE months, not losing ones; 3/5 counted episodes gate-favored, 4 needed. The arm's whole-slice equity advantage (1,108,821 vs 942,030; maxDD −46.5% vs −65.6%) traces to exposure / variance drag, not timing. Index leg closed; no config change. See 2026-09-27 E014 block | 2026-09-27 |
 | E015 | Signal-free slot sizing by own-name volatility on the same slice: A baseline, B EQUAL_RISK_MEAN1 = clip(σ_med/σ, 0.5, 2.0) normalized so the month's pool mean scale is exactly 1.0 (unchanged average exposure), C DERISK_CAP = clip(…, 1.0) unnormalized (diagnostic). PASS iff B's maxDD severity gain ≥ R/3 (R = E014's committed relief 19.07pp) AND CAGR ≥ A − 1.00pp AND better DD in ≥ 3 of 6 episodes AND B's mean invested share within ±2.00pp of A's | **failed** — all guards passed (hook inert, A == E014 baseline, picks 5,605, IC pin, σ PIT 1.4e-17, exposure −0.49pp): B's drawdown gain **−1.93pp** (−10% of R) at CAGR −2.13% vs −0.50%, maxDD WORSE (−67.51% vs −65.58%). B's arithmetic mean fell 0.149pp/mo (sd 6.31% → 6.17%): equal-risk weighting is a bet against the composite's own alpha concentration. C captured 17.8% of R (3.40pp) with CAGR +0.21pp better — directional confirmation of E014's variance-drag mechanism, ~1/5 of the relief, and C removed 1.5pp of mean invested share to do it: the relief scales with exposure ACTUALLY removed. No config change; sizing family closed on the slice. See 2026-09-27 E015 block | 2026-09-27 |
+| E026 | Equal-weight universe benchmark vs the book the strategy actually trades (REPORTING): EW-as-of-top-1500 eligible universe, EW-labeled, reproduced breadth-B, sourced Nifty 500 TRI | **reporting, no bars, no adoption** — EW-ELIGIBLE universe +16.84%/yr vs Nifty 500 TRI +13.17% on the 145-fold validation slice (min mark-coverage 62.0% in 2011; 69/144 months flagged below the 80% bar, none dropped); breadth-B reproduced (CAGR within 1pp of 0.29644, IC pin 0.07204549587457933 to 1e-9, top-5% picks 4,579 / arm picks 5,605); **the book's edge over its own EW universe is +7.40 pp/yr in-sample** (matched estimator), so ~22% of the old cap-weighted index claim was universe beta, not selection; EW universe itself had −54.82% maxDD vs index −28.87% and book −23.05%. Test window (35 folds, 2023-09-29 → 2026-07-31, burnt and shifted): book +21.37% vs EW-universe +14.17% vs TRI +12.45%, book still +14.49 pp/yr over its own universe (23 cohorts, −0.76% maxDD) but that window is burnt by E020-C. **No config change**; the EW-universe series is now the benchmark the prospective breadth_book design (frozen same day) is judged against on virgin folds. See 2026-10-01 E026 block | 2026-10-01 |
+| E027 | Floor-1.5cr rung at the ₹40L account (8 slots × ₹500k, gate boundary 1.0cr, E012 protocol): does floor 1.5cr clear the E012 adoption bars vs shipped floor 0.375 | **rejected, NOT adopted** — floor 1.5cr fixes the gate exactly as sized (refusal 25.39% → 1.80% at S₹500k, T3 clears by 6.7×; modelled impact 0.316% → 0.122%) but pays for it in the universe: floor removes 24% of eligible symbol-months (163,280 → 124,209) and cuts the **gross** pick mean −27.6bp/mo before the gate touches it, net corrected −17.6bp/mo (T1 FAILS by 12.6bp beyond its 5bp tolerance), paired t(A−B) −1.81 (p = 0.073, T2 clears barely — not the statistical intactness the 0.75cr rung showed at t −0.12). Sign of the corrected gap is negative at all four slots (S125k/250k/500k/1M: −24.8/−11.9/−17.6/−15.1bp); T2 is not comfort because a few more months against the floor would fail it too and leave T1's verdict unchanged. Diagnostic arm O (floor 3.0cr) shows IC flattens past 1.5cr (0.065098 → 0.065210) — the 0.375→1.5cr step destroys ranking quality, everything above is breadth-vs-nothing. Guards all green (G0 anchors on the 145-fold subset: picks 4,579 / 5,605 and IC pin to 1e-9; G1 A keeps 76.1% of B; G3 C at S250k refuses 1.451% vs E009 R2's 1.467%). No config change; **capacity note's ₹20L measured ceiling stands, ₹40L is now measured-and-rejected instead of unmeasured**, ₹80L remains unmeasured as a proper floor+slot rung. Two runner defects caught and fixed pre-result: the arm anchor's fetch used the labeled-only path (pins collapsed onto 4,579); the frozen G2 identity double-counted missing rows (corrected to `refused + fillable == picks` and `picks + missing == labeled pick rows`). See 2026-10-03 E027 block | 2026-10-03 |
 
 ---
 
@@ -2192,5 +2194,118 @@ from scratch.**
   protocol. One revisit trigger recorded: a machine-readable pledge/SAST event feed
   re-opens E004 (pre-registered, never measured, event-shaped — where E025 showed the
   signal actually is).
+
+---
+
+## E026 — the EW-universe benchmark; second prospective design; capacity note (2026-10-01/02)
+
+- **E026 — the equal-weight universe benchmark** (experiments/026_ew_universe_benchmark/,
+  pre-registered in hypothesis.md BEFORE the run; **REPORTING** — no bars, no adoption):
+  the missing denominator, measured. The as-of top-1500 universe's own monthly-rebalanced
+  EW return from the adj_me panel: **+16.84%/yr, −54.8% maxDD** on E018's exact 145-fold
+  slice vs Nifty 500 TRI +13.17% — the cap-weighted benchmark understated the hurdle by
+  **+3.67 pp/yr**. E018's breadth book beat its OWN universe by **+7.40 pp/yr** (matched
+  cohort estimator: +29.64% vs +22.25%) and the index by +16.47 pp/yr. Test window
+  (35 folds, shifted to 2023-09-29→2026-07-31 by the cutoff-derived split — disclosed
+  pre-run): universe +14.17%, book +21.37%, TRI +12.45% (vs E020-C's old-window pin
+  0.124575: diff −8.3e-5 — the window itself moved). Findings (verdict.md): (F1) ~22% of
+  the headline edge vs the index was universe beta; (F2) the selection edge survives the
+  correct denominator in-sample — the slice is burnt; (F3) the EW universe itself was a
+  −55% ride; (F4) the labeled set IS the marked subset of the eligible snapshot (both EW
+  legs coincide to the last float) — the benchmark measured is already the tradeable
+  book; (F5) 69/144 early months below 80% mark coverage (min 62.0% in 2011), flagged
+  not dropped. Guards: split amendment as measured (boundary 2023-09-24 → 2023-10-01;
+  val 145 → 146 folds; test window shifted one month; 2026-08-31 labeled but in neither
+  slice); TRI pin reproduced to **0.0e+00**; arm-B pin diff **3.2e-11**; picks 4,579 /
+  5,605 exact; module self-check PASS.
+- **Tape re-baseline, disclosed (drift alarm resolved with cause):** the 2026-10-01
+  refresh's corporate-action backfill revised labels retroactively — slice mean monthly
+  IC moved **+1.63e-5** (0.0720292285 → 0.0720454959) while the SELECTION pins held
+  bit-for-bit (4,579 / 5,605), so membership and rankings are untouched. Per the 8eae6c4
+  precedent, `smoke.SLICE_IC_PIN` re-baselined with the old value kept as
+  `SLICE_IC_PIN_20260924`; frozen results.json files untouched (they describe the tape
+  they ran on); pin map updated in docs/data_dictionary.md.
+- **Second prospective design registered: `breadth_book`**
+  (docs/prospective/breadth_book/design.md, sha256 fc30b084…, frozen before any fold
+  exists): the deployable breadth book (top decile of composite_2f, **equal weight**,
+  real costs 0.21% RT) judged on **12+ forward virgin folds against its OWN universe
+  EW benchmark** — the denominator E026 established. Judged quantity: mean monthly
+  (book_net − bench_ew_gross) ≥ +0.005 over 12 valid folds; fail-direction early stop
+  after 6 at ≤ −0.005; G1 identity check (ic == ref_ic — the reference IS the shipped
+  composite). Justified against the closed breadth-vs-TRI family in design.md §0 (new
+  denominator, forward-only; the old question stays closed). Runner amendment disclosed
+  pre-registration: `src/prospective/score.py` gained a generic optional `fold_metrics`
+  hook so book-level designs record their construction in the append-only folds.csv;
+  x2f_interaction byte-identical, nothing re-scored. First virgin fold closes with
+  December 2026's data.
+- **Capacity note** (docs/capacity_note.md, committed numbers only, no new run): fill
+  gate + E011 slot economics give gate boundary = C/₹40L (cr) and E012's derived floor
+  rule floor = 1.5 × boundary. Measured ladder: **₹10L → refusal 1.14%** (floor 0.375 cr,
+  shipped, end-to-end measured incl. realized engine + slippage); **₹20L → 1.47%** (floor
+  0.75 cr, E009 R2, IC intact at paired t −0.12); ₹40L/₹80L → no measured floor rung
+  (pre-floor refusal 49.6%/61.2%, adversely selected — the gate removes the best picks
+  first). **Max measured-viable ≈ ₹20L, and only after re-deriving the floor through
+  E012's protocol; ₹10L stays the operating point; above ₹20L the strategy's own gate
+  arithmetic has no evidence.** Conditional arithmetic — no deployment case exists
+  (E020-C NON-CONFIRMED; E026 restated the benchmark).
+
+## E027 — the ₹40L capacity rung, pre-registered and run: REJECTED (2026-10-02/03, profile `full`)
+
+`experiments/027_floor_1_5cr_rung/` — hypothesis frozen 2026-10-02 **before** any
+execution; run 2026-10-03, git `5f4ed50`, cutoff 2026-10-01, 325.9s. E009/E012's
+machinery imported module-to-module; the only new code is the arm set (floor 0.375 /
+0.75 / **1.5** / 3.0 cr, each a real `E007._build_chain` rebuild with floors passed
+explicitly) and the decision-rule evaluation. **Nothing ships; the shipped floor stays
+0.375 cr.**
+
+- **Question:** the capacity note's ladder ended at “beyond ₹20L: not established”
+  because no measured rung existed at the ₹40L floor the E012 rule requires (boundary
+  1.0 cr × 1.5). Does floor 1.5 cr make a ₹40L account supportable on the E012 protocol?
+- **Result at the ₹40L slot (S = ₹500k, boundary 1.0 cr):**
+
+  | arm | floor | eligibles | refused | corrected mean | gross mean | IC (145m) |
+  |---|---|---|---|---|---|---|
+  | B (shipped) | 0.375 | 163,280 | 25.39% | +2.633% | +2.659% | 0.072045 |
+  | C (E009 R2) | 0.75 | 145,397 | 12.66% | +2.646% | +2.608% | 0.067751 |
+  | **A (candidate)** | **1.5** | 124,209 | **1.80%** | **+2.457%** | +2.383% | 0.065098 |
+  | O (overshoot) | 3.0 | 99,660 | 0.12% | +2.493% | +2.479% | 0.065210 |
+
+- **Bars (frozen):** T1 **FAIL** (A's corrected +2.457% vs B's +2.633% = −17.6bp/mo,
+  tolerance 5bp); T2 PASS but barely (paired t(A−B) = **−1.81**, n = 146 months, mean
+  IC diff −0.0069, **p = 0.073** — borderline-significant, not the 0.75-cr rung's
+  statistical intactness at t −0.12 / p 0.91); T3 PASS (1.80% ≤ 25.39%/3); T4 recorded
+  (1.80% ≤ 5%). **DECISION: NOT ADOPT.**
+- **Guards, all passed:** G0 anchors on the exact 145-fold subset — picks **4,579** /
+  **5,605** and slice IC `0.07204549587457933` == `smoke.SLICE_IC_PIN` to 1e-9 (E026's
+  certified pins); G1 coverage A/B eligibles = **76.1%** (≥60% bar); G2 excluded_turnover
+  monotone in the floor (137,248 → 223,019) and the structural identity holds in all
+  arms at all four slots; G3 continuity — C@S250k refusal **1.451%** vs E009 R2's
+  committed 1.467%, corrected +2.571% vs +2.614%; restore re-asserts the pin.
+- **The finding, and why it matters more than the verdict:** the gate is *not* the
+  binding constraint at ₹40L. Floor 1.5 cr fixes it (refusal 25.4% → 1.80%, impact
+  0.316% → 0.122%) — it is the universe that pays, −27.6bp/month of **gross** pick
+  return for 24% of the eligible symbol-months, with the gate interaction returning only
+  +4.8bp of it (B's refusals were return-neutral at S500k; A's few refusals were losers).
+  The −17.6bp gap is negative at **all four slot sizes** (−24.8 / −11.9 / −17.6 /
+  −15.1bp), so the verdict is not a headline-slot artifact. Separately: IC falls
+  0.072045 → 0.065098 across 0.375 → 1.5 cr and then **flattens** (0.065210 at 3.0 cr),
+  so the ranking cost is one step, not a gradient.
+- **Consequence:** `docs/capacity_note.md` gains its measured ₹40L cell and stops calling
+  that rung unmeasured; **max measured-viable stays ≈ ₹20L**, now measured rather than
+  extrapolated. ₹80L remains unmeasured as a floor+slot pair. No config change; nothing
+  downstream re-validated because nothing was adopted.
+- **Disclosures (both found by the run refusing to complete; no measured number moved):**
+  (1) the arm-convention anchor used `smoke._fetch`, which filters
+  `next_month_ret IS NOT NULL` and collapsed the arm pin onto the labeled-only count
+  (4,579 not 5,605) — the arm convention is select-then-label and needs `HARNESS._fetch`
+  (E014's definition); (2) the **frozen G2 identity was definitionally wrong** —
+  `refused + fillable + missing_liq20 == picks` double-counts `missing`, because
+  `_reachability` counts `picks` as `len(all_rets)`, which already excludes it (E009's
+  own committed artifact: `refused + missing == picks` is False at all four R1 slots).
+  `hypothesis.md` carries a dated **AMENDMENT 2026-10-03** with the measured
+  decomposition; the corrected identity (`refused + fillable == picks` and
+  `picks + missing == labeled pick rows`, fillable recounted independently) is strictly
+  stronger, and no arm, slot, bar or decision rule changed. `--self-check` pins the
+  decision rule itself (T1/T2/T3 boundary inclusivity, T4 non-gating, G1, anchor veto).
 
 ---

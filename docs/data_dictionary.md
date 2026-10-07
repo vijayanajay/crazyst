@@ -35,7 +35,7 @@ All fetches: browser-like UA, .part atomic writes, loud failures (src/download/_
 | artifact | what | pins it holds |
 |---|---|---|
 | `runs/smoke_e2e/smoke_results.json` | smoke e2e pass over the slice | `light_pass.mean_gross` (E018/E022 G1 anchor), `slice_ic` → the IC pin, pick counts |
-| `src/backtest/smoke_e2e.py` | `SLICE_IC_PIN = 0.07202922854484578`, `SLICE_IC_PIN_PRE_REPAIR = 0.07171797803434904` | the tape-repair re-baseline pair (repaired / pre-repair) |
+| `src/backtest/smoke_e2e.py` | `SLICE_IC_PIN = 0.07204549587457933`, `SLICE_IC_PIN_20260924 = 0.07202922854484578`, `SLICE_IC_PIN_PRE_REPAIR = 0.07171797803434904` | the tape re-baseline ladder (2026-10-01 refresh / repaired tape / pre-repair) |
 | `runs/walkforward/harness_results.json` | the 35-month walk-forward (test window, §10) | `engine.benchmark_cagr = 0.12457495616414915`, `engine.cagr = −0.061435…`, `test_months` (35), `boundary = 2023-09-24`, benchmark_curve |
 | `runs/walkforward/phase6_section11_report.json` | §11 metrics + regime tables | interim reference numbers (E011/E012 lineage) |
 | `runs/prospective/` | prospective protocol record (designs.json, `<name>/folds.csv`) | created on first registration; append-only |
@@ -44,7 +44,8 @@ All fetches: browser-like UA, .part atomic writes, loud failures (src/download/_
 
 | pin | value | defined | consumed by |
 |---|---|---|---|
-| Slice IC (repaired tape) | `0.07202922854484578` | `smoke_e2e.SLICE_IC_PIN` | E018 G2, E023 G1, smoke re-pins |
+| Slice IC (2026-10-01 tape) | `0.07204549587457933` | `smoke_e2e.SLICE_IC_PIN` | E026 G2, smoke re-pins; re-baselined 2026-10-01 with disclosure (refresh backfill revised labels +1.63e-5; selection pins 4,579/5,605 held exactly — LEDGER 2026-10-01) |
+| Slice IC (repaired tape, 2026-09-24) | `0.07202922854484578` | `smoke_e2e.SLICE_IC_PIN_20260924` | E018 G2, E023 G1 (the tape those runners pinned) |
 | Slice IC (pre-repair tape) | `0.07171797803434904` | `smoke_e2e.SLICE_IC_PIN_PRE_REPAIR` | the repair supersession record |
 | Labeled top-5% picks | `4,579` | smoke_results.json | E018 G2 |
 | Arm-convention picks | `5,605` | smoke `_picks` over all decision rows | E018 G2 |

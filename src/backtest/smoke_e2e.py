@@ -71,11 +71,18 @@ ENGINE_MODES = (("stuck", 2), ("escalate", 2))   # compared side by side per run
 # pipeline repair", 2026-09-27). The 7-session repair — derived rows for the sessions Yahoo
 # never served, 2011-10-26 / 2012-10-26 / 2012-11-13 / 2014-10-23 / 2015-11-11 / 2019-02-13
 # / 2019-03-29 — moved the labeled-only slice mean monthly IC by +3.11e-4, all of it in the
-# four decision months whose feature windows touch a repaired session. This is the pin the
-# smoke and the E014/E015 IC guards assert to 1e-9; E012's frozen results.json is NOT
-# rewritten and is asserted below to still hold the pre-repair value (the frozen artifacts
-# keep describing the tape they ran on).
-SLICE_IC_PIN = 0.07202922854484578
+# four decision months whose feature windows touch a repaired session. Re-baselined again
+# at the 2026-10-01 refresh (E026's G2, disclosed): the refetch added new sessions and the
+# corporate-action backfill revised pre-event adjustment ratios, retroactively revising
+# labels — mean monthly IC moved +1.63e-5 (0.0720292285 -> 0.0720454959) while the
+# selection pins held EXACTLY (top-5% picks 4,579 and arm-convention 5,605 reproduce
+# bit-for-bit, so membership/rankings are untouched). This is the pin the smoke and the
+# E014/E015 IC guards assert to 1e-9; E012/E018's frozen results.json files are NOT
+# rewritten and still hold the values of the tape they ran on (the committed artifacts
+# keep describing their own tape). The previous tape's value is kept as a named constant
+# (the pre-repair one, below, stays for the same reason).
+SLICE_IC_PIN = 0.07204549587457933
+SLICE_IC_PIN_20260924 = 0.07202922854484578
 SLICE_IC_PIN_PRE_REPAIR = 0.07171797803434904
 
 

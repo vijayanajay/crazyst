@@ -1,6 +1,6 @@
 {
   "checkpoint": "phase5_engine_rules_momentum",
-  "git_hash": "6b0de83ca661590d85667ebc2efdfba77b2d741f",
+  "git_hash": "5f4ed50191317c3f7c833e511414612eddf2eb57",
   "config": {
     "backtest": {
       "cost_per_side_pct": 0.0,

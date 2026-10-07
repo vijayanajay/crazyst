@@ -2,6 +2,8 @@
   "x2f_interaction": {
     "design_md": "docs/prospective/x2f_interaction/design.md",
     "sha256": "878f54b6031a626f180a9f0db031d3ddad57669e65ece3e937ac7ad9c847ae31",
+    "code_path": "src/prospective/designs/x2f_interaction.py",
+    "code_sha256": "b712c8ef70c6ccddd4cca66cdeb872aabbbe92f9d7047360119a315e0cc6bfae",
     "registered_at": "2026-09-28 00:17:40",
     "reference_insample_ic": {
       "product": 0.07433458078333899,
@@ -11,5 +13,12 @@
       "months": 145,
       "note": "context only; the verdict reads virgin folds alone (design.md G2)"
     }
+  },
+  "breadth_book": {
+    "design_md": "docs/prospective/breadth_book/design.md",
+    "sha256": "fc30b0843247472f80b2d12a7dfec7613191bbf7e3e8de68a9beca4ebe470307",
+    "code_path": "src/prospective/designs/breadth_book.py",
+    "code_sha256": "ccfa80a671b39731f32bccb1d189a6c28449c10bf43ad298a91c65b88939efbe",
+    "registered_at": "2026-10-02 00:40:45"
   }
 }

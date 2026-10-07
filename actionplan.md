@@ -1,198 +1,342 @@
-# Action Plan — NSE Monthly Top-Gainer Picker
+# Action Plan — Fundamental & Forensic Elimination with 12-Month Quality Momentum
 
-Companion to `BRD.md`. Written for one developer. Follow the order unless a task says "parallel-safe". Every task ends with a runnable check — a task without a passing check is not done.
+> **Context & Why This Plan Exists**:
+> Across 28 pre-registered experiments (E000–E027 in [LEDGER.md](file:///d:/Code/crazyst/LEDGER.md)), our quantitative engine proved three structural truths:
+> 1. **Monthly equity rebalancing is an uncanny valley**: It is too slow to capture event-driven order flow ([E025](file:///d:/Code/crazyst/LEDGER.md#L39)) and too fast for compounding, bleeding 0.5%/side in statutory fees (STT, GST, stamp duty) and slippage every 30 days.
+> 2. **Technical stops and macro gates do not work**: Stop-losses ([E017](file:///d:/Code/crazyst/LEDGER.md#L30)) whipsawed and destroyed alpha. Macro 200-DMA switches ([E014](file:///d:/Code/crazyst/LEDGER.md#L29)) and drawdown gates ([E021](file:///d:/Code/crazyst/LEDGER.md#L39)) sat in cash during the most explosive recovery rallies.
+> 3. **Small-cap momentum has a hard capital ceiling**: At ₹40L account size, illiquidity floors destroy 17.6 bps/mo of gross alpha ([E027](file:///d:/Code/crazyst/LEDGER.md#L32), [capacity_note.md](file:///d:/Code/crazyst/docs/capacity_note.md)). In our out-of-sample test ([E020-C](file:///d:/Code/crazyst/LEDGER.md#L457)), the monthly momentum edge over Nifty 500 TRI collapsed to +0.13 pp/yr.
+>
+> **The Pivot**:
+> We replace high-turnover monthly trading with a **Forensic Elimination + 12-Month Quality Momentum Pipeline**. 
+> - **Primary edge in India is negative screening**: In Indian markets, the median company siphons capital. Alpha is created by ruthlessly killing the 70% of companies with governance red flags, accrual traps, and pledge risks.
+> - **Holding horizon matched to filing cadence**: Positions are held for **12 months** (or staggered quarterly cohorts). Turnover drops from 300%+/yr to $< 25\%$/yr. Friction collapses.
+> - **Real risk management**: Risk is managed through **governance elimination, strict 8-10% position sizing, and multi-asset capital allocation (Equity + Gold + Liquid Bees)** — not whipsawing technical stop-losses.
+>
+> **Core Developer Guidelines (AGENTS.md / Ponytail Mode)**:
+> - **Zero parallel stack**: All configurations live in [config.yaml](file:///d:/Code/crazyst/config.yaml). All tables live in `data/duckdb/quant.duckdb`. No new databases or config duplicates.
+> - **No bloat dependencies**: Use Python standard library (`xml.etree.cElementTree`, `re`, `urllib/requests`) and existing project tools (`DuckDB`, `pandas`). No unapproved heavy frameworks.
+> - **Deterministic regex before LLMs**: Legal audit clauses ("Qualified Opinion", "Going Concern") use compiled regex. LLM is strictly reserved for unstructured Related-Party Transaction (RPT) notes.
+> - **Auditable trail**: Every killed company is logged in `data/reports/rejections.csv` with the exact numerical rule that triggered the kill.
 
-Universe note: we track ~1500 stocks via an as-of liquidity rank (top 1500 by trailing 3-month median turnover, computed from bhav data per decision date). Winners = top 5% of eligible stocks (BRD §4). No index-membership scraping on the critical path.
+---
 
-## Status (updated 2026-09-23)
-
-Phases 0–2 are complete; every Phase 1/2 done-when is implemented and verified (audit + live
-re-runs), and the selfcheck suite is green at **15/15 checks**. Evidence lives in `LEDGER.md`:
-milestones **M2**, **M2.2**, **M2.3** and **"Phase 2 (M1) complete"**, which also record the
-checkpoint artifacts (validation-report sign-off; the three winner lists vs re-computation).
-
-Post-audit repairs (2026-09-23), all proven on live data: task 1.6's cross-check was dead code —
-fixed (row unpacking, 0/0→NaN handling, date-index alignment, still-trading sampling,
-recent-window comparison) and registered in the suite; the scheduler's `end_date` write was made
-atomic then and has since been **removed at the root** — config no longer carries `end_date` and
-the cutoff is the newest bhav date (LEDGER, 2026-09-25 refactor block); the daily-refresh gate
-(agreement 1.0 on 105 pairs) and a full
-backfill slice (638 rows, 99.8% vs NSE) were re-run through their real entry points.
-Malformed surveillance rows are now quarantined (`surveillance_rejects`) instead of aborting the
-build, with validate.report failing while rejects are non-empty (2026-09-25).
-
-Open items carried forward (none blocks a Phase 1/2 done-when):
-
-- **₹5cr turnover floor** — BRD §4's "subsumed" premise is measurably false (enforcing it
-  excludes ~31% of the universe); rule implemented, shipped OFF. Needs the BRD owner.
-- Quality debt recorded in the ledger's "Open items for the next pass": `eligible()`'s
-  connection/table dependency vs this plan's pure-function wording, the hand-synchronised
-  `_CHECKS`/point-form rule pair, quarantine for malformed surveillance rows.
-- **Phase 3 complete except the checkpoint presentation (2026-09-25)**: **E001 (3.6) ran** —
-  `partial` (momentum anatomy confirmed; delivery anatomy rejected; volatility state the
-  strongest separator, against lore direction, uniform across size buckets). **E000 (3.8) ran** —
-  `rejected` on the letter of its hit-rate trigger, noise-bound in substance (overlap min 97.7%:
-  the top-1500 contains the Nifty 200; no index-membership data ever needed). **E002b ran** —
-  full-profile confirmation sweep, `confirmed` with one major reversal: the delivery family is
-  real at 15 years (E002's quick rejection was a bull-window artifact) and `atr_ratio` is
-  regime-flipping (+0.045 up / −0.183 down). Phase 4 composite candidates: mom_12m_1m (+),
-  mom_6m (+), delivery_pct (+), atr_ratio as a regime-conditional overlay. Remaining: present
-  the IC table + anatomy + E000 overlap (the Phase 3 checkpoint), and the BRD owner decides the
-  universe question E000 hands over (pooled hit-rate delta 0.86pp, ~2σ).
-
-## Working rules (read first)
-
-1. One config file (`config.yaml`) holds every threshold, path, cost, and date. No magic numbers in code.
-2. Every experiment follows BRD §12: folder, pre-registered `hypothesis.md`, results, verdict. No exceptions, including "quick checks".
-3. Every non-trivial module ships with one small self-check script (assert-based, no test framework). `python -m module_name` runs it.
-4. Raw downloads are cached and never re-fetched if present. Deleting the cache is a deliberate act, done manually.
-5. Any run must be reproducible: log config snapshot + git hash + data cutoff with results.
-6. If a task takes more than 2 days, split it. Stop and report at each checkpoint below.
-
-## Quick/full profiles
-
-Two config profiles: `quick` = last 12 months, `full` = 15 years. Self-checks, validation, and experiments default to `quick` so iteration is seconds-fast; `full` is the deliberate act and is what produces reported numbers. Every reported result states its profile. The feature matrix is precomputed once per profile; experiments then run as SQL queries against it.
-
-## Repo layout (build it in Phase 0, don't redesign later)
+## Architecture Flow
 
 ```
-config.yaml
-data/                  # raw cache + duckdb file (gitignored)
-src/
-  download/            # one module per source
-  normalize/           # raw -> duckdb
-  universe/            # membership, eligibility
-  features/            # one file per feature group
-  model/               # scoring / ranking
-  backtest/            # engine + portfolio rules
-  walkforward/         # harness + reports
-  validate/            # canaries, data quality report
-experiments/
-  001_anatomy/         # hypothesis.md, run.py, results.json, verdict.md
-  ...
-LEDGER.md
+                      ┌────────────────────────────────────────────────────────┐
+                      │      NSE Top-1500 Universe (from quant.duckdb)         │
+                      │      (Turnover Floor: med20 >= Rs 1.5 Cr for scale)    │
+                      └───────────────────────────┬────────────────────────────┘
+                                                  │
+                        ┌─────────────────────────┴─────────────────────────┐
+                        ▼                                                   ▼
+           ┌─────────────────────────┐                         ┌─────────────────────────┐
+           │   PRIMARY: BSE XBRL     │                         │   BACKUP: SCREENER.IN   │
+           │   (Official IND-AS XML) │                         │   (Polite Token Bucket) │
+           │   Zero OCR, Schema-safe │                         │   3.5s-5.0s delay       │
+           └────────────┬────────────┘                         └────────────┬────────────┘
+                        │                                                   │
+                        └─────────────────────────┬─────────────────────────┘
+                                                  ▼
+                                 ┌──────────────────────────────────┐
+                                 │       quant.duckdb Storage       │
+                                 │   financials_annual / bfsi       │
+                                 │   shareholding_reported          │
+                                 └────────────────┬─────────────────┘
+                                                  │
+                                                  ▼
+                                 ┌──────────────────────────────────┐
+                                 │  Phase 2: Forensic Elimination   │
+                                 │  • Sloan Accrual Trap (> 0.10)   │
+                                 │  • ICR Solvency (< 3.0x)         │
+                                 │  • CFO/EBITDA Conversion (< 0.65)│
+                                 │  • Promoter Pledging (> 10%)     │
+                                 │  • Piotroski F-Score (< 7/9)     │
+                                 │  • Audit Qualifications (Regex)  │
+                                 └────────────────┬─────────────────┘
+                                                  │ (Writes rejections.csv)
+                                                  ▼
+                                 ┌──────────────────────────────────┐
+                                 │    ~200-300 Clean Survivors      │
+                                 └────────────────┬─────────────────┘
+                                                  │
+                                                  ▼
+                                 ┌──────────────────────────────────┐
+                                 │  Phase 3: 12-Month Momentum Rank │
+                                 │  • Composite 2F (12-1 Mom + Del) │
+                                 │  • Top 10-15 Stocks (8-10% each) │
+                                 │  • Annual Rebalance (Low Churn)  │
+                                 └────────────────┬─────────────────┘
+                                                  │
+                                                  ▼
+                                 ┌──────────────────────────────────┐
+                                 │  Phase 4: Multi-Asset Risk Shell │
+                                 │  • 70% Clean Momentum Basket     │
+                                 │  • 15% Sovereign Gold (GOLDBEES) │
+                                 │  • 15% Liquid/Cash (LIQUIDBEES)  │
+                                 └──────────────────────────────────┘
 ```
 
 ---
 
-## Phase 0 — Setup (0.5 day) — ✅ DONE
+## Accounting & Data Schema (`data/duckdb/quant.duckdb`)
 
-| # | Task | Done when |
-|---|---|---|
-| 0.1 | Repo skeleton per layout above; `requirements.txt` (python, duckdb, pandas or polars, requests, pyyaml, matplotlib); `.gitignore` with `data/` | `pip install -r requirements.txt` works; repo layout matches |
-| 0.2 | `config.yaml` with: date range, universe definition (top-1500 as-of liquidity rank), eligibility thresholds, costs (with `quick`/`full` profiles), portfolio rule parameters as percentiles (BRD §4/§8), paths | File exists, every value referenced by later code comes from it |
-| 0.3 | `LEDGER.md` created with table header | File exists |
+All tables are created in the existing DuckDB database:
 
-**Checkpoint: nothing to show. Proceed.**
+```sql
+CREATE TABLE IF NOT EXISTS financials_annual (
+    symbol VARCHAR,
+    fy_year INTEGER,
+    filing_date DATE,
+    is_consolidated BOOLEAN,
+    -- P&L
+    revenue DOUBLE,
+    cogs DOUBLE,
+    ebitda DOUBLE,
+    depreciation DOUBLE,
+    finance_cost DOUBLE,
+    tax_expense DOUBLE,
+    pat DOUBLE,
+    -- Balance Sheet
+    total_assets DOUBLE,
+    net_worth DOUBLE,
+    total_debt DOUBLE,
+    current_assets DOUBLE,
+    current_liabilities DOUBLE,
+    receivables DOUBLE,
+    inventory DOUBLE,
+    cwip DOUBLE,
+    gross_block DOUBLE,
+    shares_outstanding DOUBLE,
+    -- Cash Flow
+    cfo DOUBLE,
+    capex DOUBLE,
+    cfi DOUBLE,
+    cff DOUBLE,
+    source VARCHAR,
+    PRIMARY KEY (symbol, fy_year, is_consolidated)
+);
 
-## Phase 1 — Data pipeline (M0) (4–5 days) — ✅ DONE 2026-09-22 (LEDGER M2/M2.2/M2.3; task 1.6 cross-check repaired and re-proven 2026-09-23)
+CREATE TABLE IF NOT EXISTS financials_bfsi (
+    symbol VARCHAR,
+    fy_year INTEGER,
+    filing_date DATE,
+    npa_gross DOUBLE,
+    npa_net DOUBLE,
+    advances DOUBLE,
+    deposits DOUBLE,
+    car DOUBLE,
+    pcr DOUBLE,
+    nim DOUBLE,
+    pat DOUBLE,
+    total_assets DOUBLE,
+    source VARCHAR,
+    PRIMARY KEY (symbol, fy_year)
+);
 
-Work in this order. Each task depends on the previous.
-
-| # | Task | Details | Done when |
-|---|---|---|---|
-| 1.1 | Downloader: old bhavcopy | Monthly archive zips, 2011 → Jul 2024. Retry ×3, sleep between hits, skip-if-cached | `data/raw/bhavcopy_old/` filled; count of trading-day files matches expected (cross-check one month's file list vs NSE holiday list) |
-| 1.2 | Downloader: UDiFF bhavcopy | Daily zips, Jul 2024 → yesterday | Same check for a recent month |
-| 1.3 | Downloader: delivery data (`sec_bhavdata_full`) | Same span; note it starts ~2011 but has known missing stretches | Files cached; gap report printed |
-| 1.4 | Normalizer: both bhavcopy formats → one table | Map old + UDiFF columns to one schema: symbol, series, date, OHLC, volume, trades. One mapping file per format, one output schema | `SELECT count(*), count(DISTINCT date) FROM bhav` sane; spot-check 5 random dates across the format boundary give same symbol set (±new listings) |
-| 1.5 | Normalizer: delivery → `delivery` table | symbol, date, deliv_qty, deliv_per | Join to bhav on symbol+date mismatches < 1% |
-| 1.6 | Corporate actions / adjusted prices | yfinance `.NS` adjusted closes for all symbols; store `adj_close` table. Keep NSE raw prices untouched | Cross-check: for 20 random symbols, NSE close and yf close match on ≥95% of overlapping days (else symbol-mapping bug) |
-| 1.7 | Validation report (`src/validate/report.py`) | Coverage per year, per-symbol gap counts, price-mismatch count, missing-delivery % | One command prints report; exits non-zero if coverage below config threshold |
-
-**Self-check:** `src/validate/canary.py` — BRD §11 canaries (momentum IC positive, delivery% autocorrelates, eligible count stable). Must pass before Phase 3 runs.
-
-**Checkpoint: show the validation report. Get sign-off before continuing.**
-
-## Phase 2 — Universe + labels (M1) (2–3 days) — ✅ DONE 2026-09-23 (LEDGER "Phase 2 (M1) complete")
-
-| # | Task | Details | Done when |
-|---|---|---|---|
-| 2.1 | As-of universe rank | Pure SQL over bhav data: trailing 3-month median turnover per symbol, ranked as of each decision date, top 1500. No external index data | Rank for 5 hand-picked dates printed; ranks stable month-over-month except at real liquidity shifts; runtime minutes, not hours |
-| 2.2 | Eligibility function | BRD §4 rules as a pure function `eligible(symbol, date) -> bool` from config | Unit check: 6 hand-built cases (T2T stock, low turnover, recent listing, GSM-flagged, rank>1500, normal) all behave correctly |
-| 2.3 | Monthly winners table | Top 5% per month by adjusted return (plus top-20 and top-decile secondary labels), per BRD §4 | Spot-check 10 random months by recomputing from raw bhav files (no public site lists market-wide gainers); 10/10 match |
-
-**Checkpoint: show 3 winner lists side by side with re-computation from raw files.**
-
-## Phase 3 — Feature library + univariate sweep (M2) (4–5 days)
-
-| # | Task | Details | Done when |
-|---|---|---|---|
-| 3.1 | Feature framework | Panel-wide computation: one DuckDB `CREATE TABLE AS` with window functions ordered by date — past-only by construction, no per-symbol-month Python calls | ✅ Implemented in `src/features/panel.py`; one CTAS computes monthly momentum (1M/3M/6M/12M−1M) over the existing panels; synthetic hand-values, calendar gaps, NULL/empty inputs, future-isolation, and live quick-profile build pass; registered self-check (`src.features.panel`) passes |
-| 3.2 | Momentum group | BRD §6 momentum features | Each has a hand-computed test case |
-| 3.3 | Volume + delivery group | BRD §6 volume structure, delivery features | ✅ Implemented in `src/features/panel.py` (same CTAS as 3.1): volume z-score, 20-session up/down volume split + ratio, breakout-with-volume confirmation, delivery% level/z-score/20-session trend, delivery-spike-while-flat; windows ride the EQ session calendar so absent sessions NULL rather than shift lags; synthetic hand-values (up-volume 95/down 144, both z-scores), missing-session/-delivery, future-isolation and live build pass |
-| 3.4 | Volatility + candle group | BRD §6; candles as features, not triggers | ✅ Implemented in `src/features/panel.py` (same CTAS): ATR ratio (14-session adjusted TR / close), NR7, squeeze days (TR below the configured fraction of its own prior-20 mean), 20-session range compression, close-in-range position, upper/lower wick ratios, consecutive-higher-lows streak, big-body-day-in-trend — all on adjusted OHLC (split-safe), all completeness-gated (TR windows need a prior close, so `source_days` warms up one extra session); synthetic hand-values (ATR 7/112 and 7/104 and 7/125, NR7 with a tie, squeeze 1, 13/14 close-in-range, 20-session higher-low streak), missing-session NULLing, future isolation and live build pass |
-| 3.5 | Feature matrix build | One table: symbol, month, all features, next-month return, is_winner (top 5%), plus liquidity rank and size bucket (top 200 / 201–600 / 601–1500) | ✅ Implemented in `src/features/matrix.py`: `feature_matrix` = feature_panel LEFT-joined to as-of rank and to the FORWARD label — `winners` rows are keyed by the date their return ends at, so decision D's label is read at the NEXT decision date (lead over the decision calendar); unmeasured forward months stay NULL, never False. Row count = eligible symbol-months, no duplicate keys, all buckets populated, 5.0% winner rate live; synthetic checks prove the forward direction (the +30% month read from its prior decision row), per-month as-of buckets, last-month NULLs and schema completeness |
-| 3.6 | **Experiment 001 — anatomy of winners** | Hypothesis: winners differ from rest on momentum/delivery features. Output: feature distribution table winners vs rest, per regime | `hypothesis.md` written and committed BEFORE `run.py` executes; results + verdict in ledger |
-| 3.7 | **Experiment 002 — univariate IC sweep** | Spearman IC per feature per month + pooled; top-5% precision vs 5% baseline; Benjamini–Hochberg correction across the ~20 features | ✅ Ran per BRD §12: `experiments/002_ic_sweep/hypothesis.md` (pre-registered directions for all 22 features, written before the run) → `run.py` (per-month + pooled Spearman via `src.stats`, exact t-tail p, top-5% precision, BH) → `results.json` (config/git/cutoff snapshot) → verdict + ledger block. Result: **partial** — mom_12m_1m confirmed (+0.065, BH-surviving), delivery z-score and mom_6m rejected on direction, low-volatility state is the sweep's dominant signal |
-| 3.8 | **Experiment 000 — universe overlap** | Hypothesis: the as-of top-1500 liquidity universe approximates the large/mid-cap intent. Output: per-year overlap with Nifty 200 constituents, hit-rate delta if winners were computed on the Nifty-200-only universe | Overlap table in ledger; E000 verdict decides whether index membership is ever needed |
-
-**Checkpoint: present IC table + anatomy findings + E000 overlap. Expect some priors to die here — that is the deliverable.**
-
-## Phase 4 — Selection model (M3) (3–4 days) — ✅ COMPLETE (2026-09-25): **composite_2f** (mom_12m_1m + delivery_pct, parameter-free rank-average) is the model. 4.1 `inconclusive` (3f p = 0.0585); 4.1b `confirmed` (2f p = 0.0140); 4.2 ranker `rejected` (0.0402 vs 0.0681, p = 0.0159) with the 4.3 freeze protocol proven; 4.4 E006 `rejected` — the >600 tail's edge survives 1.0%/side (52% of base), Phase 6 report default set to 0.5%/side, all three levels reported; the fill model (Phase 5) is the open question, not the cost constant. Next: Phase 5 engine on synthetic data; Phase 6 walks composite_2f forward.*
-
-| # | Task | Details | Done when |
-|---|---|---|---|
-| 4.1 | Composite score v0 | Rank-average of the 3–5 features that survived E002, weights fixed in config | Beats best single feature on pre-test-window validation slice (pre-registered in hypothesis.md) |
-| 4.2 | Learned ranker | Gradient boosting with rank objective (scikit-learn / lightgbm — justify dependency in ledger) trained walk-forward style on pre-window data | Same bar as 4.1; if it loses, ledger says so and composite ships |
-| 4.3 | Model freeze protocol | Model + weights + feature list saved with each run | Re-running an old run with its saved artifacts reproduces its picks exactly |
-| 4.4 | **Experiment 006 — cost sensitivity** | Pre-registered: re-score picks at 0.2% / 0.5% / 1.0% per side on the validation slice. Rank-1200 names will not fill at 0.2% | Ledger row with all three cost levels; sets the report's default cost assumption |
-
-**Checkpoint: compare v0 vs ranker on the validation slice. Pick one. Document why.**
-
-## Phase 5 — Backtest engine + portfolio rules (M4) (4–5 days) — ✅ COMPLETE (2026-09-26): engine `src/backtest/engine.py` (T+1 open fills, E006's fill model — ADV non-fill gate + capped impact — and the 5.2 edge cases), rules `src/backtest/portfolio.py` (BRD §8), metrics `src/backtest/metrics.py`, no-lookahead audit `src/backtest/audit.py` (real data: 145 months / 6,622 picks, tamper drift 0), bucket attribution `src/backtest/attribution.py`, and the checkpoint `src/backtest/checkpoint.py` — 19-row equity curve + 5-fill trade log exact against hand-computed paper, deterministic replay proven. LEDGER "Phase 5 checkpoint — engine + portfolio rules + toy momentum"; selfcheck suite 23/23. Next: Phase 6 walks composite_2f forward on real data.
-
-Build against **synthetic data first** so it never waits on the pipeline.
-
-| # | Task | Details | Done when |
-|---|---|---|---|
-| 5.1 | Engine core | BRD §9 rules: T+1 open fills, costs, no same-bar fills, deterministic | Deterministic-replay check: two runs on same inputs → identical trade logs to the rupee — ✅ `src/backtest/engine.py`; replay bit-identical, costs + capped linear impact vs ADV, non-fills logged never dropped |
-| 5.2 | Edge cases | Suspension, delisting, circuit lock, missing delivery data | Each case has a synthetic-data test that asserts the documented behavior — ✅ engine self-check: suspension marks at last close, delisting = the no-bar path (no T+1 fill / `no_bar` past the last session), circuit lock refuses fills, all asserted on synthetic fixtures |
-| 5.3 | Portfolio rules | BRD §8: monthly review, Trigger A/B/C, churn cap, cash slots | Rule unit tests: one test per trigger with a hand-built price path — ✅ `src/backtest/portfolio.py`: review sell + cash fallback + replace percentile, Trigger B stop/trail/DMA/delivery/GSM priority, Trigger A cap, Trigger C cancellation, no averaging down |
-| 5.4 | No-lookahead audit script | Recompute every pick from data available at decision date; assert match | Audit passes on a 12-month synthetic run and later on real data — ✅ `src/backtest/audit.py`: 24-month synthetic tamper suite + real audit (145 months / 6,622 picks, future-tamper drift 0, T+1 calendar check), writes `audit_results.json` |
-| 5.5 | Trade log + metrics | BRD §11 metric set from the log | One function produces all metrics from a trade log; checked against hand-computed toy portfolio — ✅ `src/backtest/metrics.py`: FIFO completed picks → pick/month hit rates, CAGR, monthly Sharpe, churn flag, benchmark compare, all vs the hand-computed toy |
-| 5.6 | Size-bucket attribution | Split picks by as-of liquidity rank: top 200 / 201–600 / 601–1500; hit rate, return, churn per bucket | Bucket table present in the report pack; blended-only reporting fails review — ✅ `src/backtest/attribution.py`: as-of **decision-month** buckets (`TradeEvent.signal_month`), per-bucket picks/hit/return/churn; `assert_consistent` fails a blended-only report |
-
-**Checkpoint: run engine on synthetic data with a trivial "buy momentum" model. Show equity curve + trade log.** — ✅ DONE 2026-09-26: `src/backtest/checkpoint.py` (results in `src/backtest/checkpoint_results.json`; LEDGER "Phase 5 checkpoint" block).
-
-## Phase 6 — Walk-forward harness + reports (M5) (3–4 days)
-
-| # | Task | Details | Done when |
-|---|---|---|---|
-| 6.1 | Walk-forward loop | BRD §10: monthly refit, 1-month purge, test window = last 36 months ending yesterday, recomputed per run | Window boundaries printed; refit never sees test month (assert in code) |
-| 6.2 | Run protocol | §10.3: config change after seeing results → archive old run dir, append ledger note, full re-run | Demonstrated once on purpose |
-| 6.3 | Reports | Equity curve PNG+CSV, monthly pick table, IC table, per-regime table, size-bucket attribution (5.6), binomial test + CI vs 5% baseline | One command produces the full report pack from a run dir |
-| 6.4 | **The run** | Full walk-forward of the chosen model on real data | Report pack generated; hit rate, p-value, CI, per-regime table all present; verdict written in ledger regardless of outcome |
-
-**Checkpoint: this is the project's first real answer. Present the full report, including confidence interval, honestly.**
-
-## Phase 7 — Experiments batch + paper phase (M6) (ongoing, ~2 days setup + 1 month calendar)
-
-| # | Task | Details | Done when |
-|---|---|---|---|
-| 7.1 | Event overlays | E003 bulk/block deals, E004 SAST disclosures, E005 F&O OI (optional) as separate experiments per BRD §12 | Each has its own ledger row and walk-forward delta vs the base model |
-| 7.2 | Rule tuning (bounded) | Rank thresholds (§8 percentiles) and mid-month trigger thresholds swept on pre-window data only; churn reported | Chosen percentile values logged with the sweep results; churn metric reported |
-| 7.3 | Paper phase | Run rules live: score at month-end, log intended picks + triggers before results known, compare after | 1 month of decisions logged in advance; divergence between paper log and what backtest would have said = 0 |
-| 7.4 | Final writeup | What works, what doesn't, ceiling estimate, next-phase proposal | Written in LEDGER.md verdict section |
-
-## Dependency map
-
-```
-Phase 0 ──> Phase 1 ──> Phase 2 ──> Phase 3 ──> Phase 4 ──┐
-                │                       │                  ├──> Phase 6 ──> Phase 7
-                └───────────────────────┴──> Phase 5 ──────┘
+CREATE TABLE IF NOT EXISTS shareholding_reported (
+    symbol VARCHAR,
+    quarter_end DATE,
+    promoter_pct DOUBLE,
+    pledged_pct DOUBLE,
+    fii_pct DOUBLE,
+    dii_pct DOUBLE,
+    public_pct DOUBLE,
+    source VARCHAR,
+    PRIMARY KEY (symbol, quarter_end)
+);
 ```
 
-Phase 5 starts after 3.5 exists (needs feature matrix for refits) but is built on synthetic data and can run alongside Phase 4.
+---
 
-## Self-check runner
+## Phase 0 — Config, Schema & Universe Integration (Day 1: 3 Hours)
 
-One small command (stdlib only) imports each module's `python -m` self-check, prints `PASS/FAIL` + elapsed per check, exits non-zero on first failure. Default profile `quick`. Every assert carries a message (`got X, expected Y`) so failures are self-explaining; `--verbose` prints per-month rows.
+### Objective
+Wire the database tables, universe resolution, and configuration without creating parallel files or changing existing conventions.
 
-## Total estimate
+### Tasks for Developer
+1. **Config Expansion (`config.yaml`)**:
+   Add a `fundamental` block to `config.yaml`:
+   ```yaml
+   fundamental:
+     rate_limits:
+       screener_delay_sec: 4.0
+       jitter_sec: 1.5
+       cooldown_after_requests: 40
+       cooldown_sec: 45
+     forensics:
+       sloan_accrual_max: 0.10
+       icr_min: 3.0
+       cfo_ebitda_min: 0.65
+       promoter_pledge_max_pct: 10.0
+       piotroski_f_min: 7
+       debt_equity_max: 1.0
+     portfolio:
+       holding_period_months: 12
+       target_positions: 12
+       max_weight_per_stock: 0.10
+       cash_buffer_pct: 0.15
+       gold_buffer_pct: 0.15
+   ```
+2. **Schema Module (`src/fundamental/schema.py`)**:
+   Implement table creation and verification functions using `src.config` and DuckDB connection routines.
+3. **Symbol Master Bridge (`src/fundamental/universe.py`)**:
+   Map NSE symbols to BSE Scrip codes using the existing `EQUITY_L` table and official NSE/BSE mappings.
 
-~21–27 working days for one developer, excluding calendar time for the paper phase.
+### Verification & Criteria
+* Run: `python -m src.fundamental.schema`
+  * **Expected Result**: Exit code 0. Tables created, schema verified with dummy insert/rollback.
+* Run: `python -m src.fundamental.universe`
+  * **Expected Result**: $\ge 98\%$ of the top-1500 universe successfully mapped to BSE scrips.
 
-## Explicit non-goals during this plan
+---
 
-- No live broker integration. No dashboard. No sentiment/NLP. No strategy claims without a p-value. Do not "improve" the portfolio rules mid-walk-forward — file it as an experiment instead.
-- No index-membership scraping during this plan; E000 decides if it is ever worth adding.
+## Phase 1 — Ingestion Engine (Day 1-2: 6 Hours)
+
+### Objective
+Ingest 10 years of annual balance sheet, P&L, cash flow, and shareholding data for the top-1500 universe with caching and zero data loss.
+
+### Tasks for Developer
+1. **BSE XBRL Ingester (`src/fundamental/bse_xbrl.py`)**:
+   * Download official IND-AS XBRL filings (zip/xml) from BSE.
+   * Parse taxonomy using stdlib `xml.etree.cElementTree`.
+   * Standardize extraction for: `RevenueFromOperations`, `ProfitLossForPeriod`, `CashFlowFromUsedInOperatingActivities`, `FinanceCosts`, `CapitalWorkInProgress`, `TradeReceivables`.
+   * Prioritize Consolidated financial context; fall back to Standalone only if Consolidated is absent.
+2. **Polite Screener Backup (`src/fundamental/screener.py`)**:
+   * Token-bucket rate limiter: 3.5s–5.0s delay with randomized jitter.
+   * Store raw responses to `data/raw/screener/{symbol}.json`.
+   * Cache-first: if file exists on disk, network call is skipped entirely.
+3. **Unified Normalizer (`src/fundamental/normalize.py`)**:
+   * Normalizes fields into `financials_annual` and `financials_bfsi`.
+   * Identifies BFSI entities via industry code or keywords (`BANK`, `FINANCE`, `HOUSING`, `CAPITAL`) to route to `financials_bfsi`.
+
+### Verification & Criteria
+* Test with 10 sample companies (e.g., RELIANCE, TCS, HDFCBANK, INFOSYS, INFY):
+  * **Expected Result**: Revenue, PAT, and CFO match audited annual reports to the rupee.
+* Network resilience test: Simulate HTTP 429; verify exponential backoff triggers without program crash.
+
+---
+
+## Phase 2 — Mathematical Forensic Rules Engine (Pre-Registered Experiment E028)
+
+### Objective
+Filter the universe down from 1,500 names to a clean basket of 200–300 companies by eliminating accounting red flags, debt distress, and capital leakage.
+
+### The Forensic Elimination Rules
+1. **Sloan Accrual Anomaly**:
+   $$\text{Accrual Ratio} = \frac{\text{PAT} - \text{CFO}}{\text{Total Assets}} > 0.10 \implies \text{FAIL (Aggressive Accounting)}$$
+2. **Interest Coverage Ratio (ICR)**:
+   $$\text{ICR} = \frac{\text{PAT} + \text{Tax} + \text{Finance Cost}}{\text{Finance Cost}} < 3.0 \implies \text{FAIL (Insolvent / Debt Stress)}$$
+3. **Cash Conversion Health**:
+   $$\frac{\text{CFO}}{\text{EBITDA}} < 0.65 \quad \text{or} \quad (\text{PAT} > 0 \text{ and } \text{CFO} < 0) \implies \text{FAIL (Earnings Not Backed by Cash)}$$
+4. **Working Capital Divergence (Channel Stuffing)**:
+   $$\Delta \% \text{Receivables} - \Delta \% \text{Revenue} > 25\% \implies \text{FAIL (Uncollected Revenue)}$$
+5. **Asset Siphoning via CWIP**:
+   $$\frac{\text{CWIP}}{\text{Gross Block}} > 0.35 \text{ for } \ge 3 \text{ consecutive years} \implies \text{FAIL (Unfinished Projects / Leakage)}$$
+6. **Promoter Pledging Hard Veto**:
+   $$\text{Pledged \% of Promoter Holding} > 10.0\% \implies \text{FAIL (Vulnerable to Margin Calls)}$$
+7. **Piotroski F-Score**:
+   $$\text{Score} < 7 / 9 \implies \text{FAIL (Operational Deterioration)}$$
+8. **Regex Audit Opinion Filter (`src/fundamental/audit_regex.py`)**:
+   Scan Independent Auditor's Reports using regex:
+   * Hard Veto: `qualified opinion`, `adverse opinion`, `disclaimer of opinion`, `material uncertainty related to going concern`.
+   * Flag: `emphasis of matter`.
+
+### Pre-Registered Experiment Protocol (E028)
+* **Hypothesis**: The deterministic forensic screen eliminates $\ge 90\%$ of known historical corporate distress cases while falsely eliminating $\le 15\%$ of clean Nifty 50 compounders.
+* **Test Set (Known Canaries)**:
+  * DHFL (FY18), Manpasand Beverages (FY18), Cox & Kings (FY18), Yes Bank (FY19), Reliance Communications (FY17), PC Jeweller (FY18).
+* **Control Set (Clean Blue Chips)**:
+  * TCS, HUL, Titan, Infosys, Asian Paints, Bajaj Auto.
+
+### Verification & Criteria
+* Run: `python -m src.fundamental.forensics`
+  * **PASS**: $\ge 90\%$ of Canaries rejected AND $\ge 85\%$ of Clean Blue Chips pass.
+  * **Output**: Generates `data/reports/rejections.csv` logging every eliminated scrip with its specific trigger value.
+
+---
+
+## Phase 3 — The 12-Month Clean Momentum Strategy (Experiment E029)
+
+### Objective
+Replace the failed monthly-rebalance engine with an annual holding / 12-month cohort momentum strategy on the forensically cleaned universe.
+
+### Strategy Construction
+1. **Universe**: Only stocks passing Phase 2 forensic elimination AND trading with trailing-20 median turnover $\ge ₹1.5\text{ Cr}$ (preventing illiquidity traps).
+2. **Signal**: Validated `composite_2f` = mean percentile rank of:
+   * `mom_12m_1m` (12-month momentum skipping the most recent month).
+   * `delivery_pct` (delivery volume as percentage of total volume).
+3. **Portfolio Allocation**:
+   * Select top **12 stocks**.
+   * Equal weight ($1/12 \approx 8.33\%$ each).
+   * **Rebalance Frequency**: Rebalanced once every 12 months (or four overlapping quarterly cohorts of 3 stocks each to smooth timing luck).
+4. **Friction Accounting**: Real delivery costs = 0.105%/side (STT, stamp duty, GST, exchange charges, brokerage). Churn is $\le 20-25\%$ per year, so transaction drag is $< 0.1\%$ per year.
+
+### Pre-Registered Experiment Protocol (E029)
+* **Hypothesis**: 12-Month Clean Momentum beats both Nifty 500 TRI and the Equal-Weight Universe over the 15-year history net of transaction costs, with Sharpe ratio $\ge 0.85$ and max drawdown $\le -35\%$.
+* **Comparative Arms**:
+  * Arm A: Unfiltered 12-month momentum (all top-1500 names).
+  * Arm B: Forensically cleaned 12-month momentum (post-Phase 2).
+  * Benchmark 1: Nifty 500 TRI.
+  * Benchmark 2: Equal-Weight Top-1500 Universe.
+
+### Verification & Criteria
+* Run: `python -m src.backtest.clean_momentum`
+  * **PASS**: Arm B CAGR exceeds Nifty 500 TRI by $\ge 4.0\text{ pp/year}$ net of costs, AND Arm B max drawdown is at least 8.0 pp better than Arm A.
+  * **Output**: `experiments/029_clean_momentum/results.json` and `verdict.md`.
+
+---
+
+## Phase 4 — Multi-Asset & Structural Risk Architecture (Experiment E030)
+
+### Objective
+Solve the equity drawdown problem structurally across uncorrelated asset classes rather than relying on failing single-stock stop-losses.
+
+### Strategy Shell
+Instead of 100% equity allocation, deploy capital into an all-weather Core-Satellite shell:
+* **70% Equity Satellite**: The Phase 3 Clean Momentum portfolio (12 high-conviction compounders).
+* **15% Gold Allocation**: Sovereign Gold / Gold ETF (`GOLDBEES`), providing inverse correlation during global and geopolitical shocks.
+* **15% Cash / Liquid**: Liquid ETF (`LIQUIDBEES`) or Treasury arbitrage, acting as dry powder and reducing portfolio volatility.
+
+### Dynamic Trend Protection (Asset-Level, NOT Stock-Level)
+* Evaluate Nifty 500 on a monthly basis against its 10-month (200-session) moving average:
+  * If Nifty 500 is **above** 10-month SMA: Maintain full 70% Equity exposure.
+  * If Nifty 500 is **below** 10-month SMA: Shift half of the equity allocation ($35\%$) into `LIQUIDBEES` upon scheduled rebalance.
+  * *Why this works when stock stops failed*: Stock-level stops whipsaw on daily noise. Broad index trend-following over monthly closes only triggers in severe structural bear markets (2008, 2020) and avoids false intraday exits.
+
+### Pre-Registered Experiment Protocol (E030)
+* **Hypothesis**: The Multi-Asset Shell compresses maximum drawdown from $-47\%$ to $\le -22\%$ while preserving $\ge 16\%$ CAGR over 15 years.
+* **Verification**: Run `python -m src.backtest.multi_asset_shell`. Verify max drawdown severity and Sharpe ratio improvement.
+
+---
+
+## Phase 5 — Production Pipeline & Investment Dossiers (Day 3: 4 Hours)
+
+### Objective
+Provide a unified CLI runner that produces clean portfolio picks, elimination audit trails, and 1-page investment dossiers for human review.
+
+### Deliverables
+1. **Runner Module (`src/fundamental/run.py`)**:
+   * Single command: `python -m src.fundamental.run`
+   * Performs: Ingestion sync $\rightarrow$ Forensic elimination $\rightarrow$ Momentum ranking $\rightarrow$ Multi-asset sizing.
+2. **Rejection Audit Trail (`data/reports/rejections.csv`)**:
+   * Columns: `symbol`, `fy_year`, `failed_rule`, `metric_value`, `threshold_value`, `status`.
+3. **Markdown Dossier Generator (`reports/investment_dossier_latest.md`)**:
+   * Produces a clean 1-page profile for each of the top 12 selected companies:
+     * Business & Capital Allocation: 5Y Sales/PAT CAGR, 5Y Average ROIC, Free Cash Flow.
+     * Forensic Health: Sloan Accrual score, ICR, CFO/EBITDA, Piotroski F-Score.
+     * Governance & Audit: Regex audit verdict, promoter pledging status.
+     * Allocation & Position Size: Target rupee amount and percentage of portfolio.
+
+---
+
+## Summary of Milestones & Deliverables
+
+| Phase | Output Artifacts | Primary Verification Command | Pass/Fail Criteria |
+|---|---|---|---|
+| **Phase 0** | Schema in `quant.duckdb`, `universe.py` | `python -m src.fundamental.schema` | All 3 tables exist; universe bridge $\ge 98\%$ |
+| **Phase 1** | Ingested financials in DuckDB, local cache | `python -m src.fundamental.normalize` | 50 test stocks ingested; zero PK collisions |
+| **Phase 2** | `data/reports/rejections.csv`, Experiment E028 | `python -m src.fundamental.forensics` | $\ge 90\%$ canaries rejected, $\ge 85\%$ blue chips pass |
+| **Phase 3** | Experiment E029, 12-month clean momentum engine | `python -m src.backtest.clean_momentum` | CAGR $\ge \text{Index} + 4\%$, Churn $< 25\%$/yr |
+| **Phase 4** | Experiment E030, Multi-asset shell | `python -m src.backtest.multi_asset_shell` | Max Drawdown $\le -22\%$, Sharpe $\ge 1.0$ |
+| **Phase 5** | `reports/investment_dossier_latest.md` | `python -m src.fundamental.run` | Execution completes in $< 2$ mins on cache |
